@@ -17,7 +17,7 @@ interface ProductCard {
 
 // Configuration for Shopify store domain
 // TODO: Replace with your actual Shopify store domain for production readiness.
-const SHOPIFY_STORE_DOMAIN = 'https://your-shopify-store-domain.com';
+const SHOPIFY_STORE_DOMAIN = 'https://zenmato.myshopify.com';
 
 interface Message {
   id: string
@@ -479,13 +479,25 @@ export default function ChatWidget() {
       if (response.ok) {
         let assistantContent: string;
         let cards: ProductCard[] | undefined;
+        const rawResponse = data.response || data.transcription || "";
 
         try {
-          const parsedData = JSON.parse(data.response || data.transcription || "{}");
-          assistantContent = parsedData.message || data.response || data.transcription || "Message received successfully";
-          cards = parsedData.cards;
+          // Attempt to parse the response as JSON
+          const parsedData = JSON.parse(rawResponse);
+
+          // Check if parsedData is an object and has a 'message' field
+          if (typeof parsedData === 'object' && parsedData !== null && 'message' in parsedData) {
+            // If successful and has 'message', use it for content and extract cards
+            assistantContent = parsedData.message;
+            cards = parsedData.cards;
+          } else {
+            // If JSON is valid but doesn't have 'message', treat the raw response as plain text
+            assistantContent = rawResponse;
+            cards = undefined;
+          }
         } catch (error) {
-          assistantContent = data.response || data.transcription || "Message received successfully";
+          // If JSON parsing fails, display the entire raw body content as plain text
+          assistantContent = rawResponse;
           cards = undefined;
         }
 
