@@ -8,25 +8,22 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { MessageCircle, Send, Mic, MicOff, X, Volume2, AlertCircle, Sparkles } from "lucide-react"
 
-interface ProductCard {
-  image: string;
-  name: string;
-  price: string; // Or number, depending on how you want to handle it
-  variantId: string; // Assuming Shopify variant ID for Add to Cart
+// Define interface for product card data
+interface ProductCardData {
+  image: string
+  name: string
+  price: string
+  variantId: string
 }
-
-// Configuration for Shopify store domain
-// TODO: Replace with your actual Shopify store domain for production readiness.
-const SHOPIFY_STORE_DOMAIN = 'https://zenmato.myshopify.com';
 
 interface Message {
   id: string
   content: string
-  role: "user" | "assistant" | "webhook"
+  role: "user" | "webhook"
   timestamp: Date
   type: "text" | "voice"
-  audioUrl?: string // Duration is no longer displayed, but still sent to webhook
-  cards?: ProductCard[];
+  audioUrl?: string
+  cards?: ProductCardData[] // Add cards property
 }
 
 // Enhanced Animated Waveform Component with Audio Levels
@@ -137,34 +134,7 @@ const TypingIndicator = () => (
 
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false)
-  const mockProductCards: ProductCard[] = [
-    {
-      image: "/placeholder.jpg",
-      name: "Cool T-Shirt",
-      price: "$25.00",
-      variantId: "1234567890"
-    },
-    {
-      image: "/placeholder.jpg",
-      name: "Awesome Hoodie",
-      price: "$50.00",
-      variantId: "0987654321"
-    }
-  ];
-
-  
-  const mockAiMessage: Message = {
-    id: "mock-ai-response",
-    content: "Here are some recommended products for you:",
-    role: "assistant",
-    timestamp: new Date(),
-    type: "text",
-    cards: mockProductCards,
-  };
-
-  // State for managing add to cart button loading state
-  const [addingToCart, setAddingToCart] = useState<{ [key: string]: boolean }>({});
-  const [messages, setMessages] = useState<Message[]>([mockAiMessage]);
+  const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
@@ -205,14 +175,12 @@ export default function ChatWidget() {
 
   useEffect(() => {
     // Check for MediaRecorder support
-    if (typeof window !== "undefined" && navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
-      const supportsWebm = MediaRecorder.isTypeSupported("audio/webm");
-      const supportsMp4 = MediaRecorder.isTypeSupported("audio/mp4");
-      if (supportsWebm || supportsMp4) {
-        setVoiceSupported(true);
+    if (typeof window !== "undefined" && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      if (MediaRecorder.isTypeSupported("audio/webm") || MediaRecorder.isTypeSupported("audio/mp4")) {
+        setVoiceSupported(true)
       } else {
-        setVoiceSupported(false);
-        setVoiceError("Audio recording is not supported in this browser.");
+        setVoiceSupported(false)
+        setVoiceError("Audio recording is not supported in this browser.")
       }
     } else {
       setVoiceSupported(false)
@@ -411,10 +379,11 @@ export default function ChatWidget() {
       if (response.ok) {
         const webhookMessage: Message = {
           id: (Date.now() + 1).toString(),
-          content: data.response || data.transcription || "Voice message received successfully",
+          content: data.message || data.response || data.transcription || "Voice message received successfully",
           role: "webhook",
           timestamp: new Date(),
           type: "text",
+          cards: data.cards || undefined, // Pass cards from webhook response
         }
         setMessages((prev) => [...prev, webhookMessage])
       } else {
@@ -435,7 +404,7 @@ export default function ChatWidget() {
         timestamp: new Date(),
         type: "text",
       }
-      setMessages((prev: Message[]) => [...prev, errorMessage])
+      setMessages((prev) => [...prev, errorMessage])
     } finally {
       setIsLoading(false)
     }
@@ -474,39 +443,15 @@ export default function ChatWidget() {
       const data = await response.json()
 
       if (response.ok) {
-        let assistantContent: string;
-        let cards: ProductCard[] | undefined;
-        const rawResponse = data.response || data.transcription || "";
-
-        try {
-          // Attempt to parse the response as JSON
-          const parsedData = JSON.parse(rawResponse);
-
-          // Check if parsedData is an object and has a 'message' field
-          if (typeof parsedData === 'object' && parsedData !== null && 'message' in parsedData) {
-            // If successful and has 'message', use it for content and extract cards
-            assistantContent = parsedData.message;
-            cards = parsedData.cards;
-          } else {
-            // If JSON is valid but doesn't have 'message', treat the raw response as plain text
-            assistantContent = rawResponse;
-            cards = undefined;
-          }
-        } catch (error) {
-          // If JSON parsing fails, display the entire raw body content as plain text
-          assistantContent = rawResponse;
-          cards = undefined;
-        }
-
-        const assistantMessage: Message = {
+        const webhookMessage: Message = {
           id: (Date.now() + 1).toString(),
-          content: assistantContent,
-          role: "assistant", // Changed to 'assistant' as per instructions for rendering cards
+          content: data.message || data.response || data.transcription || "Message received successfully",
+          role: "webhook",
           timestamp: new Date(),
           type: "text",
-          cards: cards,
-        };
-        setMessages((prev: Message[]) => [...prev, assistantMessage]);
+          cards: data.cards || undefined, // Pass cards from webhook response
+        }
+        setMessages((prev) => [...prev, webhookMessage])
       } else {
         const errorMessage: Message = {
           id: (Date.now() + 1).toString(),
@@ -515,7 +460,7 @@ export default function ChatWidget() {
           timestamp: new Date(),
           type: "text",
         }
-        setMessages((prev: Message[]) => [...prev, errorMessage])
+        setMessages((prev) => [...prev, errorMessage])
       }
     } catch (error) {
       const errorMessage: Message = {
@@ -528,6 +473,14 @@ export default function ChatWidget() {
       setMessages((prev) => [...prev, errorMessage])
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  // Function to handle adding to cart via postMessage
+  const handleAddToCart = (variantId: string) => {
+    if (typeof window !== "undefined" && window.parent) {
+      window.parent.postMessage({ type: "ADD_TO_CART", variantId, quantity: 1 }, window.location.origin)
+      console.log(`Attempting to add variantId: ${variantId} to cart via postMessage.`)
     }
   }
 
@@ -595,7 +548,7 @@ export default function ChatWidget() {
   useEffect(() => {
     return () => {
       if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track: MediaStreamTrack) => track.stop())
+        streamRef.current.getTracks().forEach((track) => track.stop())
       }
       if (recordingTimerRef.current) {
         clearInterval(recordingTimerRef.current)
@@ -607,7 +560,7 @@ export default function ChatWidget() {
         cancelAnimationFrame(animationFrameRef.current)
       }
       // Cleanup object URLs
-      messages.forEach((message: Message) => {
+      messages.forEach((message) => {
         if (message.audioUrl) {
           URL.revokeObjectURL(message.audioUrl)
         }
@@ -615,71 +568,10 @@ export default function ChatWidget() {
     }
   }, [])
 
-  const requestAddToCart = (variantId: string, quantity: number, properties = {}) => {
-    // Prevent adding multiple items at once for the same variant
-    if (addingToCart[variantId]) {
-      return;
-    }
-    setAddingToCart(prev => ({ ...prev, [variantId]: true }));
-  
-    if (typeof window !== 'undefined' && window.parent) {
-      window.parent.postMessage(
-        {
-          type: 'add-to-cart',
-          payload: { variantId: variantId, quantity: quantity, properties: properties },
-        },
-        SHOPIFY_STORE_DOMAIN // Use the defined constant
-      );
-    }
-  };
-
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
   }
 
-  // Add listener for messages from parent window (e.g., Shopify store)
-  useEffect(() => {
-    const handleMessageFromParent = (event: MessageEvent) => {
-      // Verify the origin for security - IMPORTANT!
-      // Replace with your actual chatbot domain if different from parent
-      const allowedOrigins = [
-        SHOPIFY_STORE_DOMAIN, // Use the defined constant for the Shopify domain
-        // Add other allowed origins if needed
-      ];
-      if (!allowedOrigins.includes(event.origin)) {
-        // console.warn(`Message received from disallowed origin: ${event.origin}`);
-        return;
-      }
-  
-      const messageData = event.data;
-  
-      if (messageData?.type === 'add-to-cart-response') {
-        const { variantId, success } = messageData.payload; // Assuming payload contains variantId and success status
-        if (variantId) {
-          setAddingToCart(prev => {
-            const newState = { ...prev };
-            delete newState[variantId]; // Remove from adding state
-            return newState;
-          });
-          // Optionally, show a toast or notification on success/failure
-          if (success) {
-            console.log(`Item ${variantId} added to cart successfully.`);
-            // You might want to show a success toast here
-          } else {
-            console.error(`Failed to add item ${variantId} to cart.`);
-            // You might want to show an error toast here
-          }
-        }
-      }
-    };
-  
-    window.addEventListener('message', handleMessageFromParent);
-  
-    return () => {
-      window.removeEventListener('message', handleMessageFromParent);
-    };
-  }, []); // Empty dependency array means this effect runs once on mount and cleans up on unmount
-  
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
@@ -693,6 +585,7 @@ export default function ChatWidget() {
         <div className="fixed bottom-6 right-6 z-50">
           <div className="relative group p-10">
             {/* Animated background rings */}
+            {/* Removed blur and pulse effects as requested */}
 
             <Button
               onClick={() => setIsOpen(true)}
@@ -849,7 +742,7 @@ export default function ChatWidget() {
                 </div>
               ) : (
                 <>
-                  {messages.map((message: Message, index: number) => (
+                  {messages.map((message, index) => (
                     <div
                       key={message.id}
                       className={`flex ${message.role === "user" ? "justify-end" : "justify-start"} animate-in slide-in-from-bottom-4 fade-in duration-500`}
@@ -878,24 +771,19 @@ export default function ChatWidget() {
                           {formatTime(message.timestamp)}
                         </p>
 
-                        {message.role === "assistant" && message.cards && message.cards.length > 0 && (
-                          <div className="mt-4 flex overflow-x-auto space-x-4 pb-2 -mx-2">
-                            {message.cards.map((card: ProductCard, cardIndex: number) => (
-                              <div
-                                key={cardIndex}
-                                className="flex-none w-[150px] bg-white rounded-lg shadow-md border border-gray-100 p-3 flex flex-col items-center text-center"
-                              >
-                                <img src={card.image} alt={card.name} className="w-24 h-24 object-contain mb-2" />
-                                <div className="card-title text-sm font-semibold text-gray-800 line-clamp-2 mb-1">
-                                  {card.name}
-                                </div>
-                                <div className="card-price text-xs text-gray-600 mb-3">{card.price}</div>
+                        {/* Render product recommendation cards */}
+                        {message.cards && message.cards.length > 0 && (
+                          <div className="cards-container mt-4">
+                            {message.cards.map((card, cardIndex) => (
+                              <div key={cardIndex} className="card">
+                                <img src={card.image || "/placeholder.svg"} alt={card.name} />
+                                <div className="card-title">{card.name}</div>
+                                <div className="card-price">{card.price}</div>
                                 <Button
-                                  onClick={() => requestAddToCart(card.variantId, 1)}
-                                  disabled={addingToCart[card.variantId]} // Disable button if item is being added
-                                  className="mt-auto px-2 py-1 text-xs w-full" // Adjusted button size and layout for card
+                                  onClick={() => handleAddToCart(card.variantId)}
+                                  className="mt-2 w-full text-xs py-1 h-auto"
                                 >
-                                  {addingToCart[card.variantId] ? 'Adding...' : 'Add to Cart'} {/* Show loading text */}
+                                  Add to Cart
                                 </Button>
                               </div>
                             ))}
@@ -922,7 +810,7 @@ export default function ChatWidget() {
                 <div className="flex-1 relative">
                   <Input
                     value={input}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInput(e.target.value)}
+                    onChange={(e) => setInput(e.target.value)}
                     placeholder={isRecording ? "Recording your voice..." : "Type your message..."}
                     disabled={isLoading || isRecording}
                     className="pr-4 h-12 rounded-2xl border-2 border-gray-200 focus:border-blue-500 transition-all duration-300 bg-white/90 backdrop-blur-sm shadow-sm hover:shadow-md font-medium placeholder:text-gray-400"

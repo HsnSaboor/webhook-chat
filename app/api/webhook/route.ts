@@ -102,8 +102,9 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // Extract response message from webhook response
+  // Extract response message and cards from webhook response
   let responseMessage = "Thank you for your message!"
+  let responseCards = null
 
   if (typeof responseData === "object" && responseData !== null) {
     // Try to extract message from common response formats
@@ -115,6 +116,11 @@ export async function POST(request: NextRequest) {
       responseData.text ||
       responseData.content ||
       responseMessage
+
+    // Extract cards if present
+    if (Array.isArray(responseData.cards)) {
+      responseCards = responseData.cards
+    }
   } else if (typeof responseData === "string") {
     responseMessage = responseData
   }
@@ -124,5 +130,6 @@ export async function POST(request: NextRequest) {
     response: responseMessage,
     transcription: responseData.transcription || null,
     status: webhookResponse.status,
+    cards: responseCards, // Include cards in the response to the client
   })
 }
