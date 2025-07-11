@@ -152,9 +152,6 @@ export default function ChatWidget() {
     }
   ];
 
-  // Configuration for Shopify store domain
-  // TODO: Replace with your actual Shopify store domain for production readiness.
-  const SHOPIFY_STORE_DOMAIN = 'https://your-shopify-store-domain.com';
   
   const mockAiMessage: Message = {
     id: "mock-ai-response",
