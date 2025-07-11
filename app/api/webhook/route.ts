@@ -33,24 +33,22 @@ export async function POST(request: NextRequest) {
 
     targetWebhookUrl = "https://zenmato.myshopify.com/cart/add.js" // Direct to Shopify's add.js
 
-    const formData = new FormData()
-    formData.append("form_type", "product")
-    formData.append("utf8", "✓")
-    formData.append("id", variantId)
-    formData.append("quantity", quantity.toString())
+    // Construct URL-encoded body
+    const params = new URLSearchParams()
+    params.append("id", variantId.toString())
+    params.append("quantity", quantity.toString())
     // This is the crucial part to get sections back from Shopify
     // Use the exact section ID from your theme's add.js output
-    formData.append("sections", "sections--17568270549039__cart-drawer")
+    params.append("sections", "sections--17568270549039__cart-drawer")
     // If your theme updates other sections (e.g., header cart count), add them here too:
-    // formData.append("sections", "sections--17568270549039__cart-drawer,header-cart-count-section-id");
+    // params.append("sections", "sections--17568270549039__cart-drawer,header-cart-count-section-id");
 
-    requestBody = formData
-    // For FormData, fetch automatically sets the correct Content-Type with boundary.
-    // We explicitly set other headers to mimic the browser request.
+    requestBody = params.toString() // This will be "id=...&quantity=...&sections=..."
     requestHeaders = {
+      "Content-Type": "application/x-www-form-urlencoded", // Changed to URL-encoded
       "User-Agent":
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36", // Mimic a browser User-Agent
-      Accept: "*/*",
+      Accept: "application/json", // Explicitly request JSON
       "Accept-Language": "en-US,en;q=0.9",
       "X-Requested-With": "XMLHttpRequest", // Important for Shopify to return JSON
       Origin: "https://zenmato.myshopify.com", // Match origin for CORS if needed
@@ -61,16 +59,11 @@ export async function POST(request: NextRequest) {
       "Sec-Fetch-Site": "same-origin",
       Priority: "u=0",
       TE: "trailers",
-      // Note: Cookies are not automatically forwarded by fetch in a server environment.
-      // If Shopify relies heavily on specific cookies for cart updates, this might be a challenge.
-      // For now, we'll assume X-Requested-With and sections parameter are sufficient.
     }
 
-    console.log("Sending add-to-cart to Shopify:", {
+    console.log("Sending add-to-cart to Shopify (URL-encoded):", {
       url: targetWebhookUrl,
-      variantId,
-      quantity,
-      sections: formData.get("sections"),
+      body: requestBody, // Log the body to verify
     })
   } else {
     // Handle text or voice messages (existing logic)
@@ -127,10 +120,13 @@ export async function POST(request: NextRequest) {
   let responseData
   const contentType = webhookResponse.headers.get("content-type")
 
+  // Check if the response is JSON before parsing
   if (contentType && contentType.includes("application/json")) {
     responseData = await webhookResponse.json()
   } else {
+    // If not JSON, log the raw text response for debugging
     responseData = await webhookResponse.text()
+    console.warn("Webhook response was not JSON. Raw response:", responseData)
   }
 
   console.log("Webhook response:", {
