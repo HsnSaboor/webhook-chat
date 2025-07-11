@@ -62,7 +62,7 @@ const AnimatedWaveform = ({ isRecording, audioLevel = 0 }: { isRecording: boolea
 const StaticWaveform = ({ audioUrl }: { audioUrl?: string }) => {
   const bars = Array.from({ length: 20 }, (_, i) => i)
   const [isPlaying, setIsPlaying] = useState(false)
-  const audioRef = useRef<HTMLAudioElement>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
   const togglePlayback = () => {
     if (audioRef.current) {
@@ -156,7 +156,7 @@ export default function ChatWidget() {
   const animationFrameRef = useRef<number | null>(null)
   const dragStartY = useRef(0)
   const dragStartHeight = useRef(0)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messagesEndRef = useRef<HTMLDivElement | null>(null)
 
   // Fixed webhook URL - hidden from user
   const webhookUrl = "https://similarly-secure-mayfly.ngrok-free.app/webhook/chat"
@@ -478,9 +478,23 @@ export default function ChatWidget() {
 
   // Function to handle adding to cart via postMessage
   const handleAddToCart = (variantId: string) => {
+    console.log(`[Chatbot] Attempting to send 'add-to-cart' message for variantId: ${variantId}`)
     if (typeof window !== "undefined" && window.parent) {
-      window.parent.postMessage({ type: "ADD_TO_CART", variantId, quantity: 1 }, window.location.origin)
-      console.log(`Attempting to add variantId: ${variantId} to cart via postMessage.`)
+      // IMPORTANT: Replace 'https://your-shopify-store-domain.com' with your actual Shopify store domain.
+      // For example: 'https://my-awesome-store.myshopify.com' or 'https://www.my-store.com'
+      const shopifyStoreDomain = "https://zenmato.myshopify.com"
+      window.parent.postMessage(
+        {
+          type: "add-to-cart", // Changed to 'add-to-cart' to match parent listener
+          payload: { variantId, quantity: 1 },
+        },
+        shopifyStoreDomain,
+      )
+      console.log(
+        `[Chatbot] Sent postMessage to parent: type='add-to-cart', variantId=${variantId}, targetOrigin=${shopifyStoreDomain}`,
+      )
+    } else {
+      console.warn("[Chatbot] window.parent is not available. Cannot send add-to-cart message.")
     }
   }
 
@@ -661,7 +675,7 @@ export default function ChatWidget() {
                     <MessageCircle className="h-5 w-5" />
                   </div>
                   <div className="absolute -top-1 -right-1 h-4 w-4 bg-green-400 rounded-full border-2 border-white shadow-sm">
-                    <div className="absolute inset-0 w-4 h-4 bg-green-400 rounded-full animate-ping opacity-75"></div>
+                    <div className="absolute inset-0 w-4 h-4 bg-green-400 rounded-full animate-ping opacity-30"></div>
                   </div>
                 </div>
                 <div>
