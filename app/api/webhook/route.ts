@@ -11,8 +11,8 @@ export async function POST(request: NextRequest) {
   try {
     body = JSON.parse(rawBody)
   } catch (err) {
-    console.error("Invalid JSON:", err)
-    return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 })
+    console.error("Invalid JSON from client:", err)
+    return NextResponse.json({ error: "Invalid JSON payload from client" }, { status: 400 })
   }
 
   const { webhookUrl, text, audioData, mimeType, duration, type, payload: clientPayload } = body
@@ -33,37 +33,42 @@ export async function POST(request: NextRequest) {
 
     targetWebhookUrl = "https://zenmato.myshopify.com/cart/add.js" // Direct to Shopify's add.js
 
-    // Construct URL-encoded body
-    const params = new URLSearchParams()
-    params.append("id", variantId.toString())
-    params.append("quantity", quantity.toString())
-    // This is the crucial part to get sections back from Shopify
-    // Use the exact section ID from your theme's add.js output
-    params.append("sections", "sections--17568270549039__cart-drawer")
-    // If your theme updates other sections (e.g., header cart count), add them here too:
-    // params.append("sections", "sections--17568270549039__cart-drawer,header-cart-count-section-id");
+    // Revert to FormData to match original curl's multipart/form-data
+    const formData = new FormData()
+    formData.append("form_type", "product")
+    formData.append("utf8", "✓")
+    formData.append("id", variantId.toString())
+    formData.append("quantity", quantity.toString())
+    formData.append("sections", "sections--17568270549039__cart-drawer")
+    // Add other sections if your theme updates them (e.g., header cart count)
+    // formData.append("sections", "sections--17568270549039__cart-drawer,header-cart-count-section-id");
 
-    requestBody = params.toString() // This will be "id=...&quantity=...&sections=..."
+    requestBody = formData // fetch will automatically set Content-Type: multipart/form-data with boundary
+
+    // Mimic all relevant headers from your curl command
     requestHeaders = {
-      "Content-Type": "application/x-www-form-urlencoded", // Changed to URL-encoded
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36", // Mimic a browser User-Agent
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0", // Exact User-Agent from curl
       Accept: "application/json", // Explicitly request JSON
-      "Accept-Language": "en-US,en;q=0.9",
-      "X-Requested-With": "XMLHttpRequest", // Important for Shopify to return JSON
+      "Accept-Language": "en-US,en;q=0.5",
+      "X-Requested-With": "XMLHttpRequest", // Crucial for Shopify to return JSON
       Origin: "https://zenmato.myshopify.com", // Match origin for CORS if needed
-      Referer: "https://zenmato.myshopify.com/products/zenmato-t-shirt-bundle", // Example referer from your curl
+      Referer: "https://zenmato.myshopify.com/products/zenmato-t-shirt-bundle", // Exact Referer from curl
+      "Sec-GPC": "1",
       Connection: "keep-alive",
       "Sec-Fetch-Dest": "empty",
       "Sec-Fetch-Mode": "cors",
       "Sec-Fetch-Site": "same-origin",
       Priority: "u=0",
       TE: "trailers",
+      // IMPORTANT: Cookies are not automatically forwarded by server-side fetch.
+      // If Shopify strictly requires session cookies for add.js without redirects,
+      // this might still be an issue. We are relying on X-Requested-With and Accept: application/json.
     }
 
-    console.log("Sending add-to-cart to Shopify (URL-encoded):", {
+    console.log("Sending add-to-cart to Shopify (FormData):", {
       url: targetWebhookUrl,
-      body: requestBody, // Log the body to verify
+      // Note: requestBody (FormData) cannot be easily logged directly here,
+      // but fetch will handle it correctly.
     })
   } else {
     // Handle text or voice messages (existing logic)
@@ -110,29 +115,64 @@ export async function POST(request: NextRequest) {
     })
   }
 
-  // Send message to webhook
-  const webhookResponse = await fetch(targetWebhookUrl, {
-    method: "POST",
-    headers: requestHeaders,
-    body: requestBody,
-  })
+  let webhookResponse: Response
+  try {
+    webhookResponse = await fetch(targetWebhookUrl, {
+      method: "POST",
+      headers: requestHeaders,
+      body: requestBody,
+    })
+  } catch (fetchError: any) {
+    console.error("Error fetching from target URL:", fetchError)
+    return NextResponse.json(
+      {
+        success: false,
+        response: `Failed to connect to target service: ${fetchError.message}`,
+      },
+      { status: 500 },
+    )
+  }
 
-  let responseData
+  let responseData: any
+  let rawResponseText: string | null = null
   const contentType = webhookResponse.headers.get("content-type")
 
-  // Check if the response is JSON before parsing
-  if (contentType && contentType.includes("application/json")) {
-    responseData = await webhookResponse.json()
-  } else {
-    // If not JSON, log the raw text response for debugging
-    responseData = await webhookResponse.text()
-    console.warn("Webhook response was not JSON. Raw response:", responseData)
+  try {
+    if (contentType && contentType.includes("application/json")) {
+      responseData = await webhookResponse.json()
+    } else {
+      rawResponseText = await webhookResponse.text()
+      try {
+        responseData = JSON.parse(rawResponseText)
+        console.warn("Webhook response Content-Type was not JSON, but successfully parsed as JSON.")
+      } catch (parseError) {
+        console.warn("Webhook response was not JSON and could not be parsed as JSON. Raw response:", rawResponseText)
+        responseData = rawResponseText
+      }
+    }
+  } catch (jsonParseError: any) {
+    console.error("Error parsing webhook response as JSON:", jsonParseError)
+    try {
+      rawResponseText = await webhookResponse.text()
+      console.error("Raw response text that caused JSON parsing error:", rawResponseText)
+    } catch (textReadError) {
+      console.error("Also failed to read raw response text:", textReadError)
+    }
+    return NextResponse.json(
+      {
+        success: false,
+        response: "Failed to process webhook response. Please check server logs.",
+        debug: rawResponseText || "No raw response available",
+      },
+      { status: 500 },
+    )
   }
 
   console.log("Webhook response:", {
     status: webhookResponse.status,
     contentType,
     dataType: typeof responseData,
+    responseSnippet: typeof responseData === "string" ? responseData.substring(0, 200) + "..." : responseData,
   })
 
   if (!webhookResponse.ok) {
@@ -146,13 +186,11 @@ export async function POST(request: NextRequest) {
         success: false,
         response: "I'm having trouble connecting right now. Please try again in a moment.",
       },
-      { status: 200 }, // Return 200 to avoid showing error to user
+      { status: 200 },
     )
   }
 
-  // Extract response message and cards from webhook response
   if (typeof responseData === "object" && responseData !== null) {
-    // Try to extract message from common response formats
     responseMessage =
       responseData.message ||
       responseData.response ||
@@ -162,12 +200,10 @@ export async function POST(request: NextRequest) {
       responseData.content ||
       responseMessage
 
-    // Extract cards if present
     if (Array.isArray(responseData.cards)) {
       responseCards = responseData.cards
     }
 
-    // Extract sections if present
     if (typeof responseData.sections === "object" && responseData.sections !== null) {
       responseSections = responseData.sections
     }
