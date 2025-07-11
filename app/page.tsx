@@ -24,6 +24,7 @@ interface Message {
   type: "text" | "voice"
   audioUrl?: string
   cards?: ProductCardData[] // Add cards property
+  sections?: Record<string, string> // New: Add sections property
 }
 
 // Enhanced Animated Waveform Component with Audio Levels
@@ -156,7 +157,7 @@ export default function ChatWidget() {
   const animationFrameRef = useRef<number | null>(null)
   const dragStartY = useRef(0)
   const dragStartHeight = useRef(0)
-  const messagesEndRef = useRef<HTMLDivElement | null>(null)
+  const messagesEndRef = useRef<HTMLDivElement | null>(messages.length > 0 ? null : undefined) // Only scroll if messages exist
 
   // Fixed webhook URL - hidden from user
   const webhookUrl = "https://similarly-secure-mayfly.ngrok-free.app/webhook/chat"
@@ -384,8 +385,30 @@ export default function ChatWidget() {
           timestamp: new Date(),
           type: "text",
           cards: data.cards || undefined, // Pass cards from webhook response
+          sections: data.sections || undefined, // New: Pass sections from webhook response
         }
         setMessages((prev) => [...prev, webhookMessage])
+
+        // New: Update sections if present
+        if (data.sections) {
+          console.log("[Chatbot] Received sections data, updating UI:", data.sections)
+          for (const sectionId in data.sections) {
+            const sectionHtml = data.sections[sectionId]
+            const targetElement = document.getElementById(`shopify-section-${sectionId}`)
+            if (targetElement) {
+              targetElement.innerHTML = sectionHtml
+              console.log(`[Chatbot] Updated section: shopify-section-${sectionId}`)
+            } else {
+              console.warn(`[Chatbot] Target element not found for section: shopify-section-${sectionId}`)
+            }
+          }
+          // Attempt to open the cart drawer after updating sections
+          const hdtCartDrawer = document.getElementById("CartDrawer") as any // Cast to any to access custom methods
+          if (hdtCartDrawer && typeof hdtCartDrawer.open === "function") {
+            hdtCartDrawer.open()
+            console.log("[Chatbot] Called hdt-cart-drawer.open() after section update.")
+          }
+        }
       } else {
         const errorMessage: Message = {
           id: (Date.now() + 1).toString(),
@@ -450,8 +473,30 @@ export default function ChatWidget() {
           timestamp: new Date(),
           type: "text",
           cards: data.cards || undefined, // Pass cards from webhook response
+          sections: data.sections || undefined, // New: Pass sections from webhook response
         }
         setMessages((prev) => [...prev, webhookMessage])
+
+        // New: Update sections if present
+        if (data.sections) {
+          console.log("[Chatbot] Received sections data, updating UI:", data.sections)
+          for (const sectionId in data.sections) {
+            const sectionHtml = data.sections[sectionId]
+            const targetElement = document.getElementById(`shopify-section-${sectionId}`)
+            if (targetElement) {
+              targetElement.innerHTML = sectionHtml
+              console.log(`[Chatbot] Updated section: shopify-section-${sectionId}`)
+            } else {
+              console.warn(`[Chatbot] Target element not found for section: shopify-section-${sectionId}`)
+            }
+          }
+          // Attempt to open the cart drawer after updating sections
+          const hdtCartDrawer = document.getElementById("CartDrawer") as any // Cast to any to access custom methods
+          if (hdtCartDrawer && typeof hdtCartDrawer.open === "function") {
+            hdtCartDrawer.open()
+            console.log("[Chatbot] Called hdt-cart-drawer.open() after section update.")
+          }
+        }
       } else {
         const errorMessage: Message = {
           id: (Date.now() + 1).toString(),
@@ -476,25 +521,83 @@ export default function ChatWidget() {
     }
   }
 
-  // Function to handle adding to cart via postMessage
-  const handleAddToCart = (variantId: string) => {
-    console.log(`[Chatbot] Attempting to send 'add-to-cart' message for variantId: ${variantId}`)
-    if (typeof window !== "undefined" && window.parent) {
-      // IMPORTANT: Replace 'https://your-shopify-store-domain.com' with your actual Shopify store domain.
-      // For example: 'https://my-awesome-store.myshopify.com' or 'https://www.my-store.com'
-      const shopifyStoreDomain = "https://zenmato.myshopify.com"
-      window.parent.postMessage(
-        {
-          type: "add-to-cart", // Changed to 'add-to-cart' to match parent listener
-          payload: { variantId, quantity: 1 },
+  // Function to handle adding to cart by sending to our own API route
+  const handleAddToCart = async (variantId: string) => {
+    console.log(`[Chatbot] Sending 'add-to-cart' action to internal API for variantId: ${variantId}`)
+    setIsLoading(true) // Show loading indicator
+
+    try {
+      const response = await fetch("/api/webhook", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json", // Our internal API expects JSON
         },
-        shopifyStoreDomain,
-      )
-      console.log(
-        `[Chatbot] Sent postMessage to parent: type='add-to-cart', variantId=${variantId}, targetOrigin=${shopifyStoreDomain}`,
-      )
-    } else {
-      console.warn("[Chatbot] window.parent is not available. Cannot send add-to-cart message.")
+        body: JSON.stringify({
+          type: "add-to-cart",
+          payload: { variantId, quantity: 1 }, // Send variantId and quantity
+          // No webhookUrl needed here, as our API route will determine the Shopify URL
+        }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        console.log("[Chatbot] Add to cart successful via internal API. Response:", data)
+        // The sections update logic is now handled by the API route's response processing
+        // and the subsequent client-side update in the main sendMessage/sendVoiceMessage flow.
+        // We just need to ensure the UI updates based on the `data.sections` received.
+        if (data.sections) {
+          console.log("[Chatbot] Received sections data from internal API, updating UI:", data.sections)
+          for (const sectionId in data.sections) {
+            const sectionHtml = data.sections[sectionId]
+            const targetElement = document.getElementById(`shopify-section-${sectionId}`)
+            if (targetElement) {
+              targetElement.innerHTML = sectionHtml
+              console.log(`[Chatbot] Updated section: shopify-section-${sectionId}`)
+            } else {
+              console.warn(`[Chatbot] Target element not found for section: shopify-section-${sectionId}`)
+            }
+          }
+          // Attempt to open the cart drawer after updating sections
+          const hdtCartDrawer = document.getElementById("CartDrawer") as any // Cast to any to access custom methods
+          if (hdtCartDrawer && typeof hdtCartDrawer.open === "function") {
+            hdtCartDrawer.open()
+            console.log("[Chatbot] Called hdt-cart-drawer.open() after section update.")
+          }
+        }
+
+        // Optionally, add a message to the chat indicating success
+        const successMessage: Message = {
+          id: (Date.now() + 2).toString(),
+          content: "Item added to cart!",
+          role: "webhook",
+          timestamp: new Date(),
+          type: "text",
+        }
+        setMessages((prev) => [...prev, successMessage])
+      } else {
+        console.error("[Chatbot] Failed to add to cart via internal API. Response:", data)
+        const errorMessage: Message = {
+          id: (Date.now() + 2).toString(),
+          content: data.response || "Failed to add item to cart. Please try again.",
+          role: "webhook",
+          timestamp: new Date(),
+          type: "text",
+        }
+        setMessages((prev) => [...prev, errorMessage])
+      }
+    } catch (error) {
+      console.error("[Chatbot] Error calling internal API for add to cart:", error)
+      const errorMessage: Message = {
+        id: (Date.now() + 2).toString(),
+        content: "Connection error when adding to cart. Please try again.",
+        role: "webhook",
+        timestamp: new Date(),
+        type: "text",
+      }
+      setMessages((prev) => [...prev, errorMessage])
+    } finally {
+      setIsLoading(false) // Hide loading indicator
     }
   }
 
