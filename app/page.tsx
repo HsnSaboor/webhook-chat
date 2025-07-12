@@ -499,20 +499,39 @@ export default function ChatWidget() {
   // Function to handle adding to cart via postMessage
   const handleAddToCart = (variantId: string) => {
     console.log(`[Chatbot] Attempting to send 'add-to-cart' message for variantId: ${variantId}`)
-    if (typeof window !== "undefined" && window.parent) {
+
+    if (typeof window !== "undefined" && window.parent && window.parent !== window) {
       const shopifyStoreDomain = "https://zenmato.myshopify.com"
+
+      // Send the message to parent with redirect request
       window.parent.postMessage(
         {
           type: "add-to-cart",
-          payload: { variantId, quantity: 1 },
+          payload: {
+            variantId,
+            quantity: 1,
+            redirect: true, // THIS IS THE CRITICAL LINE: Ensure 'redirect: true' is inside 'payload'
+          },
         },
         shopifyStoreDomain,
       )
+
       console.log(
-        `[Chatbot] Sent postMessage to parent: type='add-to-cart', variantId=${variantId}, targetOrigin=${shopifyStoreDomain}`,
+        `[Chatbot] Sent postMessage to parent: type='add-to-cart', variantId=${variantId}, redirect=true, targetOrigin=${shopifyStoreDomain}`,
       )
+
+      // Optional: Show user feedback
+      console.log(`[Chatbot] Add to cart request sent for variant ${variantId}. Redirecting to cart...`)
     } else {
-      console.warn("[Chatbot] window.parent is not available. Cannot send add-to-cart message.")
+      console.warn(
+        "[Chatbot] window.parent is not available or chatbot is not in iframe. Cannot send add-to-cart message.",
+      )
+
+      // Fallback: try direct approach if not in iframe
+      if (typeof window !== "undefined" && window.location.hostname.includes("myshopify.com")) {
+        console.log("[Chatbot] Attempting direct cart add as fallback...")
+        // Direct cart add fallback could go here
+      }
     }
   }
 
