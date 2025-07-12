@@ -6,7 +6,7 @@ import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
-import { MessageCircle, Send, Mic, MicOff, X, Volume2, AlertCircle, Sparkles } from "lucide-react"
+import { MessageCircle, Send, Mic, X, Volume2, AlertCircle, Sparkles, Zap, Star, Heart } from "lucide-react"
 
 // Define interface for product card data
 interface ProductCardData {
@@ -23,7 +23,7 @@ interface Message {
   timestamp: Date
   type: "text" | "voice"
   audioUrl?: string
-  cards?: ProductCardData[] // Add cards property
+  cards?: ProductCardData[]
 }
 
 // Enhanced Animated Waveform Component with Audio Levels
@@ -31,10 +31,10 @@ const AnimatedWaveform = ({ isRecording, audioLevel = 0 }: { isRecording: boolea
   const bars = Array.from({ length: 12 }, (_, i) => i)
 
   return (
-    <div className="flex items-center justify-center space-x-1 h-10 px-3 bg-white/10 rounded-full backdrop-blur-sm">
+    <div className="flex items-center justify-center space-x-1.5 bg-gradient-to-r from-red-500/20 via-pink-500/20 to-red-500/20 rounded-full backdrop-blur-md border border-red-300/30 h-8 px-2">
       {bars.map((bar) => {
-        const baseHeight = 4
-        const maxHeight = 28
+        const baseHeight = 6
+        const maxHeight = 36
         const randomMultiplier = Math.random() * 0.8 + 0.2
         const levelMultiplier = isRecording ? audioLevel * randomMultiplier + 0.3 : 0.2
         const height = Math.min(baseHeight + (maxHeight - baseHeight) * levelMultiplier, maxHeight)
@@ -42,14 +42,14 @@ const AnimatedWaveform = ({ isRecording, audioLevel = 0 }: { isRecording: boolea
         return (
           <div
             key={bar}
-            className={`w-1 bg-gradient-to-t from-red-400 via-red-300 to-red-200 rounded-full transition-all duration-150 ${
-              isRecording ? "animate-waveform shadow-sm" : ""
+            className={`w-1.5 bg-gradient-to-t from-red-500 via-pink-400 to-red-300 rounded-full transition-all duration-200 ${
+              isRecording ? "animate-waveform shadow-lg shadow-red-500/30" : ""
             }`}
             style={{
               height: `${height}px`,
-              animationDelay: `${bar * 60}ms`,
-              animationDuration: `${Math.random() * 300 + 400}ms`,
-              filter: isRecording ? "drop-shadow(0 0 2px rgba(239, 68, 68, 0.5))" : "none",
+              animationDelay: `${bar * 80}ms`,
+              animationDuration: `${Math.random() * 400 + 500}ms`,
+              filter: isRecording ? "drop-shadow(0 0 4px rgba(239, 68, 68, 0.6))" : "none",
             }}
           />
         )
@@ -58,9 +58,9 @@ const AnimatedWaveform = ({ isRecording, audioLevel = 0 }: { isRecording: boolea
   )
 }
 
-// Enhanced Static Waveform Component with Playback (no duration display)
+// Enhanced Static Waveform Component with Playback
 const StaticWaveform = ({ audioUrl }: { audioUrl?: string }) => {
-  const bars = Array.from({ length: 20 }, (_, i) => i)
+  const bars = Array.from({ length: 24 }, (_, i) => i)
   const [isPlaying, setIsPlaying] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
@@ -82,25 +82,30 @@ const StaticWaveform = ({ audioUrl }: { audioUrl?: string }) => {
         <audio ref={audioRef} src={audioUrl} onEnded={() => setIsPlaying(false)} onError={() => setIsPlaying(false)} />
       )}
 
-      <div className="flex items-center space-x-3 p-3 bg-white/10 rounded-xl backdrop-blur-sm border border-white/20">
+      <div className="flex items-center p-4 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 rounded-2xl backdrop-blur-md border border-white/30 shadow-lg px-3 space-x-3">
         {audioUrl && (
           <Button
             variant="ghost"
             size="sm"
             onClick={togglePlayback}
-            className="h-8 w-8 p-0 hover:bg-white/20 rounded-full transition-all duration-200"
+            className="h-10 w-10 p-0 hover:bg-white/30 rounded-full transition-all duration-300 hover:scale-110 shadow-lg hover:shadow-neon border-solid border-slate-300 border-2"
           >
-            <Volume2 className={`h-4 w-4 ${isPlaying ? "animate-pulse text-blue-300" : "text-white/80"}`} />
+            <Volume2
+              className={`h-5 w-5 transition-all duration-300 ${isPlaying ? "animate-pulse text-blue-400 scale-110" : "text-white/90"}`}
+            />
           </Button>
         )}
 
-        <div className="flex items-center space-x-1 flex-1 relative">
+        <div className="flex items-center flex-1 relative space-x-0.5">
           {bars.map((bar) => (
             <div
               key={bar}
-              className="w-1 bg-current opacity-60 rounded-full transition-all duration-200 hover:opacity-80 relative z-10"
+              className={`w-1 bg-gradient-to-t from-blue-400 via-purple-400 to-pink-400 rounded-full transition-all duration-300 hover:scale-110 relative z-10 ${
+                isPlaying ? "animate-pulse" : ""
+              }`}
               style={{
-                height: `${Math.random() * 16 + 6}px`,
+                height: `${Math.random() * 20 + 8}px`,
+                opacity: isPlaying ? Math.random() * 0.5 + 0.5 : 0.7,
               }}
             />
           ))}
@@ -110,25 +115,40 @@ const StaticWaveform = ({ audioUrl }: { audioUrl?: string }) => {
   )
 }
 
-// Enhanced Typing indicator with sparkles
+// Enhanced Typing indicator with multiple effects
 const TypingIndicator = () => (
-  <div className="flex items-center space-x-3 p-4">
-    <div className="flex space-x-1">
+  <div className="flex items-center space-x-4 p-5">
+    <div className="flex space-x-2">
       <div
-        className="w-2 h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full animate-bounce"
+        className="w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full animate-bounce shadow-lg shadow-blue-500/30"
         style={{ animationDelay: "0ms" }}
       ></div>
       <div
-        className="w-2 h-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full animate-bounce"
-        style={{ animationDelay: "150ms" }}
+        className="w-3 h-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full animate-bounce shadow-lg shadow-purple-500/30"
+        style={{ animationDelay: "200ms" }}
       ></div>
       <div
-        className="w-2 h-2 bg-gradient-to-r from-pink-500 to-blue-500 rounded-full animate-bounce"
-        style={{ animationDelay: "300ms" }}
+        className="w-3 h-3 bg-gradient-to-r from-pink-500 to-blue-500 rounded-full animate-bounce shadow-lg shadow-pink-500/30"
+        style={{ animationDelay: "400ms" }}
       ></div>
     </div>
-    <span className="text-sm text-gray-600 font-medium">AI is thinking</span>
-    <Sparkles className="h-4 w-4 text-purple-500 animate-pulse" />
+    <span className="text-sm text-gray-700 font-semibold bg-gradient-to-r from-gray-600 to-gray-800 bg-clip-text text-transparent">
+      AI is crafting your response
+    </span>
+    <div className="flex space-x-1">
+      <Sparkles className="h-4 w-4 text-yellow-500 animate-pulse" />
+      <Zap className="h-4 w-4 text-blue-500 animate-bounce" />
+      <Star className="h-4 w-4 text-purple-500 animate-pulse" />
+    </div>
+  </div>
+)
+
+// Particle Background Component
+const ParticleBackground = () => (
+  <div className="absolute inset-0 overflow-hidden pointer-events-none">
+    {Array.from({ length: 9 }, (_, i) => (
+      <div key={i} className="particle" />
+    ))}
   </div>
 )
 
@@ -369,7 +389,7 @@ export default function ChatWidget() {
           webhookUrl,
           audioData: base64Audio,
           mimeType: audioBlob.type,
-          duration: duration, // Still send duration to webhook
+          duration: duration,
           type: "voice",
         }),
       })
@@ -383,7 +403,7 @@ export default function ChatWidget() {
           role: "webhook",
           timestamp: new Date(),
           type: "text",
-          cards: data.cards || undefined, // Pass cards from webhook response
+          cards: data.cards || undefined,
         }
         setMessages((prev) => [...prev, webhookMessage])
       } else {
@@ -449,7 +469,7 @@ export default function ChatWidget() {
           role: "webhook",
           timestamp: new Date(),
           type: "text",
-          cards: data.cards || undefined, // Pass cards from webhook response
+          cards: data.cards || undefined,
         }
         setMessages((prev) => [...prev, webhookMessage])
       } else {
@@ -480,12 +500,10 @@ export default function ChatWidget() {
   const handleAddToCart = (variantId: string) => {
     console.log(`[Chatbot] Attempting to send 'add-to-cart' message for variantId: ${variantId}`)
     if (typeof window !== "undefined" && window.parent) {
-      // IMPORTANT: Replace 'https://your-shopify-store-domain.com' with your actual Shopify store domain.
-      // For example: 'https://my-awesome-store.myshopify.com' or 'https://www.my-store.com'
       const shopifyStoreDomain = "https://zenmato.myshopify.com"
       window.parent.postMessage(
         {
-          type: "add-to-cart", // Changed to 'add-to-cart' to match parent listener
+          type: "add-to-cart",
           payload: { variantId, quantity: 1 },
         },
         shopifyStoreDomain,
@@ -594,121 +612,138 @@ export default function ChatWidget() {
 
   return (
     <>
-      {/* Enhanced Chat Widget Button with Floating Animation */}
+      {/* Enhanced Chat Widget Button with Advanced Animations */}
       {!isOpen && (
         <div className="fixed bottom-6 right-6 z-50">
-          <div className="relative group p-10">
-            {/* Animated background rings */}
-            {/* Removed blur and pulse effects as requested */}
+          <div className="relative group">
+            {/* Animated background rings with enhanced effects */}
+            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 animate-pulse-glow opacity-75"></div>
+            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 animate-gradient-xy opacity-50"></div>
 
             <Button
               onClick={() => setIsOpen(true)}
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}
-              className="relative h-16 w-16 rounded-full bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 hover:from-blue-700 hover:via-purple-700 hover:to-indigo-700 shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:scale-110 border-2 border-white/30 backdrop-blur-sm animate-float"
+              className="relative h-20 w-20 rounded-full bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 hover:from-purple-700 hover:via-blue-700 hover:to-indigo-700 shadow-2xl hover:shadow-neon transition-all duration-700 transform hover:scale-110 border-4 border-white/40 backdrop-blur-md animate-float group-hover:animate-bounce-in"
             >
               <MessageCircle
-                className={`h-7 w-7 text-white transition-all duration-300 ${isHovered ? "scale-110 rotate-12" : ""}`}
+                className={`h-9 w-9 text-white transition-all duration-500 ${isHovered ? "scale-125 rotate-12" : ""}`}
               />
 
-              {/* Enhanced notification dot with ripple effect */}
-              <div className="absolute -top-1 -right-1 h-5 w-5 bg-gradient-to-r from-red-500 to-pink-500 rounded-full border-2 border-white shadow-lg">
+              {/* Enhanced notification dot with multiple effects */}
+              <div className="absolute -top-2 -right-2 h-6 w-6 bg-gradient-to-r from-red-500 to-pink-500 rounded-full border-3 border-white shadow-xl animate-bounce-in">
                 <div className="absolute inset-0 bg-red-500 rounded-full animate-ping opacity-75"></div>
-                <div className="absolute inset-0 bg-red-400 rounded-full animate-pulse"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-red-400 to-pink-400 rounded-full animate-pulse"></div>
+                <Heart className="h-3 w-3 text-white absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
               </div>
             </Button>
 
-            {/* Enhanced Tooltip with gradient */}
-            <div className="absolute bottom-full right-0 mb-4 px-4 py-3 bg-gradient-to-r from-gray-900 to-gray-800 backdrop-blur-md text-white text-sm rounded-2xl opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap shadow-2xl border border-white/10 transform group-hover:scale-105">
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <MessageCircle className="h-4 w-4" />
-                <span className="font-medium">Chat with us - We're online!</span>
-                <Sparkles className="h-4 w-4 text-yellow-400 animate-pulse" />
+            {/* Enhanced Tooltip with advanced styling */}
+            <div className="absolute bottom-full right-0 mb-6 px-6 py-4 bg-gradient-to-r from-gray-900 via-purple-900 to-gray-900 backdrop-blur-2xl text-white text-sm rounded-3xl opacity-0 group-hover:opacity-100 transition-all duration-500 whitespace-nowrap shadow-2xl border border-white/20 transform group-hover:scale-105 group-hover:-translate-y-2">
+              <div className="flex items-center space-x-3">
+                <div className="w-3 h-3 bg-gradient-to-r from-green-400 to-emerald-400 rounded-full animate-pulse shadow-lg shadow-green-400/50"></div>
+                <MessageCircle className="h-5 w-5 animate-bounce" />
+                <span className="font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                  Chat with us - We're online!
+                </span>
+                <div className="flex space-x-1">
+                  <Sparkles className="h-4 w-4 text-yellow-400 animate-pulse" />
+                  <Zap className="h-4 w-4 text-blue-400 animate-bounce" />
+                </div>
               </div>
-              <div className="absolute top-full right-8 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+              <div className="absolute top-full right-10 w-0 h-0 border-l-6 border-r-6 border-t-6 border-transparent border-t-gray-900"></div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Enhanced Chat Widget with Glass Morphism */}
+      {/* Enhanced Chat Widget with Advanced Glass Morphism */}
       {isOpen && (
         <div
-          className={`fixed z-50 transition-all duration-700 ease-out ${
+          className={`fixed z-50 transition-all duration-1000 ease-out ${
             isMobile ? "inset-x-4 bottom-4" : "bottom-6 right-6 w-96"
           }`}
           style={{
-            height: isMobile ? `${chatHeight}px` : "650px",
-            maxHeight: isMobile ? "80vh" : "650px",
+            height: isMobile ? `${chatHeight}px` : "700px",
+            maxHeight: isMobile ? "85vh" : "700px",
           }}
         >
-          <Card className="h-full flex flex-col shadow-2xl animate-in slide-in-from-bottom-8 fade-in duration-700 border-0 overflow-hidden bg-white/90 backdrop-blur-2xl rounded-2xl">
-            {/* Enhanced Header with Animated Gradient */}
+          <Card className="h-full flex flex-col shadow-2xl animate-in slide-in-from-bottom-8 fade-in duration-1000 border-0 overflow-hidden bg-gradient-to-b from-white/95 via-white/90 to-white/95 backdrop-blur-3xl rounded-3xl relative">
+            <ParticleBackground />
+
+            {/* Enhanced Header with Advanced Gradient Animation */}
             <CardHeader
-              className={`flex flex-row items-center justify-between p-5 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 text-white rounded-t-2xl relative overflow-hidden ${
+              className={`flex flex-row items-center justify-between p-6 bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-700 text-white rounded-t-3xl relative overflow-hidden ${
                 isMobile ? "cursor-ns-resize select-none" : ""
               }`}
               onMouseDown={handleMouseDown}
               onTouchStart={handleTouchStart}
             >
-              {/* Animated background with moving gradient */}
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-600/80 via-purple-600/80 to-indigo-700/80 animate-gradient-x"></div>
+              {/* Multiple animated background layers */}
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-600/90 via-blue-600/90 to-indigo-700/90 animate-gradient-xy"></div>
+              <div className="absolute inset-0 bg-gradient-to-br from-pink-500/20 via-purple-500/20 to-blue-500/20 animate-gradient-x"></div>
               <div
-                className="absolute inset-0 opacity-20"
+                className="absolute inset-0 opacity-30"
                 style={{
                   backgroundImage:
-                    "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fillRule='evenodd'%3E%3Cg fill='%23ffffff' fillOpacity='0.05'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
+                    "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fillRule='evenodd'%3E%3Cg fill='%23ffffff' fillOpacity='0.1'%3E%3Ccircle cx='30' cy='30' r='3'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
                 }}
               />
 
-              {/* Mobile resize handle with enhanced styling */}
+              {/* Enhanced mobile resize handle */}
               {isMobile && (
-                <div className="absolute top-3 left-1/2 transform -translate-x-1/2 touch-none z-10">
-                  <div className="w-12 h-1.5 bg-white/50 rounded-full shadow-lg backdrop-blur-sm"></div>
+                <div className="absolute top-4 left-1/2 transform -translate-x-1/2 touch-none z-10">
+                  <div className="w-16 h-2 bg-white/60 rounded-full shadow-xl backdrop-blur-sm border border-white/30"></div>
                 </div>
               )}
 
-              <div className="flex items-center space-x-4 mt-2 relative z-10">
+              <div className="flex items-center space-x-5 mt-2 relative z-10">
                 <div className="relative">
-                  <div className="h-10 w-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30">
-                    <MessageCircle className="h-5 w-5" />
+                  <div className="h-12 w-12 bg-white/25 rounded-full flex items-center justify-center backdrop-blur-md border-2 border-white/40 shadow-xl animate-pulse-glow">
+                    <MessageCircle className="h-6 w-6 animate-bounce" />
                   </div>
-                  <div className="absolute -top-1 -right-1 h-4 w-4 bg-green-400 rounded-full border-2 border-white shadow-sm">
-                    <div className="absolute inset-0 w-4 h-4 bg-green-400 rounded-full animate-ping opacity-30"></div>
+                  <div className="absolute -top-1 -right-1 h-5 w-5 bg-gradient-to-r from-green-400 to-emerald-400 rounded-full border-2 border-white shadow-lg animate-bounce-in">
+                    <div className="absolute inset-0 w-5 h-5 bg-green-400 rounded-full animate-ping opacity-40"></div>
                   </div>
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg tracking-wide">AI Support</h3>
-                  <p className="text-xs text-white/90 font-medium">Always here to help you!</p>
+                  <h3 className="font-bold text-xl tracking-wide bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
+                    AI Support
+                  </h3>
+                  <p className="text-sm text-white/95 font-semibold flex items-center space-x-2">
+                    <span>Always here to help you!</span>
+                    <Sparkles className="h-4 w-4 animate-pulse" />
+                  </p>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-2 mt-2 relative z-10">
+              <div className="flex items-center space-x-3 mt-2 relative z-10">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setIsOpen(false)}
-                  className="text-white hover:bg-white/20 h-10 w-10 p-0 rounded-full transition-all duration-300 hover:scale-110 backdrop-blur-sm border border-white/20"
+                  className="text-white hover:bg-white/25 h-12 w-12 p-0 rounded-full transition-all duration-500 hover:scale-110 backdrop-blur-md border-2 border-white/30 hover:shadow-neon"
                 >
-                  <X className="h-5 w-5" />
+                  <X className="h-6 w-6" />
                 </Button>
               </div>
             </CardHeader>
 
-            {/* Enhanced Recording Indicator with Real-time Audio Visualization */}
+            {/* Enhanced Recording Indicator */}
             {isRecording && (
-              <div className="bg-gradient-to-r from-red-50 via-pink-50 to-red-50 border-b border-red-200 p-4 animate-in slide-in-from-top-4 duration-500">
+              <div className="bg-gradient-to-r from-red-50 via-pink-50 to-red-50 border-b-2 border-red-200/50 p-5 animate-in slide-in-from-top-4 duration-700 backdrop-blur-md px-5 py-3">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-3">
                     <div className="relative">
-                      <div className="w-5 h-5 bg-gradient-to-r from-red-500 to-pink-500 rounded-full animate-pulse shadow-lg"></div>
-                      <div className="absolute inset-0 w-5 h-5 bg-red-500 rounded-full animate-ping opacity-30"></div>
+                      <div className="w-6 h-6 bg-gradient-to-r from-red-500 to-pink-500 rounded-full animate-pulse shadow-xl shadow-red-500/50"></div>
+                      <div className="absolute inset-0 w-6 h-6 bg-red-500 rounded-full animate-ping opacity-40"></div>
                     </div>
-                    <span className="text-red-700 text-sm font-bold">Recording in progress...</span>
+                    <span className="text-red-700 font-bold bg-gradient-to-r from-red-600 to-red-800 bg-clip-text text-transparent text-sm">
+                      Recording...
+                    </span>
                     <AnimatedWaveform isRecording={isRecording} audioLevel={audioLevel} />
                   </div>
-                  <div className="text-red-600 text-xl font-mono font-bold bg-white/70 px-4 py-2 rounded-full shadow-sm backdrop-blur-sm border border-red-200">
+                  <div className="text-red-600 font-mono font-bold backdrop-blur-md animate-pulse-glow text-base bg-transparent border-solid border-red-300 rounded-full shadow-2xl border-2 px-1.5 py-1">
                     {formatDuration(recordingDuration)}
                   </div>
                 </div>
@@ -717,38 +752,41 @@ export default function ChatWidget() {
 
             {/* Enhanced Voice Error Display */}
             {voiceError && (
-              <div className="bg-gradient-to-r from-orange-50 to-yellow-50 border-b border-orange-200 p-4 animate-in slide-in-from-top-2 duration-300">
-                <div className="flex items-center space-x-3">
-                  <AlertCircle className="h-5 w-5 text-orange-600" />
-                  <span className="text-orange-700 text-sm font-medium">{voiceError}</span>
+              <div className="bg-gradient-to-r from-orange-50 via-yellow-50 to-orange-50 border-b-2 border-orange-200/50 p-5 animate-in slide-in-from-top-2 duration-500 backdrop-blur-md">
+                <div className="flex items-center space-x-4">
+                  <AlertCircle className="h-6 w-6 text-orange-600 animate-bounce" />
+                  <span className="text-orange-700 text-sm font-semibold bg-gradient-to-r from-orange-600 to-orange-800 bg-clip-text text-transparent">
+                    {voiceError}
+                  </span>
                 </div>
               </div>
             )}
 
-            {/* Enhanced Messages with Better Styling */}
-            <CardContent className="flex-1 overflow-y-auto p-5 space-y-4 bg-gradient-to-b from-gray-50/30 to-white/50 backdrop-blur-sm">
+            {/* Enhanced Messages with Advanced Styling */}
+            <CardContent className="flex-1 overflow-y-auto p-6 space-y-5 bg-gradient-to-b from-gray-50/40 via-white/60 to-gray-50/40 backdrop-blur-md relative">
               {messages.length === 0 ? (
-                <div className="flex items-center justify-center h-full text-gray-500">
-                  <div className="text-center animate-in fade-in duration-1000">
-                    <div className="relative mb-8">
-                      <div className="h-20 w-20 mx-auto bg-gradient-to-r from-blue-100 to-purple-100 rounded-full flex items-center justify-center shadow-lg">
-                        <MessageCircle className="h-10 w-10 text-blue-600" />
+                <div className="flex items-center justify-center h-full text-gray-500 relative">
+                  <div className="text-center animate-in fade-in duration-1500">
+                    <div className="relative mb-10">
+                      <div className="h-24 w-24 mx-auto bg-gradient-to-r from-purple-100 via-blue-100 to-indigo-100 rounded-full flex items-center justify-center shadow-2xl animate-float">
+                        <MessageCircle className="h-12 w-12 text-purple-600 animate-bounce" />
                       </div>
-                      <div className="absolute inset-0 h-20 w-20 mx-auto border-4 border-blue-200 rounded-full animate-ping opacity-30"></div>
+                      <div className="absolute inset-0 h-24 w-24 mx-auto border-4 border-purple-200 rounded-full animate-ping opacity-40"></div>
+                      <div className="absolute inset-0 h-24 w-24 mx-auto bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-full animate-pulse"></div>
                     </div>
-                    <h3 className="text-2xl font-bold mb-3 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                    <h3 className="text-3xl font-bold mb-4 bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent animate-shimmer">
                       Welcome to AI Support!
                     </h3>
-                    <p className="text-gray-600 mb-6 font-medium">How can we assist you today?</p>
-                    <div className="flex items-center justify-center space-x-6 text-sm text-gray-500">
-                      <div className="flex items-center space-x-2 bg-white/60 px-3 py-2 rounded-full backdrop-blur-sm border border-gray-200">
-                        <MessageCircle className="h-4 w-4 text-blue-500" />
-                        <span>Type a message</span>
+                    <p className="text-gray-700 mb-8 font-semibold text-lg">How can we assist you today?</p>
+                    <div className="flex items-center justify-center space-x-8 text-sm text-gray-600">
+                      <div className="flex items-center space-x-3 bg-white/80 px-5 py-3 rounded-full backdrop-blur-md border-2 border-gray-200/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                        <MessageCircle className="h-5 w-5 text-blue-500 animate-pulse" />
+                        <span className="font-semibold">Type a message</span>
                       </div>
                       {voiceSupported && (
-                        <div className="flex items-center space-x-2 bg-white/60 px-3 py-2 rounded-full backdrop-blur-sm border border-gray-200">
-                          <Mic className="h-4 w-4 text-purple-500" />
-                          <span>Record voice</span>
+                        <div className="flex items-center space-x-3 bg-white/80 px-5 py-3 rounded-full backdrop-blur-md border-2 border-gray-200/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                          <Mic className="h-5 w-5 text-purple-500 animate-bounce" />
+                          <span className="font-semibold">Record voice</span>
                         </div>
                       )}
                     </div>
@@ -759,43 +797,63 @@ export default function ChatWidget() {
                   {messages.map((message, index) => (
                     <div
                       key={message.id}
-                      className={`flex ${message.role === "user" ? "justify-end" : "justify-start"} animate-in slide-in-from-bottom-4 fade-in duration-500`}
-                      style={{ animationDelay: `${index * 100}ms` }}
+                      className={`flex ${message.role === "user" ? "justify-end" : "justify-start"} animate-in slide-in-from-bottom-4 fade-in duration-600`}
+                      style={{ animationDelay: `${index * 150}ms` }}
                     >
                       <div
-                        className={`max-w-[85%] rounded-2xl p-4 shadow-lg transition-all duration-300 hover:shadow-xl transform hover:scale-[1.02] ${
+                        className={`max-w-[85%] rounded-3xl p-5 shadow-xl transition-all duration-500 hover:shadow-2xl transform hover:scale-[1.02] message-bubble border-solid border-2 py-2.5 border-violet-500 ${
                           message.role === "user"
-                            ? "bg-gradient-to-r from-blue-500 via-purple-600 to-indigo-600 text-white shadow-blue-200"
-                            : "bg-white/90 text-gray-900 border border-gray-200 shadow-gray-200 backdrop-blur-sm"
+                            ? "bg-gradient-to-r from-purple-500 via-blue-600 to-indigo-600 text-white shadow-purple-200 border-2 border-white/30"
+                            : "bg-gradient-to-r from-white/95 via-gray-50/95 to-white/95 text-gray-900 border-2 border-gray-200/50 shadow-gray-200 backdrop-blur-md"
                         }`}
                       >
                         {message.type === "voice" && (
-                          <div className="mb-4">
-                            <div className="flex items-center space-x-2 mb-3">
-                              <Mic className="h-4 w-4 opacity-75" />
-                              <span className="text-xs opacity-75 font-semibold tracking-wide">VOICE MESSAGE</span>
+                          <div className="mb-3">
+                            <div className="flex items-center space-x-3 mb-4">
+                              <Mic className="h-5 w-5 opacity-75 animate-pulse" />
+                              <span className="text-sm opacity-90 font-bold tracking-wider bg-gradient-to-r from-current to-current/80 bg-clip-text text-transparent">
+                                VOICE MESSAGE
+                              </span>
+                              <div className="flex space-x-1">
+                                <div className="w-2 h-2 bg-current rounded-full animate-bounce opacity-60"></div>
+                                <div
+                                  className="w-2 h-2 bg-current rounded-full animate-bounce opacity-60"
+                                  style={{ animationDelay: "0.1s" }}
+                                ></div>
+                                <div
+                                  className="w-2 h-2 bg-current rounded-full animate-bounce opacity-60"
+                                  style={{ animationDelay: "0.2s" }}
+                                ></div>
+                              </div>
                             </div>
                             <StaticWaveform audioUrl={message.audioUrl} />
                           </div>
                         )}
-                        <p className="whitespace-pre-wrap text-sm leading-relaxed font-medium">{message.content}</p>
+                        <p className="whitespace-pre-wrap text-base leading-relaxed font-semibold">{message.content}</p>
                         <p
-                          className={`text-xs mt-3 font-medium ${message.role === "user" ? "text-blue-100" : "text-gray-500"}`}
+                          className={`text-sm mt-4 font-semibold flex items-center space-x-2 ${
+                            message.role === "user" ? "text-blue-100" : "text-gray-500"
+                          }`}
                         >
-                          {formatTime(message.timestamp)}
+                          <span>{formatTime(message.timestamp)}</span>
+                          {message.role === "webhook" && <Sparkles className="h-3 w-3 animate-pulse" />}
                         </p>
 
-                        {/* Render product recommendation cards */}
+                        {/* Enhanced product recommendation cards */}
                         {message.cards && message.cards.length > 0 && (
-                          <div className="cards-container mt-4">
+                          <div className="cards-container mt-6">
                             {message.cards.map((card, cardIndex) => (
-                              <div key={cardIndex} className="card">
+                              <div
+                                key={cardIndex}
+                                className="card animate-bounce-in"
+                                style={{ animationDelay: `${cardIndex * 100}ms` }}
+                              >
                                 <img src={card.image || "/placeholder.svg"} alt={card.name} />
                                 <div className="card-title">{card.name}</div>
                                 <div className="card-price">{card.price}</div>
                                 <Button
                                   onClick={() => handleAddToCart(card.variantId)}
-                                  className="mt-2 w-full text-xs py-1 h-auto"
+                                  className="mt-3 w-full text-sm py-2 h-auto bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl border-0 font-bold"
                                 >
                                   Add to Cart
                                 </Button>
@@ -807,8 +865,8 @@ export default function ChatWidget() {
                     </div>
                   ))}
                   {isLoading && (
-                    <div className="flex justify-start animate-in slide-in-from-bottom-4 fade-in duration-300">
-                      <div className="bg-white/90 text-gray-900 rounded-2xl shadow-lg border border-gray-200 backdrop-blur-sm">
+                    <div className="flex justify-start animate-in slide-in-from-bottom-4 fade-in duration-500">
+                      <div className="bg-gradient-to-r from-white/95 via-gray-50/95 to-white/95 text-gray-900 rounded-3xl shadow-xl border-2 border-gray-200/50 backdrop-blur-md">
                         <TypingIndicator />
                       </div>
                     </div>
@@ -818,16 +876,16 @@ export default function ChatWidget() {
               )}
             </CardContent>
 
-            {/* Enhanced Input with Glass Morphism */}
-            <CardFooter className="p-5 border-t border-gray-200/50 bg-white/80 backdrop-blur-xl">
-              <form onSubmit={sendMessage} className="flex w-full space-x-3">
+            {/* Enhanced Input with Advanced Glass Morphism */}
+            <CardFooter className="p-6 border-t-2 border-gray-200/50 bg-gradient-to-r from-white/90 via-gray-50/90 to-white/90 backdrop-blur-2xl">
+              <form onSubmit={sendMessage} className="flex w-full space-x-4">
                 <div className="flex-1 relative">
                   <Input
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     placeholder={isRecording ? "Recording your voice..." : "Type your message..."}
                     disabled={isLoading || isRecording}
-                    className="pr-4 h-12 rounded-2xl border-2 border-gray-200 focus:border-blue-500 transition-all duration-300 bg-white/90 backdrop-blur-sm shadow-sm hover:shadow-md font-medium placeholder:text-gray-400"
+                    className="pr-4 h-14 rounded-3xl border-3 border-gray-300/50 focus:border-purple-500 transition-all duration-500 bg-white/95 backdrop-blur-md shadow-lg hover:shadow-xl font-semibold placeholder:text-gray-500 text-base focus-ring"
                   />
                 </div>
 
@@ -839,16 +897,18 @@ export default function ChatWidget() {
                     size="lg"
                     onClick={toggleRecording}
                     disabled={isLoading}
-                    className={`h-12 w-12 p-0 rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg ${
+                    className={`h-14 w-14 p-0 rounded-3xl transition-all duration-500 transform hover:scale-110 shadow-xl ${
                       isRecording
-                        ? "bg-gradient-to-r from-red-500 via-pink-500 to-red-600 hover:from-red-600 hover:via-pink-600 hover:to-red-700 shadow-red-200 animate-pulse border-0"
-                        : "border-2 border-gray-300 hover:border-purple-500 hover:bg-purple-50 bg-white/90 backdrop-blur-sm shadow-gray-200"
+                        ? "bg-gradient-to-r from-red-500 via-pink-500 to-red-600 hover:from-red-600 hover:via-pink-600 hover:to-red-700 shadow-red-200 animate-pulse border-0 hover:shadow-neon"
+                        : "border-3 border-gray-400/50 hover:border-purple-500 hover:bg-purple-50 bg-white/95 backdrop-blur-md shadow-gray-200 hover:shadow-glow-purple"
                     }`}
                   >
                     {isRecording ? (
-                      <MicOff className="h-5 w-5 text-white" />
+                      <div className="flex items-center justify-center">
+                        <Send className="h-6 w-6 text-white animate-bounce drop-shadow-lg" />
+                      </div>
                     ) : (
-                      <Mic className="h-5 w-5 text-gray-600 hover:text-purple-600 transition-colors duration-200" />
+                      <Mic className="h-6 w-6 text-gray-600 hover:text-purple-600 transition-colors duration-300" />
                     )}
                   </Button>
                 )}
@@ -856,9 +916,9 @@ export default function ChatWidget() {
                 <Button
                   type="submit"
                   disabled={!input.trim() || isLoading || isRecording}
-                  className="h-12 px-6 rounded-2xl bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 hover:from-blue-700 hover:via-purple-700 hover:to-indigo-700 transition-all duration-300 transform hover:scale-105 shadow-lg shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed border-0 font-semibold"
+                  className="h-14 px-8 rounded-3xl bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 hover:from-purple-700 hover:via-blue-700 hover:to-indigo-700 transition-all duration-500 transform hover:scale-110 shadow-xl shadow-purple-200 disabled:opacity-50 disabled:cursor-not-allowed border-0 font-bold hover:shadow-neon"
                 >
-                  <Send className="h-5 w-5" />
+                  <Send className="h-6 w-6" />
                 </Button>
               </form>
             </CardFooter>
