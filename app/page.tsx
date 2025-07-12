@@ -1,12 +1,26 @@
 "use client"
 
 import type React from "react"
+import { ChevronDown } from "lucide-react" // Added ChevronDown import
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react" // Added useCallback
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
-import { MessageCircle, Send, Mic, X, Volume2, AlertCircle, Sparkles, Zap, Star, Heart } from "lucide-react"
+import {
+  MessageCircle,
+  Send,
+  Mic,
+  X,
+  Volume2,
+  AlertCircle,
+  Sparkles,
+  Zap,
+  Star,
+  Heart,
+  User,
+  Check,
+} from "lucide-react" // Added User, Check
 
 // Define interface for product card data
 interface ProductCardData {
@@ -14,6 +28,7 @@ interface ProductCardData {
   name: string
   price: string
   variantId: string
+  productUrl?: string // Added productUrl
 }
 
 interface Message {
@@ -115,6 +130,16 @@ const StaticWaveform = ({ audioUrl }: { audioUrl?: string }) => {
   )
 }
 
+// Loading Skeleton for AI replies
+const MessageSkeleton = () => (
+  <div className="flex items-start space-x-3 animate-pulse">
+    <div className="flex-1 space-y-2">
+      <div className="h-4 bg-secondary rounded w-3/4"></div>
+      <div className="h-4 bg-secondary rounded w-1/2"></div>
+    </div>
+  </div>
+)
+
 // Enhanced Typing indicator with multiple effects
 const TypingIndicator = () => (
   <div className="flex items-center space-x-4 p-5">
@@ -166,6 +191,9 @@ export default function ChatWidget() {
   const [voiceSupported, setVoiceSupported] = useState(false)
   const [voiceError, setVoiceError] = useState("")
   const [isHovered, setIsHovered] = useState(false)
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false)
+  const [addedProductVariantId, setAddedProductVariantId] = useState<string | null>(null)
+  const [sessionId, setSessionId] = useState<string | null>(null) // New state for session ID
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
@@ -177,9 +205,37 @@ export default function ChatWidget() {
   const dragStartY = useRef(0)
   const dragStartHeight = useRef(0)
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null)
 
   // Fixed webhook URL - hidden from user
   const webhookUrl = "https://similarly-secure-mayfly.ngrok-free.app/webhook/chat"
+
+  // Analytics tracking function
+  const trackEvent = useCallback(
+    async (eventType: string, data: Record<string, any> = {}) => {
+      if (!sessionId) {
+        console.warn("Analytics event skipped: No session ID available.")
+        return
+      }
+      try {
+        await fetch("/api/analytics", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            sessionId,
+            eventType,
+            timestamp: new Date().toISOString(),
+            data,
+          }),
+        })
+      } catch (error) {
+        console.error("Failed to send analytics event:", error)
+      }
+    },
+    [sessionId],
+  )
 
   useEffect(() => {
     // Check if mobile
@@ -211,6 +267,50 @@ export default function ChatWidget() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
+
+  // Initial welcome message and session ID generation
+  useEffect(() => {
+    if (isOpen && !sessionId) {
+      const newSessionId = `chat_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
+      setSessionId(newSessionId)
+      trackEvent("chat_opened", { initialMessagesCount: messages.length })
+      setMessages([
+        {
+          id: "welcome",
+          content: "Hello! How can I assist you today? Feel free to ask me anything about our products or services.",
+          role: "webhook",
+          timestamp: new Date(),
+          type: "text",
+        },
+      ])
+    } else if (!isOpen && sessionId) {
+      // Reset session ID when chat is closed
+      setSessionId(null)
+      setMessages([]) // Clear messages on close
+    }
+  }, [isOpen, sessionId, trackEvent]) // Added trackEvent to dependency array
+
+  // Scroll to bottom button logic
+  const handleScroll = useCallback(() => {
+    if (messagesContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current
+      const isAtBottom = scrollHeight - scrollTop <= clientHeight + 10
+      setShowScrollToBottom(!isAtBottom)
+    }
+  }, [])
+
+  useEffect(() => {
+    const container = messagesContainerRef.current
+    if (container) {
+      container.addEventListener("scroll", handleScroll)
+      handleScroll() // Initial check
+      return () => container.removeEventListener("scroll", handleScroll)
+    }
+  }, [handleScroll])
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }
 
   // Audio level monitoring
   const monitorAudioLevel = () => {
@@ -374,6 +474,7 @@ export default function ChatWidget() {
 
     setMessages((prev) => [...prev, userMessage])
     setIsLoading(true)
+    trackEvent("message_sent", { type: "voice", duration, messageContent: "Voice message" }) // Track voice message
 
     try {
       // Convert audio blob to base64
@@ -444,6 +545,7 @@ export default function ChatWidget() {
     }
 
     setMessages((prev) => [...prev, userMessage])
+    trackEvent("message_sent", { type: "text", messageContent: input.trim() }) // Track text message
     setInput("")
     setIsLoading(true)
 
@@ -497,40 +599,48 @@ export default function ChatWidget() {
   }
 
   // Function to handle adding to cart via postMessage
-  const handleAddToCart = (variantId: string) => {
-    console.log(`[Chatbot] Attempting to send 'add-to-cart' message for variantId: ${variantId}`)
+  const handleAddToCart = (card: ProductCardData) => {
+    console.log(`[Chatbot] Attempting to send 'add-to-cart' message for variantId: ${card.variantId}`)
+    setAddedProductVariantId(card.variantId) // Set the variant ID to show "Added!"
+
+    setTimeout(() => {
+      setAddedProductVariantId(null) // Reset after a short delay
+    }, 1500) // Show "Added!" for 1.5 seconds
+
+    trackEvent("add_to_cart", {
+      variantId: card.variantId,
+      productName: card.name,
+      productPrice: card.price,
+      source: "chatbot",
+    }) // Track add to cart
 
     if (typeof window !== "undefined" && window.parent && window.parent !== window) {
       const shopifyStoreDomain = "https://zenmato.myshopify.com"
 
-      // Send the message to parent with redirect request
       window.parent.postMessage(
         {
           type: "add-to-cart",
           payload: {
-            variantId,
+            variantId: card.variantId,
             quantity: 1,
-            redirect: true, // THIS IS THE CRITICAL LINE: Ensure 'redirect: true' is inside 'payload'
+            redirect: true,
           },
         },
         shopifyStoreDomain,
       )
 
       console.log(
-        `[Chatbot] Sent postMessage to parent: type='add-to-cart', variantId=${variantId}, redirect=true, targetOrigin=${shopifyStoreDomain}`,
+        `[Chatbot] Sent postMessage to parent: type='add-to-cart', variantId=${card.variantId}, redirect=true, targetOrigin=${shopifyStoreDomain}`,
       )
 
-      // Optional: Show user feedback
-      console.log(`[Chatbot] Add to cart request sent for variant ${variantId}. Redirecting to cart...`)
+      console.log(`[Chatbot] Add to cart request sent for variant ${card.variantId}. Redirecting to cart...`)
     } else {
       console.warn(
         "[Chatbot] window.parent is not available or chatbot is not in iframe. Cannot send add-to-cart message.",
       )
 
-      // Fallback: try direct approach if not in iframe
       if (typeof window !== "undefined" && window.location.hostname.includes("myshopify.com")) {
         console.log("[Chatbot] Attempting direct cart add as fallback...")
-        // Direct cart add fallback could go here
       }
     }
   }
@@ -627,6 +737,17 @@ export default function ChatWidget() {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
     return `${mins}:${secs.toString().padStart(2, "0")}`
+  }
+
+  const handleCopyMessage = (text: string) => {
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        console.log("Message copied to clipboard!")
+      })
+      .catch((err) => {
+        console.error("Failed to copy message: ", err)
+      })
   }
 
   return (
@@ -782,8 +903,11 @@ export default function ChatWidget() {
             )}
 
             {/* Enhanced Messages with Advanced Styling */}
-            <CardContent className="flex-1 overflow-y-auto p-6 space-y-5 bg-gradient-to-b from-gray-50/40 via-white/60 to-gray-50/40 backdrop-blur-md relative">
-              {messages.length === 0 ? (
+            <CardContent
+              ref={messagesContainerRef}
+              className="flex-1 overflow-y-auto p-6 space-y-5 bg-gradient-to-b from-gray-50/40 via-white/60 to-gray-50/40 backdrop-blur-md relative"
+            >
+              {messages.length === 1 && messages[0].id === "welcome" && !isLoading ? (
                 <div className="flex items-center justify-center h-full text-gray-500 relative">
                   <div className="text-center animate-in fade-in duration-1500">
                     <div className="relative mb-10">
@@ -809,6 +933,28 @@ export default function ChatWidget() {
                         </div>
                       )}
                     </div>
+                    {/* Recent Chats Section */}
+                    <div className="w-full max-w-sm rounded-lg border border-border p-4 bg-card shadow-lg animate-in fade-in slide-in-from-bottom-4 delay-200 mt-8 mx-auto">
+                      <h3 className="text-lg font-semibold text-foreground mb-3">Recent Chats</h3>
+                      <div className="space-y-2">
+                        {/* Placeholder for recent chats */}
+                        {[
+                          { id: "1", title: "Product Inquiry", time: "Yesterday" },
+                          { id: "2", title: "Order #12345", time: "2 days ago" },
+                          { id: "3", title: "Shipping Info", time: "Last week" },
+                        ].map((chat, idx) => (
+                          <div
+                            key={chat.id}
+                            className="py-2 px-3 rounded-md hover:bg-secondary/50 transition-colors duration-200 cursor-pointer flex justify-between items-center"
+                          >
+                            <span className="text-foreground font-medium">{chat.title}</span>
+                            <span className="text-muted-foreground text-sm">{chat.time}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="border-b border-border my-4"></div> {/* Line divider */}
+                      <p className="text-sm text-muted-foreground">No recent chats yet. Start a new one!</p>
+                    </div>
                   </div>
                 </div>
               ) : (
@@ -819,8 +965,13 @@ export default function ChatWidget() {
                       className={`flex ${message.role === "user" ? "justify-end" : "justify-start"} animate-in slide-in-from-bottom-4 fade-in duration-600`}
                       style={{ animationDelay: `${index * 150}ms` }}
                     >
+                      {message.role === "user" && (
+                        <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0 mr-3 shadow-md">
+                          <User className="h-5 w-5 text-primary-foreground" />
+                        </div>
+                      )}
                       <div
-                        className={`max-w-[85%] rounded-3xl p-5 shadow-xl transition-all duration-500 hover:shadow-2xl transform hover:scale-[1.02] message-bubble border-solid border-2 py-2.5 border-violet-500 ${
+                        className={`max-w-[85%] rounded-3xl p-5 shadow-xl transition-all duration-500 hover:shadow-2xl transform hover:scale-[1.02] message-bubble border-solid border-2 py-2.5 ${
                           message.role === "user"
                             ? "bg-gradient-to-r from-purple-500 via-blue-600 to-indigo-600 text-white shadow-purple-200 border-2 border-white/30"
                             : "bg-gradient-to-r from-white/95 via-gray-50/95 to-white/95 text-gray-900 border-2 border-gray-200/50 shadow-gray-200 backdrop-blur-md"
@@ -862,21 +1013,46 @@ export default function ChatWidget() {
                         {message.cards && message.cards.length > 0 && (
                           <div className="cards-container mt-6">
                             {message.cards.map((card, cardIndex) => (
-                              <div
+                              <Card
                                 key={cardIndex}
                                 className="card animate-bounce-in"
                                 style={{ animationDelay: `${cardIndex * 100}ms` }}
                               >
-                                <img src={card.image || "/placeholder.svg"} alt={card.name} />
-                                <div className="card-title">{card.name}</div>
-                                <div className="card-price">{card.price}</div>
-                                <Button
-                                  onClick={() => handleAddToCart(card.variantId)}
-                                  className="mt-3 w-full text-sm py-2 h-auto bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl border-0 font-bold"
-                                >
-                                  Add to Cart
-                                </Button>
-                              </div>
+                                <CardContent className="p-2 flex flex-col items-center">
+                                  <img
+                                    src={card.image || "/placeholder.svg"}
+                                    alt={card.name}
+                                    className="w-24 h-24 object-cover rounded-md mb-2 shadow-sm"
+                                    loading="lazy" // Lazy loading for images
+                                  />
+                                  <h4 className="text-sm font-semibold text-foreground truncate w-full text-center mb-1">
+                                    {card.name}
+                                  </h4>
+                                  <p className="text-base font-bold text-primary mb-2">{card.price}</p>
+                                  <Button
+                                    onClick={() => handleAddToCart(card)} // Pass the whole card object
+                                    className="w-full text-xs py-1.5 h-auto bg-primary hover:bg-primary/90 transition-all duration-150 shadow-sm hover:shadow-md mb-1"
+                                  >
+                                    {addedProductVariantId === card.variantId ? (
+                                      <span className="flex items-center gap-1">
+                                        <Check className="h-3 w-3" /> Added!
+                                      </span>
+                                    ) : (
+                                      "Add to Cart"
+                                    )}
+                                  </Button>
+                                  {card.productUrl && (
+                                    <a
+                                      href={card.productUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="w-full text-xs py-1 h-auto text-center text-muted-foreground hover:text-primary transition-colors duration-150"
+                                    >
+                                      View Product
+                                    </a>
+                                  )}
+                                </CardContent>
+                              </Card>
                             ))}
                           </div>
                         )}
@@ -890,10 +1066,23 @@ export default function ChatWidget() {
                       </div>
                     </div>
                   )}
-                  <div ref={messagesEndRef} />
                 </>
               )}
+              <div ref={messagesEndRef} />
             </CardContent>
+
+            {/* Scroll to bottom button */}
+            {showScrollToBottom && (
+              <Button
+                variant="secondary"
+                size="icon"
+                onClick={scrollToBottom}
+                className="absolute bottom-[80px] right-6 h-10 w-10 rounded-full shadow-lg animate-bounce-in z-20"
+                aria-label="Scroll to bottom"
+              >
+                <ChevronDown className="h-5 w-5" />
+              </Button>
+            )}
 
             {/* Enhanced Input with Advanced Glass Morphism */}
             <CardFooter className="p-6 border-t-2 border-gray-200/50 bg-gradient-to-r from-white/90 via-gray-50/90 to-white/90 backdrop-blur-2xl">
