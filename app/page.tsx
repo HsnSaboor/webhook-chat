@@ -244,52 +244,30 @@ export default function ChatWidget() {
   useEffect(() => {
     const handlePostMessage = (event: MessageEvent) => {
       // ✅ Security: Validate origin
-      const allowedOrigin = "https://zenmato.myshopify.com";
-      if (event.origin !== allowedOrigin) {
-        console.warn("[Chatbot] Untrusted origin:", event.origin);
-        return;
+      if (event.origin !== "https://zenmato.myshopify.com") {
+        return
       }
 
-      const data = event.data;
+      const data = event.data
 
       // ✅ Validate payload structure
-      if (data?.type !== "init") {
-        console.warn("[Chatbot] Ignoring unexpected postMessage:", data);
-        return;
+      if (data?.type !== "init" || !data.session_id) {
+        return
       }
 
-      if (!data.session_id) {
-        console.error("[Chatbot] Missing session_id in init message");
-        return;
-      }
+      // ✅ Log and set all received data
+      console.log("[Chatbot] Received init data from parent:", data)
+      setSessionId(data.session_id)
+      setSourceUrl(data.source_url || null)
+      setPageContext(data.page_context || null)
+    }
 
-      // ✅ Set session_id
-      console.log("[Chatbot] Received session_id from parent:", data.session_id);
-      setSessionId(data.session_id);
-
-      // ✅ Set source_url if present
-      if (typeof data.source_url === "string") {
-        console.log("[Chatbot] Received source_url:", data.source_url);
-        setSourceUrl(data.source_url);
-      } else {
-        console.warn("[Chatbot] No valid source_url received");
-      }
-
-      // ✅ Set page_context if present
-      if (typeof data.page_context === "string") {
-        console.log("[Chatbot] Received page_context:", data.page_context);
-        setPageContext(data.page_context);
-      } else {
-        console.warn("[Chatbot] No valid page_context received");
-      }
-    };
-
-    window.addEventListener("message", handlePostMessage);
+    window.addEventListener("message", handlePostMessage)
 
     return () => {
-      window.removeEventListener("message", handlePostMessage);
-    };
-  }, []);
+      window.removeEventListener("message", handlePostMessage)
+    }
+  }, []) // Empty dependency array ensures this runs only once on mount
 
  // Empty dependency array ensures this runs only once on mount
 
@@ -545,7 +523,9 @@ export default function ChatWidget() {
         duration: duration,
         type: "voice",
         session_id: sessionId,
-        webhookUrl
+        webhookUrl,
+        source_url: sourceUrl,
+        page_context: pageContext
       }
       // ========== FIX END ==========
 
@@ -620,7 +600,9 @@ export default function ChatWidget() {
         text: input.trim(),
         type: "text",
         session_id: sessionId,
-        webhookUrl
+        webhookUrl,
+        source_url: sourceUrl,
+        page_context: pageContext
       }
       // ========== FIX END ==========
 
