@@ -208,7 +208,7 @@ export default function ChatWidget() {
   const messagesContainerRef = useRef<HTMLDivElement | null>(null)
 
   // Fixed webhook URL - hidden from user
-  const webhookUrl = "/api/webhook"
+  const webhookUrl = "https://similarly-secure-mayfly.ngrok-free.app/webhook-test/chat"
 
   // Analytics tracking function
   const trackEvent = useCallback(
@@ -514,6 +514,7 @@ export default function ChatWidget() {
         duration: duration,
         type: "voice",
         session_id: sessionId,
+        webhookUrl
       }
       // ========== FIX END ==========
 
@@ -588,6 +589,7 @@ export default function ChatWidget() {
         text: input.trim(),
         type: "text",
         session_id: sessionId,
+        webhookUrl
       }
       // ========== FIX END ==========
 
