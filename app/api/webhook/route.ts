@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     product_id,
     product_name,
     order_id,
-    type: messageType,
+    messageType
     audioData,
     mimeType,
     duration,
