@@ -54,6 +54,7 @@ export async function POST(request: NextRequest) {
     timestamp: new Date().toISOString(),
     event_type,
     user_message: user_message || text,
+    type
     source_url,
     page_context,
     chatbot_triggered,
