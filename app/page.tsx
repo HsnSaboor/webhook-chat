@@ -240,40 +240,56 @@ export default function ChatWidget() {
     [sessionId],
   )
 
-  // Listen for postMessage from parent
+  // Listen for postMessage from parent (Shopify theme)
   useEffect(() => {
-  const handlePostMessage = (event: MessageEvent) => {
-    // ✅ Security: Validate origin
-    if (event.origin !== "https://zenmato.myshopify.com") {
-      console.warn("[Chatbot] Untrusted origin:", event.origin)
-      return
-    }
-
-    const data = event.data
-
-    // ✅ Validate expected payload structure
-    if (data?.type === "init" && data.session_id) {
-      console.log("[Chatbot] Received session_id from parent:", data.session_id)
-      setSessionId(data.session_id)
-
-      if (data.source_url) {
-        console.log("[Chatbot] Received source_url:", data.source_url)
-        setSourceUrl(data.source_url)
+    const handlePostMessage = (event: MessageEvent) => {
+      // ✅ Security: Validate origin
+      const allowedOrigin = "https://zenmato.myshopify.com";
+      if (event.origin !== allowedOrigin) {
+        console.warn("[Chatbot] Untrusted origin:", event.origin);
+        return;
       }
 
-      if (data.page_context) {
-        console.log("[Chatbot] Received page_context:", data.page_context)
-        setPageContext(data.page_context)
+      const data = event.data;
+
+      // ✅ Validate payload structure
+      if (data?.type !== "init") {
+        console.warn("[Chatbot] Ignoring unexpected postMessage:", data);
+        return;
       }
-    }
-  }
 
-  window.addEventListener("message", handlePostMessage)
+      if (!data.session_id) {
+        console.error("[Chatbot] Missing session_id in init message");
+        return;
+      }
 
-  return () => {
-    window.removeEventListener("message", handlePostMessage)
-  }
-}, [])
+      // ✅ Set session_id
+      console.log("[Chatbot] Received session_id from parent:", data.session_id);
+      setSessionId(data.session_id);
+
+      // ✅ Set source_url if present
+      if (typeof data.source_url === "string") {
+        console.log("[Chatbot] Received source_url:", data.source_url);
+        setSourceUrl(data.source_url);
+      } else {
+        console.warn("[Chatbot] No valid source_url received");
+      }
+
+      // ✅ Set page_context if present
+      if (typeof data.page_context === "string") {
+        console.log("[Chatbot] Received page_context:", data.page_context);
+        setPageContext(data.page_context);
+      } else {
+        console.warn("[Chatbot] No valid page_context received");
+      }
+    };
+
+    window.addEventListener("message", handlePostMessage);
+
+    return () => {
+      window.removeEventListener("message", handlePostMessage);
+    };
+  }, []);
  // Empty dependency array ensures this runs only once on mount
 
   useEffect(() => {
