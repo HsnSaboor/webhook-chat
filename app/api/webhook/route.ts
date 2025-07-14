@@ -16,9 +16,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
   }
 
-  // Default type detection
-  const messageType = type || (audioData ? "voice" : "text");
-
   const {
     webhookUrl,
     text,
@@ -32,7 +29,6 @@ export async function POST(request: NextRequest) {
     product_id,
     product_name,
     order_id,
-    messageType
     audioData,
     mimeType,
     duration,
@@ -49,6 +45,9 @@ export async function POST(request: NextRequest) {
   }
 
   console.log("[Webhook] Received session_id:", session_id)
+
+  // Default type detection
+  const messageType = type || (audioData ? "voice" : "text");
 
   // 1. Send pre-Zeno event to n8n
   const preZenoPayload = {
