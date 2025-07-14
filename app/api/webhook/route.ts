@@ -2,19 +2,24 @@ import { type NextRequest, NextResponse } from "next/server"
 
 export async function POST(request: NextRequest) {
   const rawBody = await request.text()
-  if (!rawBody) return NextResponse.json({ error: "Empty body" }, { status: 400 })
+
+  if (!rawBody) {
+    console.error("[Webhook] Empty body received.")
+    return NextResponse.json({ error: "Empty body" }, { status: 400 })
+  }
 
   let body: any
   try {
     body = JSON.parse(rawBody)
-  } catch {
+  } catch (err) {
+    console.error("[Webhook] Failed to parse JSON:", err, "Raw Body:", rawBody)
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
   }
 
   const {
     webhookUrl,
     text,
-    session_id, // TRUST this
+    session_id,
     event_type = "user_message",
     user_message,
     source_url,
@@ -31,12 +36,16 @@ export async function POST(request: NextRequest) {
   } = body
 
   if (!webhookUrl || (!text && !audioData)) {
+    console.error("[Webhook] Missing required fields", { webhookUrl, text, audioData })
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
   }
 
   if (!session_id) {
+    console.error("[Webhook] Missing session_id in payload", body)
     return NextResponse.json({ error: "Missing session_id" }, { status: 400 })
   }
+
+  console.log("[Webhook] Received session_id:", session_id)
 
   // 1. Send pre-Zeno event to n8n
   const preZenoPayload = {
@@ -53,6 +62,9 @@ export async function POST(request: NextRequest) {
     product_name,
     order_id,
   }
+
+  console.log("[Webhook] Sending pre-Zeno payload to:", webhookUrl)
+  console.log(JSON.stringify(preZenoPayload, null, 2))
 
   await fetch(webhookUrl, {
     method: "POST",
@@ -71,6 +83,8 @@ export async function POST(request: NextRequest) {
       : { text }),
   }
 
+  console.log("[Webhook] Sending Zeno input:", JSON.stringify(zenoInput, null, 2))
+
   const webhookRes = await fetch(webhookUrl, {
     method: "POST",
     headers: {
@@ -81,14 +95,19 @@ export async function POST(request: NextRequest) {
     body: JSON.stringify(zenoInput),
   })
 
-  let responseData: any
   const contentType = webhookRes.headers.get("content-type")
+  let responseData: any
 
-  if (contentType?.includes("application/json")) {
-    responseData = await webhookRes.json()
-  } else {
-    responseData = await webhookRes.text()
+  try {
+    responseData = contentType?.includes("application/json")
+      ? await webhookRes.json()
+      : await webhookRes.text()
+  } catch (err) {
+    console.error("[Webhook] Failed to parse Zeno response:", err)
+    return NextResponse.json({ error: "Invalid Zeno response" }, { status: 502 })
   }
+
+  console.log("[Webhook] Zeno response:", responseData)
 
   const zenoMessage =
     responseData?.message ||
@@ -108,6 +127,8 @@ export async function POST(request: NextRequest) {
       product_id: responseCards[0].id,
       product_name: responseCards[0].name,
     }
+
+    console.log("[Webhook] Sending upsell event:", JSON.stringify(upsellEvent, null, 2))
 
     await fetch(webhookUrl, {
       method: "POST",
