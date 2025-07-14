@@ -193,7 +193,7 @@ export default function ChatWidget() {
   const [isHovered, setIsHovered] = useState(false)
   const [showScrollToBottom, setShowScrollToBottom] = useState(false)
   const [addedProductVariantId, setAddedProductVariantId] = useState<string | null>(null)
-  const [sessionId, setSessionId] = useState<string | null>(null) // New state for session ID
+  const [sessionId, setSessionId] = useState<string | null>(null) // State for session ID
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
@@ -208,7 +208,7 @@ export default function ChatWidget() {
   const messagesContainerRef = useRef<HTMLDivElement | null>(null)
 
   // Fixed webhook URL - hidden from user
-  const webhookUrl = "https://similarly-secure-mayfly.ngrok-free.app/webhook-test/chat"
+  const webhookUrl = "/api/webhook"
 
   // Analytics tracking function
   const trackEvent = useCallback(
@@ -236,6 +236,30 @@ export default function ChatWidget() {
     },
     [sessionId],
   )
+
+  // ========== MODIFICATION START: Listen for postMessage from parent ==========
+  useEffect(() => {
+    const handlePostMessage = (event: MessageEvent) => {
+      // Security: Check the origin of the message
+      if (event.origin !== "https://zenmato.myshopify.com") {
+        return
+      }
+
+      // Check for the expected data structure
+      if (event.data && event.data.type === "init" && event.data.session_id) {
+        console.log("[Chatbot] Received session_id from parent:", event.data.session_id)
+        setSessionId(event.data.session_id)
+      }
+    }
+
+    window.addEventListener("message", handlePostMessage)
+
+    // Cleanup the event listener on component unmount
+    return () => {
+      window.removeEventListener("message", handlePostMessage)
+    }
+  }, []) // Empty dependency array ensures this runs only once on mount
+  // ========== MODIFICATION END ==========
 
   useEffect(() => {
     // Check if mobile
@@ -268,27 +292,31 @@ export default function ChatWidget() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
-  // Initial welcome message and session ID generation
+  // ========== MODIFICATION START: Updated welcome message logic ==========
+  // This effect now handles the welcome message and tracks chat opening
+  // without generating its own session ID.
   useEffect(() => {
-    if (isOpen && !sessionId) {
-      const newSessionId = `chat_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
-      setSessionId(newSessionId)
-      trackEvent("chat_opened", { initialMessagesCount: messages.length })
-      setMessages([
-        {
-          id: "welcome",
-          content: "Hello! How can I assist you today? Feel free to ask me anything about our products or services.",
-          role: "webhook",
-          timestamp: new Date(),
-          type: "text",
-        },
-      ])
-    } else if (!isOpen && sessionId) {
-      // Reset session ID when chat is closed
-      setSessionId(null)
+    if (isOpen) {
+      if (sessionId) {
+        trackEvent("chat_opened", { initialMessagesCount: messages.length })
+      }
+      if (messages.length === 0) {
+        // Only add welcome message if chat is empty
+        setMessages([
+          {
+            id: "welcome",
+            content: "Hello! How can I assist you today? Feel free to ask me anything about our products or services.",
+            role: "webhook",
+            timestamp: new Date(),
+            type: "text",
+          },
+        ])
+      }
+    } else if (!isOpen) {
       setMessages([]) // Clear messages on close
     }
-  }, [isOpen, sessionId, trackEvent]) // Added trackEvent to dependency array
+  }, [isOpen, sessionId, trackEvent]) // trackEvent depends on sessionId
+  // ========== MODIFICATION END ==========
 
   // Scroll to bottom button logic
   const handleScroll = useCallback(() => {
@@ -481,21 +509,28 @@ export default function ChatWidget() {
       const arrayBuffer = await audioBlob.arrayBuffer()
       const base64Audio = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)))
 
+      // ========== MODIFICATION START: Add sessionId and logging to webhook payload ==========
+      const webhookPayload = {
+        audioData: base64Audio,
+        mimeType: audioBlob.type,
+        duration: duration,
+        type: "voice",
+        sessionId: sessionId, // Include session ID in the request
+      }
+
+      console.log("[Chatbot] Sending webhook payload:", webhookPayload)
+
       const response = await fetch("/api/webhook", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          webhookUrl,
-          audioData: base64Audio,
-          mimeType: audioBlob.type,
-          duration: duration,
-          type: "voice",
-        }),
+        body: JSON.stringify(webhookPayload),
       })
 
       const data = await response.json()
+      console.log("[Chatbot] Received webhook response:", data)
+      // ========== MODIFICATION END ==========
 
       if (response.ok) {
         const webhookMessage: Message = {
@@ -550,19 +585,26 @@ export default function ChatWidget() {
     setIsLoading(true)
 
     try {
+      // ========== MODIFICATION START: Add sessionId and logging to webhook payload ==========
+      const webhookPayload = {
+        text: input.trim(),
+        type: "text",
+        sessionId: sessionId, // Include session ID in the request
+      }
+
+      console.log("[Chatbot] Sending webhook payload:", webhookPayload)
+
       const response = await fetch("/api/webhook", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          webhookUrl,
-          text: input.trim(),
-          type: "text",
-        }),
+        body: JSON.stringify(webhookPayload),
       })
 
       const data = await response.json()
+      console.log("[Chatbot] Received webhook response:", data)
+      // ========== MODIFICATION END ==========
 
       if (response.ok) {
         const webhookMessage: Message = {
