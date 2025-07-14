@@ -1,9 +1,9 @@
 "use client"
 
 import type React from "react"
-import { ChevronDown } from "lucide-react"
+import { ChevronDown } from "lucide-react" // Added ChevronDown import
 
-import { useState, useRef, useEffect, useCallback } from "react"
+import { useState, useRef, useEffect, useCallback } from "react" // Added useCallback
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
@@ -20,7 +20,7 @@ import {
   Heart,
   User,
   Check,
-} from "lucide-react"
+} from "lucide-react" // Added User, Check
 
 // Define interface for product card data
 interface ProductCardData {
@@ -28,7 +28,7 @@ interface ProductCardData {
   name: string
   price: string
   variantId: string
-  productUrl?: string
+  productUrl?: string // Added productUrl
 }
 
 interface Message {
@@ -130,6 +130,16 @@ const StaticWaveform = ({ audioUrl }: { audioUrl?: string }) => {
   )
 }
 
+// Loading Skeleton for AI replies
+const MessageSkeleton = () => (
+  <div className="flex items-start space-x-3 animate-pulse">
+    <div className="flex-1 space-y-2">
+      <div className="h-4 bg-secondary rounded w-3/4"></div>
+      <div className="h-4 bg-secondary rounded w-1/2"></div>
+    </div>
+  </div>
+)
+
 // Enhanced Typing indicator with multiple effects
 const TypingIndicator = () => (
   <div className="flex items-center space-x-4 p-5">
@@ -183,13 +193,9 @@ export default function ChatWidget() {
   const [isHovered, setIsHovered] = useState(false)
   const [showScrollToBottom, setShowScrollToBottom] = useState(false)
   const [addedProductVariantId, setAddedProductVariantId] = useState<string | null>(null)
-
-  // ========== MODIFICATION START: Add state for all parent-sent data ==========
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [sourceUrl, setSourceUrl] = useState<string | null>(null)
   const [pageContext, setPageContext] = useState<string | null>(null)
-  // ========== MODIFICATION END ==========
-
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null)
@@ -201,6 +207,9 @@ export default function ChatWidget() {
   const dragStartHeight = useRef(0)
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
   const messagesContainerRef = useRef<HTMLDivElement | null>(null)
+
+  // Fixed webhook URL - hidden from user
+  const webhookUrl = "https://similarly-secure-mayfly.ngrok-free.app/webhook-test/chat"
 
   // Analytics tracking function
   const trackEvent = useCallback(
@@ -215,12 +224,14 @@ export default function ChatWidget() {
           headers: {
             "Content-Type": "application/json",
           },
+          // ========== FIX START: Use session_id key ==========
           body: JSON.stringify({
             session_id: sessionId,
             eventType,
             timestamp: new Date().toISOString(),
             data,
           }),
+          // ========== FIX END ==========
         })
       } catch (error) {
         console.error("Failed to send analytics event:", error)
@@ -229,36 +240,58 @@ export default function ChatWidget() {
     [sessionId],
   )
 
-  // ========== MODIFICATION START: Listen for all data from parent ==========
   // Listen for postMessage from parent (Shopify theme)
   useEffect(() => {
     const handlePostMessage = (event: MessageEvent) => {
       // ✅ Security: Validate origin
-      if (event.origin !== "https://zenmato.myshopify.com") {
-        return
+      const allowedOrigin = "https://zenmato.myshopify.com";
+      if (event.origin !== allowedOrigin) {
+        console.warn("[Chatbot] Untrusted origin:", event.origin);
+        return;
       }
 
-      const data = event.data
+      const data = event.data;
 
       // ✅ Validate payload structure
-      if (data?.type !== "init" || !data.session_id) {
-        return
+      if (data?.type !== "init") {
+        console.warn("[Chatbot] Ignoring unexpected postMessage:", data);
+        return;
       }
 
-      // ✅ Log and set all received data
-      console.log("[Chatbot] Received init data from parent:", data)
-      setSessionId(data.session_id)
-      setSourceUrl(data.source_url || null)
-      setPageContext(data.page_context || null)
-    }
+      if (!data.session_id) {
+        console.error("[Chatbot] Missing session_id in init message");
+        return;
+      }
 
-    window.addEventListener("message", handlePostMessage)
+      // ✅ Set session_id
+      console.log("[Chatbot] Received session_id from parent:", data.session_id);
+      setSessionId(data.session_id);
+
+      // ✅ Set source_url if present
+      if (typeof data.source_url === "string") {
+        console.log("[Chatbot] Received source_url:", data.source_url);
+        setSourceUrl(data.source_url);
+      } else {
+        console.warn("[Chatbot] No valid source_url received");
+      }
+
+      // ✅ Set page_context if present
+      if (typeof data.page_context === "string") {
+        console.log("[Chatbot] Received page_context:", data.page_context);
+        setPageContext(data.page_context);
+      } else {
+        console.warn("[Chatbot] No valid page_context received");
+      }
+    };
+
+    window.addEventListener("message", handlePostMessage);
 
     return () => {
-      window.removeEventListener("message", handlePostMessage)
-    }
-  }, []) // Empty dependency array ensures this runs only once on mount
-  // ========== MODIFICATION END ==========
+      window.removeEventListener("message", handlePostMessage);
+    };
+  }, []);
+
+ // Empty dependency array ensures this runs only once on mount
 
   useEffect(() => {
     // Check if mobile
@@ -298,6 +331,7 @@ export default function ChatWidget() {
         trackEvent("chat_opened", { initialMessagesCount: messages.length })
       }
       if (messages.length === 0) {
+        // Only add welcome message if chat is empty
         setMessages([
           {
             id: "welcome",
@@ -335,13 +369,15 @@ export default function ChatWidget() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
 
-  // Audio level monitoring and recording functions... (No changes needed here)
+  // Audio level monitoring
   const monitorAudioLevel = () => {
     if (analyserRef.current) {
       const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount)
       analyserRef.current.getByteFrequencyData(dataArray)
+
       const average = dataArray.reduce((sum, value) => sum + value, 0) / dataArray.length
-      setAudioLevel(average / 255)
+      setAudioLevel(average / 255) // Normalize to 0-1
+
       animationFrameRef.current = requestAnimationFrame(monitorAudioLevel)
     }
   }
@@ -349,16 +385,31 @@ export default function ChatWidget() {
   const requestMicrophonePermission = async (): Promise<MediaStream | null> => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: true, noiseSuppression: true, sampleRate: 44100 },
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          sampleRate: 44100,
+        },
       })
+
+      // Set up audio analysis for visual feedback
       audioContextRef.current = new AudioContext()
       const source = audioContextRef.current.createMediaStreamSource(stream)
       analyserRef.current = audioContextRef.current.createAnalyser()
       analyserRef.current.fftSize = 256
       source.connect(analyserRef.current)
+
       return stream
     } catch (error: any) {
-      // Error handling...
+      let errorMessage = "Microphone access denied."
+      if (error.name === "NotAllowedError") {
+        errorMessage = "Microphone access denied. Please allow microphone access and try again."
+      } else if (error.name === "NotFoundError") {
+        errorMessage = "No microphone found. Please connect a microphone and try again."
+      } else if (error.name === "NotSupportedError") {
+        errorMessage = "Microphone access is not supported in this browser."
+      }
+      setVoiceError(errorMessage)
       return null
     }
   }
@@ -377,19 +428,98 @@ export default function ChatWidget() {
   }
 
   const startRecording = async () => {
-    // Start recording logic...
+    const stream = await requestMicrophonePermission()
+    if (!stream) return
+
+    try {
+      streamRef.current = stream
+      audioChunksRef.current = []
+
+      // Try different MIME types for better compatibility
+      let mimeType = "audio/webm"
+      if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
+        mimeType = "audio/webm;codecs=opus"
+      } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
+        mimeType = "audio/mp4"
+      } else if (MediaRecorder.isTypeSupported("audio/ogg;codecs=opus")) {
+        mimeType = "audio/ogg;codecs=opus"
+      }
+
+      mediaRecorderRef.current = new MediaRecorder(stream, {
+        mimeType: mimeType,
+      })
+
+      mediaRecorderRef.current.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data)
+        }
+      }
+
+      mediaRecorderRef.current.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType })
+        sendVoiceMessage(audioBlob, recordingDuration)
+
+        // Cleanup
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach((track) => track.stop())
+          streamRef.current = null
+        }
+        if (audioContextRef.current) {
+          audioContextRef.current.close()
+          audioContextRef.current = null
+        }
+        if (animationFrameRef.current) {
+          cancelAnimationFrame(animationFrameRef.current)
+          animationFrameRef.current = null
+        }
+        setAudioLevel(0)
+      }
+
+      mediaRecorderRef.current.onerror = (event: any) => {
+        setVoiceError("Recording failed. Please try again.")
+        setIsRecording(false)
+        stopRecordingTimer()
+      }
+
+      mediaRecorderRef.current.start(100) // Collect data every 100ms
+      setIsRecording(true)
+      startRecordingTimer()
+      monitorAudioLevel() // Start audio level monitoring
+      setVoiceError("")
+    } catch (error) {
+      setVoiceError("Failed to start recording. Please try again.")
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop())
+        streamRef.current = null
+      }
+    }
   }
 
   const stopRecording = () => {
-    // Stop recording logic...
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+      mediaRecorderRef.current.stop()
+    }
+    setIsRecording(false)
+    stopRecordingTimer()
   }
 
   const toggleRecording = async () => {
-    // Toggle recording logic...
+    if (!voiceSupported) {
+      setVoiceError("Voice recording is not supported in this browser.")
+      return
+    }
+
+    if (isRecording) {
+      stopRecording()
+    } else {
+      await startRecording()
+    }
   }
 
   const sendVoiceMessage = async (audioBlob: Blob, duration: number) => {
+    // Create a local URL for playback
     const audioUrl = URL.createObjectURL(audioBlob)
+
     const userMessage: Message = {
       id: Date.now().toString(),
       content: "Voice message",
@@ -401,29 +531,31 @@ export default function ChatWidget() {
 
     setMessages((prev) => [...prev, userMessage])
     setIsLoading(true)
-    trackEvent("message_sent", { type: "voice", duration })
+    trackEvent("message_sent", { type: "voice", duration, messageContent: "Voice message" }) // Track voice message
 
     try {
+      // Convert audio blob to base64
       const arrayBuffer = await audioBlob.arrayBuffer()
       const base64Audio = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)))
 
-      // ========== MODIFICATION START: Include all context in webhook payload ==========
+      // ========== FIX START: Use session_id key ==========
       const webhookPayload = {
-        type: "voice",
         audioData: base64Audio,
         mimeType: audioBlob.type,
         duration: duration,
+        type: "voice",
         session_id: sessionId,
-        source_url: sourceUrl,
-        page_context: pageContext,
+        webhookUrl
       }
-      // ========== MODIFICATION END ==========
+      // ========== FIX END ==========
 
       console.log("[Chatbot] Sending webhook payload:", webhookPayload)
 
       const response = await fetch("/api/webhook", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(webhookPayload),
       })
 
@@ -431,12 +563,34 @@ export default function ChatWidget() {
       console.log("[Chatbot] Received webhook response:", data)
 
       if (response.ok) {
-        // Handle success...
+        const webhookMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          content: data.message || data.response || data.transcription || "Voice message received successfully",
+          role: "webhook",
+          timestamp: new Date(),
+          type: "text",
+          cards: data.cards || undefined,
+        }
+        setMessages((prev) => [...prev, webhookMessage])
       } else {
-        // Handle error...
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          content: "Sorry, I'm having trouble processing your voice message. Please try again.",
+          role: "webhook",
+          timestamp: new Date(),
+          type: "text",
+        }
+        setMessages((prev) => [...prev, errorMessage])
       }
     } catch (error) {
-      // Handle fetch error...
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: "Connection error. Please check your internet and try again.",
+        role: "webhook",
+        timestamp: new Date(),
+        type: "text",
+      }
+      setMessages((prev) => [...prev, errorMessage])
     } finally {
       setIsLoading(false)
     }
@@ -444,6 +598,7 @@ export default function ChatWidget() {
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
+
     if (!input.trim()) return
 
     const userMessage: Message = {
@@ -455,26 +610,27 @@ export default function ChatWidget() {
     }
 
     setMessages((prev) => [...prev, userMessage])
-    trackEvent("message_sent", { type: "text", messageContent: input.trim() })
+    trackEvent("message_sent", { type: "text", messageContent: input.trim() }) // Track text message
     setInput("")
     setIsLoading(true)
 
     try {
-      // ========== MODIFICATION START: Include all context in webhook payload ==========
+      // ========== FIX START: Use session_id key ==========
       const webhookPayload = {
-        type: "text",
         text: input.trim(),
+        type: "text",
         session_id: sessionId,
-        source_url: sourceUrl,
-        page_context: pageContext,
+        webhookUrl
       }
-      // ========== MODIFICATION END ==========
+      // ========== FIX END ==========
 
       console.log("[Chatbot] Sending webhook payload:", webhookPayload)
 
       const response = await fetch("/api/webhook", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(webhookPayload),
       })
 
@@ -484,7 +640,7 @@ export default function ChatWidget() {
       if (response.ok) {
         const webhookMessage: Message = {
           id: (Date.now() + 1).toString(),
-          content: data.message || data.response || "Message received successfully",
+          content: data.message || data.response || data.transcription || "Message received successfully",
           role: "webhook",
           timestamp: new Date(),
           type: "text",
@@ -517,38 +673,133 @@ export default function ChatWidget() {
 
   // Function to handle adding to cart via postMessage
   const handleAddToCart = (card: ProductCardData) => {
-    // No changes needed here
+    console.log(`[Chatbot] Attempting to send 'add-to-cart' message for variantId: ${card.variantId}`)
+    setAddedProductVariantId(card.variantId) // Set the variant ID to show "Added!"
+
+    setTimeout(() => {
+      setAddedProductVariantId(null) // Reset after a short delay
+    }, 1500) // Show "Added!" for 1.5 seconds
+
+    trackEvent("add_to_cart", {
+      variantId: card.variantId,
+      productName: card.name,
+      productPrice: card.price,
+      source: "chatbot",
+    }) // Track add to cart
+
+    if (typeof window !== "undefined" && window.parent && window.parent !== window) {
+      const shopifyStoreDomain = "https://zenmato.myshopify.com"
+
+      window.parent.postMessage(
+        {
+          type: "add-to-cart",
+          payload: {
+            variantId: card.variantId,
+            quantity: 1,
+            redirect: true,
+          },
+        },
+        shopifyStoreDomain,
+      )
+
+      console.log(
+        `[Chatbot] Sent postMessage to parent: type='add-to-cart', variantId=${card.variantId}, redirect=true, targetOrigin=${shopifyStoreDomain}`,
+      )
+
+      console.log(`[Chatbot] Add to cart request sent for variant ${card.variantId}. Redirecting to cart...`)
+    } else {
+      console.warn(
+        "[Chatbot] window.parent is not available or chatbot is not in iframe. Cannot send add-to-cart message.",
+      )
+
+      if (typeof window !== "undefined" && window.location.hostname.includes("myshopify.com")) {
+        console.log("[Chatbot] Attempting direct cart add as fallback...")
+      }
+    }
   }
 
-  // Event handlers for dragging
+  // Touch and mouse event handlers for dragging
   const handleMouseDown = (e: React.MouseEvent) => {
-    // No changes needed here
+    if (isMobile) {
+      e.preventDefault()
+      setIsDragging(true)
+      dragStartY.current = e.clientY
+      dragStartHeight.current = chatHeight
+    }
   }
+
   const handleTouchStart = (e: React.TouchEvent) => {
-    // No changes needed here
+    if (isMobile) {
+      e.preventDefault()
+      setIsDragging(true)
+      dragStartY.current = e.touches[0].clientY
+      dragStartHeight.current = chatHeight
+    }
   }
+
   const handleMouseMove = (e: MouseEvent) => {
-    // No changes needed here
+    if (isDragging && isMobile) {
+      const deltaY = dragStartY.current - e.clientY
+      const newHeight = Math.min(Math.max(dragStartHeight.current + deltaY, 300), window.innerHeight * 0.9)
+      setChatHeight(newHeight)
+    }
   }
+
   const handleTouchMove = (e: TouchEvent) => {
-    // No changes needed here
+    if (isDragging && isMobile) {
+      e.preventDefault()
+      const deltaY = dragStartY.current - e.touches[0].clientY
+      const newHeight = Math.min(Math.max(dragStartHeight.current + deltaY, 300), window.innerHeight * 0.9)
+      setChatHeight(newHeight)
+    }
   }
+
   const handleMouseUp = () => {
-    // No changes needed here
+    setIsDragging(false)
   }
+
   const handleTouchEnd = () => {
-    // No changes needed here
+    setIsDragging(false)
   }
 
   useEffect(() => {
     if (isDragging) {
-      // No changes needed here
+      document.addEventListener("mousemove", handleMouseMove)
+      document.addEventListener("mouseup", handleMouseUp)
+      document.addEventListener("touchmove", handleTouchMove, { passive: false })
+      document.addEventListener("touchend", handleTouchEnd)
+
+      return () => {
+        document.removeEventListener("mousemove", handleMouseMove)
+        document.removeEventListener("mouseup", handleMouseUp)
+        document.removeEventListener("touchmove", handleTouchMove)
+        document.removeEventListener("touchend", handleTouchEnd)
+      }
     }
   }, [isDragging, isMobile])
 
   // Cleanup on unmount
   useEffect(() => {
-    // No changes needed here
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop())
+      }
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current)
+      }
+      if (audioContextRef.current) {
+        audioContextRef.current.close()
+      }
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current)
+      }
+      // Cleanup object URLs
+      messages.forEach((message) => {
+        if (message.audioUrl) {
+          URL.revokeObjectURL(message.audioUrl)
+        }
+      })
+    }
   }, [])
 
   const formatTime = (date: Date) => {
@@ -561,13 +812,61 @@ export default function ChatWidget() {
     return `${mins}:${secs.toString().padStart(2, "0")}`
   }
 
-  // The rest of the return statement (JSX) remains unchanged
+  const handleCopyMessage = (text: string) => {
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        console.log("Message copied to clipboard!")
+      })
+      .catch((err) => {
+        console.error("Failed to copy message: ", err)
+      })
+  }
+
   return (
     <>
       {/* Enhanced Chat Widget Button with Advanced Animations */}
       {!isOpen && (
         <div className="fixed bottom-6 right-6 z-50">
-          {/* Button JSX */}
+          <div className="relative group">
+            {/* Animated background rings with enhanced effects */}
+            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 animate-pulse-glow opacity-75"></div>
+            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 animate-gradient-xy opacity-50"></div>
+
+            <Button
+              onClick={() => setIsOpen(true)}
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
+              className="relative h-20 w-20 rounded-full bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 hover:from-purple-700 hover:via-blue-700 hover:to-indigo-700 shadow-2xl hover:shadow-neon transition-all duration-700 transform hover:scale-110 border-4 border-white/40 backdrop-blur-md animate-float group-hover:animate-bounce-in"
+            >
+              <MessageCircle
+                className={`h-9 w-9 text-white transition-all duration-500 ${isHovered ? "scale-125 rotate-12" : ""}`}
+              />
+
+              {/* Enhanced notification dot with multiple effects */}
+              <div className="absolute -top-2 -right-2 h-6 w-6 bg-gradient-to-r from-red-500 to-pink-500 rounded-full border-3 border-white shadow-xl animate-bounce-in">
+                <div className="absolute inset-0 bg-red-500 rounded-full animate-ping opacity-75"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-red-400 to-pink-400 rounded-full animate-pulse"></div>
+                <Heart className="h-3 w-3 text-white absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+              </div>
+            </Button>
+
+            {/* Enhanced Tooltip with advanced styling */}
+            <div className="absolute bottom-full right-0 mb-6 px-6 py-4 bg-gradient-to-r from-gray-900 via-purple-900 to-gray-900 backdrop-blur-2xl text-white text-sm rounded-3xl opacity-0 group-hover:opacity-100 transition-all duration-500 whitespace-nowrap shadow-2xl border border-white/20 transform group-hover:scale-105 group-hover:-translate-y-2">
+              <div className="flex items-center space-x-3">
+                <div className="w-3 h-3 bg-gradient-to-r from-green-400 to-emerald-400 rounded-full animate-pulse shadow-lg shadow-green-400/50"></div>
+                <MessageCircle className="h-5 w-5 animate-bounce" />
+                <span className="font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                  Chat with us - We're online!
+                </span>
+                <div className="flex space-x-1">
+                  <Sparkles className="h-4 w-4 text-yellow-400 animate-pulse" />
+                  <Zap className="h-4 w-4 text-blue-400 animate-bounce" />
+                </div>
+              </div>
+              <div className="absolute top-full right-10 w-0 h-0 border-l-6 border-r-6 border-t-6 border-transparent border-t-gray-900"></div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -584,6 +883,8 @@ export default function ChatWidget() {
         >
           <Card className="h-full flex flex-col shadow-2xl animate-in slide-in-from-bottom-8 fade-in duration-1000 border-0 overflow-hidden bg-gradient-to-b from-white/95 via-white/90 to-white/95 backdrop-blur-3xl rounded-3xl relative">
             <ParticleBackground />
+
+            {/* Enhanced Header with Advanced Gradient Animation */}
             <CardHeader
               className={`flex flex-row items-center justify-between p-6 bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-700 text-white rounded-t-3xl relative overflow-hidden ${
                 isMobile ? "cursor-ns-resize select-none" : ""
@@ -591,35 +892,315 @@ export default function ChatWidget() {
               onMouseDown={handleMouseDown}
               onTouchStart={handleTouchStart}
             >
-              {/* Header JSX */}
+              {/* Multiple animated background layers */}
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-600/90 via-blue-600/90 to-indigo-700/90 animate-gradient-xy"></div>
+              <div className="absolute inset-0 bg-gradient-to-br from-pink-500/20 via-purple-500/20 to-blue-500/20 animate-gradient-x"></div>
+              <div
+                className="absolute inset-0 opacity-30"
+                style={{
+                  backgroundImage:
+                    "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fillRule='evenodd'%3E%3Cg fill='%23ffffff' fillOpacity='0.1'%3E%3Ccircle cx='30' cy='30' r='3'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
+                }}
+              />
+
+              {/* Enhanced mobile resize handle */}
+              {isMobile && (
+                <div className="absolute top-4 left-1/2 transform -translate-x-1/2 touch-none z-10">
+                  <div className="w-16 h-2 bg-white/60 rounded-full shadow-xl backdrop-blur-sm border border-white/30"></div>
+                </div>
+              )}
+
+              <div className="flex items-center space-x-5 mt-2 relative z-10">
+                <div className="relative">
+                  <div className="h-12 w-12 bg-white/25 rounded-full flex items-center justify-center backdrop-blur-md border-2 border-white/40 shadow-xl animate-pulse-glow">
+                    <MessageCircle className="h-6 w-6 animate-bounce" />
+                  </div>
+                  <div className="absolute -top-1 -right-1 h-5 w-5 bg-gradient-to-r from-green-400 to-emerald-400 rounded-full border-2 border-white shadow-lg animate-bounce-in">
+                    <div className="absolute inset-0 w-5 h-5 bg-green-400 rounded-full animate-ping opacity-40"></div>
+                  </div>
+                </div>
+                <div>
+                  <h3 className="font-bold text-xl tracking-wide bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
+                    AI Support
+                  </h3>
+                  <p className="text-sm text-white/95 font-semibold flex items-center space-x-2">
+                    <span>Always here to help you!</span>
+                    <Sparkles className="h-4 w-4 animate-pulse" />
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-3 mt-2 relative z-10">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsOpen(false)}
+                  className="text-white hover:bg-white/25 h-12 w-12 p-0 rounded-full transition-all duration-500 hover:scale-110 backdrop-blur-md border-2 border-white/30 hover:shadow-neon"
+                >
+                  <X className="h-6 w-6" />
+                </Button>
+              </div>
             </CardHeader>
-            {/* Recording and Error Indicators */}
+
+            {/* Enhanced Recording Indicator */}
+            {isRecording && (
+              <div className="bg-gradient-to-r from-red-50 via-pink-50 to-red-50 border-b-2 border-red-200/50 p-5 animate-in slide-in-from-top-4 duration-700 backdrop-blur-md px-5 py-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="relative">
+                      <div className="w-6 h-6 bg-gradient-to-r from-red-500 to-pink-500 rounded-full animate-pulse shadow-xl shadow-red-500/50"></div>
+                      <div className="absolute inset-0 w-6 h-6 bg-red-500 rounded-full animate-ping opacity-40"></div>
+                    </div>
+                    <span className="text-red-700 font-bold bg-gradient-to-r from-red-600 to-red-800 bg-clip-text text-transparent text-sm">
+                      Recording...
+                    </span>
+                    <AnimatedWaveform isRecording={isRecording} audioLevel={audioLevel} />
+                  </div>
+                  <div className="text-red-600 font-mono font-bold backdrop-blur-md animate-pulse-glow text-base bg-transparent border-solid border-red-300 rounded-full shadow-2xl border-2 px-1.5 py-1">
+                    {formatDuration(recordingDuration)}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Enhanced Voice Error Display */}
+            {voiceError && (
+              <div className="bg-gradient-to-r from-orange-50 via-yellow-50 to-orange-50 border-b-2 border-orange-200/50 p-5 animate-in slide-in-from-top-2 duration-500 backdrop-blur-md">
+                <div className="flex items-center space-x-4">
+                  <AlertCircle className="h-6 w-6 text-orange-600 animate-bounce" />
+                  <span className="text-orange-700 text-sm font-semibold bg-gradient-to-r from-orange-600 to-orange-800 bg-clip-text text-transparent">
+                    {voiceError}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Enhanced Messages with Advanced Styling */}
             <CardContent
               ref={messagesContainerRef}
               className="flex-1 overflow-y-auto p-6 space-y-5 bg-gradient-to-b from-gray-50/40 via-white/60 to-gray-50/40 backdrop-blur-md relative"
             >
-              {/* Messages Mapping JSX */}
               {messages.length === 1 && messages[0].id === "welcome" && !isLoading ? (
-                // Welcome message JSX
-                <></>
+                <div className="flex items-center justify-center h-full text-gray-500 relative">
+                  <div className="text-center animate-in fade-in duration-1500">
+                    <div className="relative mb-10">
+                      <div className="h-24 w-24 mx-auto bg-gradient-to-r from-purple-100 via-blue-100 to-indigo-100 rounded-full flex items-center justify-center shadow-2xl animate-float">
+                        <MessageCircle className="h-12 w-12 text-purple-600 animate-bounce" />
+                      </div>
+                      <div className="absolute inset-0 h-24 w-24 mx-auto border-4 border-purple-200 rounded-full animate-ping opacity-40"></div>
+                      <div className="absolute inset-0 h-24 w-24 mx-auto bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-full animate-pulse"></div>
+                    </div>
+                    <h3 className="text-3xl font-bold mb-4 bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent animate-shimmer">
+                      Welcome to AI Support!
+                    </h3>
+                    <p className="text-gray-700 mb-8 font-semibold text-lg">How can we assist you today?</p>
+                    <div className="flex items-center justify-center space-x-8 text-sm text-gray-600">
+                      <div className="flex items-center space-x-3 bg-white/80 px-5 py-3 rounded-full backdrop-blur-md border-2 border-gray-200/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                        <MessageCircle className="h-5 w-5 text-blue-500 animate-pulse" />
+                        <span className="font-semibold">Type a message</span>
+                      </div>
+                      {voiceSupported && (
+                        <div className="flex items-center space-x-3 bg-white/80 px-5 py-3 rounded-full backdrop-blur-md border-2 border-gray-200/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                          <Mic className="h-5 w-5 text-purple-500 animate-bounce" />
+                          <span className="font-semibold">Record voice</span>
+                        </div>
+                      )}
+                    </div>
+                    {/* Recent Chats Section */}
+                    <div className="w-full max-w-sm rounded-lg border border-border p-4 bg-card shadow-lg animate-in fade-in slide-in-from-bottom-4 delay-200 mt-8 mx-auto">
+                      <h3 className="text-lg font-semibold text-foreground mb-3">Recent Chats</h3>
+                      <div className="space-y-2">
+                        {/* Placeholder for recent chats */}
+                        {[
+                          { id: "1", title: "Product Inquiry", time: "Yesterday" },
+                          { id: "2", title: "Order #12345", time: "2 days ago" },
+                          { id: "3", title: "Shipping Info", time: "Last week" },
+                        ].map((chat, idx) => (
+                          <div
+                            key={chat.id}
+                            className="py-2 px-3 rounded-md hover:bg-secondary/50 transition-colors duration-200 cursor-pointer flex justify-between items-center"
+                          >
+                            <span className="text-foreground font-medium">{chat.title}</span>
+                            <span className="text-muted-foreground text-sm">{chat.time}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="border-b border-border my-4"></div> {/* Line divider */}
+                      <p className="text-sm text-muted-foreground">No recent chats yet. Start a new one!</p>
+                    </div>
+                  </div>
+                </div>
               ) : (
                 <>
                   {messages.map((message, index) => (
-                    // Individual message JSX
-                    <div key={message.id}>{/* ... */}</div>
+                    <div
+                      key={message.id}
+                      className={`flex ${message.role === "user" ? "justify-end" : "justify-start"} animate-in slide-in-from-bottom-4 fade-in duration-600`}
+                      style={{ animationDelay: `${index * 150}ms` }}
+                    >
+                      {message.role === "user" && (
+                        <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0 mr-3 shadow-md">
+                          <User className="h-5 w-5 text-primary-foreground" />
+                        </div>
+                      )}
+                      <div
+                        className={`max-w-[85%] rounded-3xl p-5 shadow-xl transition-all duration-500 hover:shadow-2xl transform hover:scale-[1.02] message-bubble border-solid border-2 py-2.5 ${
+                          message.role === "user"
+                            ? "bg-gradient-to-r from-purple-500 via-blue-600 to-indigo-600 text-white shadow-purple-200 border-2 border-white/30"
+                            : "bg-gradient-to-r from-white/95 via-gray-50/95 to-white/95 text-gray-900 border-2 border-gray-200/50 shadow-gray-200 backdrop-blur-md"
+                        }`}
+                      >
+                        {message.type === "voice" && (
+                          <div className="mb-3">
+                            <div className="flex items-center space-x-3 mb-4">
+                              <Mic className="h-5 w-5 opacity-75 animate-pulse" />
+                              <span className="text-sm opacity-90 font-bold tracking-wider bg-gradient-to-r from-current to-current/80 bg-clip-text text-transparent">
+                                VOICE MESSAGE
+                              </span>
+                              <div className="flex space-x-1">
+                                <div className="w-2 h-2 bg-current rounded-full animate-bounce opacity-60"></div>
+                                <div
+                                  className="w-2 h-2 bg-current rounded-full animate-bounce opacity-60"
+                                  style={{ animationDelay: "0.1s" }}
+                                ></div>
+                                <div
+                                  className="w-2 h-2 bg-current rounded-full animate-bounce opacity-60"
+                                  style={{ animationDelay: "0.2s" }}
+                                ></div>
+                              </div>
+                            </div>
+                            <StaticWaveform audioUrl={message.audioUrl} />
+                          </div>
+                        )}
+                        <p className="whitespace-pre-wrap text-base leading-relaxed font-semibold">{message.content}</p>
+                        <p
+                          className={`text-sm mt-4 font-semibold flex items-center space-x-2 ${
+                            message.role === "user" ? "text-blue-100" : "text-gray-500"
+                          }`}
+                        >
+                          <span>{formatTime(message.timestamp)}</span>
+                          {message.role === "webhook" && <Sparkles className="h-3 w-3 animate-pulse" />}
+                        </p>
+
+                        {/* Enhanced product recommendation cards */}
+                        {message.cards && message.cards.length > 0 && (
+                          <div className="cards-container mt-6">
+                            {message.cards.map((card, cardIndex) => (
+                              <Card
+                                key={cardIndex}
+                                className="card animate-bounce-in"
+                                style={{ animationDelay: `${cardIndex * 100}ms` }}
+                              >
+                                <CardContent className="p-2 flex flex-col items-center">
+                                  <img
+                                    src={card.image || "/placeholder.svg"}
+                                    alt={card.name}
+                                    className="w-24 h-24 object-cover rounded-md mb-2 shadow-sm"
+                                    loading="lazy" // Lazy loading for images
+                                  />
+                                  <h4 className="text-sm font-semibold text-foreground truncate w-full text-center mb-1">
+                                    {card.name}
+                                  </h4>
+                                  <p className="text-base font-bold text-primary mb-2">{card.price}</p>
+                                  <Button
+                                    onClick={() => handleAddToCart(card)} // Pass the whole card object
+                                    className="w-full text-xs py-1.5 h-auto bg-primary hover:bg-primary/90 transition-all duration-150 shadow-sm hover:shadow-md mb-1"
+                                  >
+                                    {addedProductVariantId === card.variantId ? (
+                                      <span className="flex items-center gap-1">
+                                        <Check className="h-3 w-3" /> Added!
+                                      </span>
+                                    ) : (
+                                      "Add to Cart"
+                                    )}
+                                  </Button>
+                                  {card.productUrl && (
+                                    <a
+                                      href={card.productUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="w-full text-xs py-1 h-auto text-center text-muted-foreground hover:text-primary transition-colors duration-150"
+                                    >
+                                      View Product
+                                    </a>
+                                  )}
+                                </CardContent>
+                              </Card>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   ))}
                   {isLoading && (
-                    // Typing indicator JSX
-                    <></>
+                    <div className="flex justify-start animate-in slide-in-from-bottom-4 fade-in duration-500">
+                      <div className="bg-gradient-to-r from-white/95 via-gray-50/95 to-white/95 text-gray-900 rounded-3xl shadow-xl border-2 border-gray-200/50 backdrop-blur-md">
+                        <TypingIndicator />
+                      </div>
+                    </div>
                   )}
                 </>
               )}
               <div ref={messagesEndRef} />
             </CardContent>
+
             {/* Scroll to bottom button */}
+            {showScrollToBottom && (
+              <Button
+                variant="secondary"
+                size="icon"
+                onClick={scrollToBottom}
+                className="absolute bottom-[80px] right-6 h-10 w-10 rounded-full shadow-lg animate-bounce-in z-20"
+                aria-label="Scroll to bottom"
+              >
+                <ChevronDown className="h-5 w-5" />
+              </Button>
+            )}
+
+            {/* Enhanced Input with Advanced Glass Morphism */}
             <CardFooter className="p-6 border-t-2 border-gray-200/50 bg-gradient-to-r from-white/90 via-gray-50/90 to-white/90 backdrop-blur-2xl">
               <form onSubmit={sendMessage} className="flex w-full space-x-4">
-                {/* Input and Buttons JSX */}
+                <div className="flex-1 relative">
+                  <Input
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder={isRecording ? "Recording your voice..." : "Type your message..."}
+                    disabled={isLoading || isRecording}
+                    className="pr-4 h-14 rounded-3xl border-3 border-gray-300/50 focus:border-purple-500 transition-all duration-500 bg-white/95 backdrop-blur-md shadow-lg hover:shadow-xl font-semibold placeholder:text-gray-500 text-base focus-ring"
+                  />
+                </div>
+
+                {/* Enhanced Voice Input Button */}
+                {voiceSupported && (
+                  <Button
+                    type="button"
+                    variant={isRecording ? "destructive" : "outline"}
+                    size="lg"
+                    onClick={toggleRecording}
+                    disabled={isLoading}
+                    className={`h-14 w-14 p-0 rounded-3xl transition-all duration-500 transform hover:scale-110 shadow-xl ${
+                      isRecording
+                        ? "bg-gradient-to-r from-red-500 via-pink-500 to-red-600 hover:from-red-600 hover:via-pink-600 hover:to-red-700 shadow-red-200 animate-pulse border-0 hover:shadow-neon"
+                        : "border-3 border-gray-400/50 hover:border-purple-500 hover:bg-purple-50 bg-white/95 backdrop-blur-md shadow-gray-200 hover:shadow-glow-purple"
+                    }`}
+                  >
+                    {isRecording ? (
+                      <div className="flex items-center justify-center">
+                        <Send className="h-6 w-6 text-white animate-bounce drop-shadow-lg" />
+                      </div>
+                    ) : (
+                      <Mic className="h-6 w-6 text-gray-600 hover:text-purple-600 transition-colors duration-300" />
+                    )}
+                  </Button>
+                )}
+
+                <Button
+                  type="submit"
+                  disabled={!input.trim() || isLoading || isRecording}
+                  className="h-14 px-8 rounded-3xl bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 hover:from-purple-700 hover:via-blue-700 hover:to-indigo-700 transition-all duration-500 transform hover:scale-110 shadow-xl shadow-purple-200 disabled:opacity-50 disabled:cursor-not-allowed border-0 font-bold hover:shadow-neon"
+                >
+                  <Send className="h-6 w-6" />
+                </Button>
               </form>
             </CardFooter>
           </Card>
