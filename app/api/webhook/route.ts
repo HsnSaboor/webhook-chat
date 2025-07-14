@@ -16,6 +16,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
   }
 
+  // Default type detection
+  const messageType = type || (audioData ? "voice" : "text");
+
   const {
     webhookUrl,
     text,
@@ -29,7 +32,7 @@ export async function POST(request: NextRequest) {
     product_id,
     product_name,
     order_id,
-    type,
+    type: messageType,
     audioData,
     mimeType,
     duration,
@@ -54,7 +57,7 @@ export async function POST(request: NextRequest) {
     timestamp: new Date().toISOString(),
     event_type,
     user_message: user_message || text,
-    type
+    type: messageType,
     source_url,
     page_context,
     chatbot_triggered,
@@ -77,7 +80,7 @@ export async function POST(request: NextRequest) {
   const zenoInput = {
     timestamp: new Date().toISOString(),
     session_id,
-    type: type || (audioData ? "voice" : "text"),
+    type: messageType,
     source: "chat-widget",
     ...(audioData
       ? { audioData, mimeType, duration }
