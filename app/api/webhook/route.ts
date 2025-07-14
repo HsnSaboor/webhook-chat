@@ -1,5 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server"
 
+// Fix for environments where crypto might not be directly accessible
+const generateId = () => {
+  return typeof crypto?.randomUUID === "function"
+    ? crypto.randomUUID()
+    : Math.random().toString(36).substring(2) + Date.now().toString(36)
+}
+
 export async function POST(request: NextRequest) {
   const rawBody = await request.text()
 
@@ -32,6 +39,7 @@ export async function POST(request: NextRequest) {
     audioData,
     mimeType,
     duration,
+    type, // <-- was missing before
   } = body
 
   if (!webhookUrl || (!text && !audioData)) {
@@ -44,14 +52,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Missing session_id" }, { status: 400 })
   }
 
+  const messageType = type || (audioData ? "voice" : "text")
   console.log("[Webhook] Received session_id:", session_id)
-
-  // Default type detection
-  const messageType = type || (audioData ? "voice" : "text");
 
   // 1. Send pre-Zeno event to n8n
   const preZenoPayload = {
-    id: crypto.randomUUID(),
+    id: generateId(),
     session_id,
     timestamp: new Date().toISOString(),
     event_type,
@@ -69,13 +75,18 @@ export async function POST(request: NextRequest) {
   console.log("[Webhook] Sending pre-Zeno payload to:", webhookUrl)
   console.log(JSON.stringify(preZenoPayload, null, 2))
 
-  await fetch(webhookUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(preZenoPayload),
-  })
+  try {
+    await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(preZenoPayload),
+    })
+  } catch (err) {
+    console.error("[Webhook] Failed to send pre-Zeno payload:", err)
+    return NextResponse.json({ error: "Failed to send pre-Zeno payload" }, { status: 500 })
+  }
 
-  // 2. Call Zeno AI
+  // 2. Send Zeno AI request
   const zenoInput = {
     timestamp: new Date().toISOString(),
     session_id,
@@ -88,21 +99,26 @@ export async function POST(request: NextRequest) {
 
   console.log("[Webhook] Sending Zeno input:", JSON.stringify(zenoInput, null, 2))
 
-  const webhookRes = await fetch(webhookUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "User-Agent": "Chat-Widget/2.0",
-      "X-Widget-Source": "chat-widget",
-    },
-    body: JSON.stringify(zenoInput),
-  })
-
-  const contentType = webhookRes.headers.get("content-type")
-  let responseData: any
-
+  let webhookRes
   try {
-    responseData = contentType?.includes("application/json")
+    webhookRes = await fetch(webhookUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "User-Agent": "Chat-Widget/2.0",
+        "X-Widget-Source": "chat-widget",
+      },
+      body: JSON.stringify(zenoInput),
+    })
+  } catch (err) {
+    console.error("[Webhook] Failed to send Zeno request:", err)
+    return NextResponse.json({ error: "Failed to send Zeno request" }, { status: 500 })
+  }
+
+  let responseData: any
+  try {
+    const contentType = webhookRes.headers.get("content-type") || ""
+    responseData = contentType.includes("application/json")
       ? await webhookRes.json()
       : await webhookRes.text()
   } catch (err) {
@@ -133,11 +149,15 @@ export async function POST(request: NextRequest) {
 
     console.log("[Webhook] Sending upsell event:", JSON.stringify(upsellEvent, null, 2))
 
-    await fetch(webhookUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(upsellEvent),
-    })
+    try {
+      await fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(upsellEvent),
+      })
+    } catch (err) {
+      console.warn("[Webhook] Failed to send upsell event:", err)
+    }
   }
 
   return NextResponse.json({
