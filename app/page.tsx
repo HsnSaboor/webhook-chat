@@ -223,12 +223,14 @@ export default function ChatWidget() {
           headers: {
             "Content-Type": "application/json",
           },
+          // ========== FIX START: Use session_id key ==========
           body: JSON.stringify({
-            sessionId,
+            session_id: sessionId,
             eventType,
             timestamp: new Date().toISOString(),
             data,
           }),
+          // ========== FIX END ==========
         })
       } catch (error) {
         console.error("Failed to send analytics event:", error)
@@ -237,7 +239,7 @@ export default function ChatWidget() {
     [sessionId],
   )
 
-  // ========== MODIFICATION START: Listen for postMessage from parent ==========
+  // Listen for postMessage from parent
   useEffect(() => {
     const handlePostMessage = (event: MessageEvent) => {
       // Security: Check the origin of the message
@@ -259,7 +261,6 @@ export default function ChatWidget() {
       window.removeEventListener("message", handlePostMessage)
     }
   }, []) // Empty dependency array ensures this runs only once on mount
-  // ========== MODIFICATION END ==========
 
   useEffect(() => {
     // Check if mobile
@@ -292,9 +293,7 @@ export default function ChatWidget() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
-  // ========== MODIFICATION START: Updated welcome message logic ==========
-  // This effect now handles the welcome message and tracks chat opening
-  // without generating its own session ID.
+  // Updated welcome message logic
   useEffect(() => {
     if (isOpen) {
       if (sessionId) {
@@ -315,8 +314,7 @@ export default function ChatWidget() {
     } else if (!isOpen) {
       setMessages([]) // Clear messages on close
     }
-  }, [isOpen, sessionId, trackEvent]) // trackEvent depends on sessionId
-  // ========== MODIFICATION END ==========
+  }, [isOpen, sessionId, trackEvent])
 
   // Scroll to bottom button logic
   const handleScroll = useCallback(() => {
@@ -509,14 +507,15 @@ export default function ChatWidget() {
       const arrayBuffer = await audioBlob.arrayBuffer()
       const base64Audio = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)))
 
-      // ========== MODIFICATION START: Add sessionId and logging to webhook payload ==========
+      // ========== FIX START: Use session_id key ==========
       const webhookPayload = {
         audioData: base64Audio,
         mimeType: audioBlob.type,
         duration: duration,
         type: "voice",
-        sessionId: sessionId, // Include session ID in the request
+        session_id: sessionId,
       }
+      // ========== FIX END ==========
 
       console.log("[Chatbot] Sending webhook payload:", webhookPayload)
 
@@ -530,7 +529,6 @@ export default function ChatWidget() {
 
       const data = await response.json()
       console.log("[Chatbot] Received webhook response:", data)
-      // ========== MODIFICATION END ==========
 
       if (response.ok) {
         const webhookMessage: Message = {
@@ -585,12 +583,13 @@ export default function ChatWidget() {
     setIsLoading(true)
 
     try {
-      // ========== MODIFICATION START: Add sessionId and logging to webhook payload ==========
+      // ========== FIX START: Use session_id key ==========
       const webhookPayload = {
         text: input.trim(),
         type: "text",
-        sessionId: sessionId, // Include session ID in the request
+        session_id: sessionId,
       }
+      // ========== FIX END ==========
 
       console.log("[Chatbot] Sending webhook payload:", webhookPayload)
 
@@ -604,7 +603,6 @@ export default function ChatWidget() {
 
       const data = await response.json()
       console.log("[Chatbot] Received webhook response:", data)
-      // ========== MODIFICATION END ==========
 
       if (response.ok) {
         const webhookMessage: Message = {
