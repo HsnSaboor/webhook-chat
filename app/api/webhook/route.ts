@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
   const {
     webhookUrl,
     text,
-    session_id: providedSessionId,
+    session_id, // TRUST this
     event_type = "user_message",
     user_message,
     source_url,
@@ -34,8 +34,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
   }
 
-  // Always prefer provided session_id, otherwise generate fallback UUID
-  const session_id = providedSessionId || crypto.randomUUID()
+  if (!session_id) {
+    return NextResponse.json({ error: "Missing session_id" }, { status: 400 })
+  }
 
   // 1. Send pre-Zeno event to n8n
   const preZenoPayload = {
