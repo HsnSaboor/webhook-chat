@@ -193,8 +193,9 @@ export default function ChatWidget() {
   const [isHovered, setIsHovered] = useState(false)
   const [showScrollToBottom, setShowScrollToBottom] = useState(false)
   const [addedProductVariantId, setAddedProductVariantId] = useState<string | null>(null)
-  const [sessionId, setSessionId] = useState<string | null>(null) // State for session ID
-
+  const [sessionId, setSessionId] = useState<string | null>(null)
+  const [sourceUrl, setSourceUrl] = useState<string | null>(null)
+  const [pageContext, setPageContext] = useState<string | null>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null)
@@ -241,26 +242,39 @@ export default function ChatWidget() {
 
   // Listen for postMessage from parent
   useEffect(() => {
-    const handlePostMessage = (event: MessageEvent) => {
-      // Security: Check the origin of the message
-      if (event.origin !== "https://zenmato.myshopify.com") {
-        return
-      }
-
-      // Check for the expected data structure
-      if (event.data && event.data.type === "init" && event.data.session_id) {
-        console.log("[Chatbot] Received session_id from parent:", event.data.session_id)
-        setSessionId(event.data.session_id)
-      }
+  const handlePostMessage = (event: MessageEvent) => {
+    // ✅ Security: Validate origin
+    if (event.origin !== "https://zenmato.myshopify.com") {
+      console.warn("[Chatbot] Untrusted origin:", event.origin)
+      return
     }
 
-    window.addEventListener("message", handlePostMessage)
+    const data = event.data
 
-    // Cleanup the event listener on component unmount
-    return () => {
-      window.removeEventListener("message", handlePostMessage)
+    // ✅ Validate expected payload structure
+    if (data?.type === "init" && data.session_id) {
+      console.log("[Chatbot] Received session_id from parent:", data.session_id)
+      setSessionId(data.session_id)
+
+      if (data.source_url) {
+        console.log("[Chatbot] Received source_url:", data.source_url)
+        setSourceUrl(data.source_url)
+      }
+
+      if (data.page_context) {
+        console.log("[Chatbot] Received page_context:", data.page_context)
+        setPageContext(data.page_context)
+      }
     }
-  }, []) // Empty dependency array ensures this runs only once on mount
+  }
+
+  window.addEventListener("message", handlePostMessage)
+
+  return () => {
+    window.removeEventListener("message", handlePostMessage)
+  }
+}, [])
+ // Empty dependency array ensures this runs only once on mount
 
   useEffect(() => {
     // Check if mobile

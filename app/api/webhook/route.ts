@@ -92,6 +92,8 @@ export async function POST(request: NextRequest) {
     session_id,
     type: messageType,
     source: "chat-widget",
+    source_url,
+    page_context,
     ...(audioData
       ? { audioData, mimeType, duration }
       : { text }),
