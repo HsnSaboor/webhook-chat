@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
   const {
     webhookUrl,
     text,
-    session_id,
+    session_id: providedSessionId,
     event_type = "user_message",
     user_message,
     source_url,
@@ -34,7 +34,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
   }
 
-  // Send PRE-ZENO EVENT to n8n webhook
+  // Always prefer provided session_id, otherwise generate fallback UUID
+  const session_id = providedSessionId || crypto.randomUUID()
+
+  // 1. Send pre-Zeno event to n8n
   const preZenoPayload = {
     id: crypto.randomUUID(),
     session_id,
@@ -56,25 +59,15 @@ export async function POST(request: NextRequest) {
     body: JSON.stringify(preZenoPayload),
   })
 
-  // Call ZENO AI
-  let zenoInput: any = {
+  // 2. Call Zeno AI
+  const zenoInput = {
     timestamp: new Date().toISOString(),
-    type: type || "text",
+    session_id,
+    type: type || (audioData ? "voice" : "text"),
     source: "chat-widget",
-  }
-
-  if (type === "voice") {
-    zenoInput = {
-      ...zenoInput,
-      audioData,
-      mimeType,
-      duration,
-    }
-  } else {
-    zenoInput = {
-      ...zenoInput,
-      text,
-    }
+    ...(audioData
+      ? { audioData, mimeType, duration }
+      : { text }),
   }
 
   const webhookRes = await fetch(webhookUrl, {
@@ -105,7 +98,7 @@ export async function POST(request: NextRequest) {
 
   const responseCards = Array.isArray(responseData?.cards) ? responseData.cards : []
 
-  // Send POST-ZENO event (only if upsell)
+  // 3. Send upsell event if cards exist
   if (responseCards.length > 0) {
     const upsellEvent = {
       session_id,
