@@ -2,7 +2,6 @@
 
 import type React from "react"
 import { ChevronDown } from "lucide-react" // Added ChevronDown import
-
 import { useState, useRef, useEffect, useCallback } from "react" // Added useCallback
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -193,9 +192,15 @@ export default function ChatWidget() {
   const [isHovered, setIsHovered] = useState(false)
   const [showScrollToBottom, setShowScrollToBottom] = useState(false)
   const [addedProductVariantId, setAddedProductVariantId] = useState<string | null>(null)
+  
+  // State for data from parent
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [sourceUrl, setSourceUrl] = useState<string | null>(null)
   const [pageContext, setPageContext] = useState<string | null>(null)
+  // ++ ADDED STATE FOR NEW DATA ++
+  const [cartCurrency, setCartCurrency] = useState<string | null>(null)
+  const [localization, setLocalization] = useState<string | null>(null)
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null)
@@ -208,8 +213,8 @@ export default function ChatWidget() {
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
   const messagesContainerRef = useRef<HTMLDivElement | null>(null)
 
-  // Fixed webhook URL - hidden from user
   const webhookUrl = "https://similarly-secure-mayfly.ngrok-free.app/webhook/chat"
+
 
   // Analytics tracking function
   const trackEvent = useCallback(
@@ -241,33 +246,32 @@ export default function ChatWidget() {
   )
 
   // Listen for postMessage from parent (Shopify theme)
+  // Listen for postMessage from parent (Shopify theme)
   useEffect(() => {
     const handlePostMessage = (event: MessageEvent) => {
-      // ✅ Security: Validate origin
+      // Security: Validate origin. Use your actual Shopify store domain.
       if (event.origin !== "https://zenmato.myshopify.com") {
+        console.warn("[Chatbot] Ignoring message from untrusted origin:", event.origin)
         return
       }
 
       const data = event.data
-
-      // ✅ Validate payload structure
-      if (data?.type !== "init" || !data.session_id) {
-        return
+      if (data?.type === "init" && data.session_id) {
+        console.log("[Chatbot] Received init data from parent:", data)
+        setSessionId(data.session_id)
+        setSourceUrl(data.source_url || null)
+        setPageContext(data.page_context || null)
+        // ++ CAPTURE NEW DATA ++
+        setCartCurrency(data.cart_currency || null)
+        setLocalization(data.localization || null)
       }
-
-      // ✅ Log and set all received data
-      console.log("[Chatbot] Received init data from parent:", data)
-      setSessionId(data.session_id)
-      setSourceUrl(data.source_url || null)
-      setPageContext(data.page_context || null)
     }
 
     window.addEventListener("message", handlePostMessage)
-
     return () => {
       window.removeEventListener("message", handlePostMessage)
     }
-  }, []) // Empty dependency array ensures this runs only once on mount
+  }, [])
 
  // Empty dependency array ensures this runs only once on mount
 
@@ -495,9 +499,7 @@ export default function ChatWidget() {
   }
 
   const sendVoiceMessage = async (audioBlob: Blob, duration: number) => {
-    // Create a local URL for playback
-    const audioUrl = URL.createObjectURL(audioBlob)
-
+    const audioUrl = URL.createObjectURL(audioBlob);
     const userMessage: Message = {
       id: Date.now().toString(),
       content: "Voice message",
@@ -505,39 +507,50 @@ export default function ChatWidget() {
       timestamp: new Date(),
       type: "voice",
       audioUrl: audioUrl,
-    }
+    };
 
-    setMessages((prev) => [...prev, userMessage])
-    setIsLoading(true)
-    trackEvent("message_sent", { type: "voice", duration, messageContent: "Voice message" }) // Track voice message
+    setMessages((prev) => [...prev, userMessage]);
+    setIsLoading(true);
+    trackEvent("message_sent", { type: "voice", duration, messageContent: "Voice message" }); // Track voice message
 
     try {
-      // Convert audio blob to base64
-      const arrayBuffer = await audioBlob.arrayBuffer()
-      const base64Audio = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)))
+      const arrayBuffer = await audioBlob.arrayBuffer();
+      const base64Audio = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+      
+      let eventType = "user_message";
+      if (!sessionStorage.getItem("chat_started_logged")) {
+        eventType = "chat_started";
+        sessionStorage.setItem("chat_started_logged", "true");
+      }
 
       // ========== FIX START: Use session_id key ==========
       const webhookPayload = {
+        id: crypto.randomUUID(),
+        session_id: sessionId,
+        timestamp: new Date().toISOString(),
+        event_type: eventType,
+        user_message: `Voice message (${duration}s)`, // Context for voice
+        webhookUrl: webhookUrl,
+        source_url: sourceUrl,
+        page_context: pageContext,
+        chatbot_triggered: true,
+        conversion_tracked: false,
+        type: "voice",
         audioData: base64Audio,
         mimeType: audioBlob.type,
         duration: duration,
-        type: "voice",
-        session_id: sessionId,
-        webhookUrl,
-        source_url: sourceUrl,
-        page_context: pageContext
-      }
+        cart_currency: cartCurrency,
+        localization: localization
+      };
       // ========== FIX END ==========
 
-      console.log("[Chatbot] Sending webhook payload:", webhookPayload)
+      console.log("[Chatbot] Sending webhook payload (voice):", webhookPayload);
 
       const response = await fetch("/api/webhook", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(webhookPayload),
-      })
+      });
 
       const data = await response.json()
       console.log("[Chatbot] Received webhook response:", data)
@@ -577,36 +590,49 @@ export default function ChatWidget() {
   }
 
   const sendMessage = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
+    if (!input.trim()) return;
 
-    if (!input.trim()) return
-
+    const userMessageText = input.trim();
     const userMessage: Message = {
       id: Date.now().toString(),
-      content: input.trim(),
+      content: userMessageText,
       role: "user",
       timestamp: new Date(),
       type: "text",
-    }
+    };
 
-    setMessages((prev) => [...prev, userMessage])
-    trackEvent("message_sent", { type: "text", messageContent: input.trim() }) // Track text message
-    setInput("")
-    setIsLoading(true)
+    setMessages((prev) => [...prev, userMessage]);
+    trackEvent("message_sent", { type: "text", messageContent: userMessageText });
+    setInput("");
+    setIsLoading(true);
 
     try {
-      // ========== FIX START: Use session_id key ==========
-      const webhookPayload = {
-        text: input.trim(),
-        type: "text",
-        session_id: sessionId,
-        webhookUrl,
-        source_url: sourceUrl,
-        page_context: pageContext
+      let eventType = "user_message";
+      if (!sessionStorage.getItem("chat_started_logged")) {
+        eventType = "chat_started";
+        sessionStorage.setItem("chat_started_logged", "true");
       }
-      // ========== FIX END ==========
 
-      console.log("[Chatbot] Sending webhook payload:", webhookPayload)
+      // ++ FIXED PAYLOAD ++
+      const webhookPayload = {
+        id: crypto.randomUUID(),
+        session_id: sessionId,
+        timestamp: new Date().toISOString(),
+        event_type: eventType,
+        user_message: userMessageText,
+        webhookUrl: webhookUrl,
+        source_url: sourceUrl,
+        page_context: pageContext,
+        chatbot_triggered: true,
+        conversion_tracked: false,
+        type: "text",
+        text: userMessageText,
+        cart_currency: cartCurrency,
+        localization: localization
+      };
+
+      console.log("[Chatbot] Sending webhook payload (text):", webhookPayload);
 
       const response = await fetch("/api/webhook", {
         method: "POST",

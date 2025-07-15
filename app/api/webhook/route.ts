@@ -1,172 +1,76 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server";
 
-// Fix for environments where crypto might not be directly accessible
-const generateId = () => {
-  return typeof crypto?.randomUUID === "function"
-    ? crypto.randomUUID()
-    : Math.random().toString(36).substring(2) + Date.now().toString(36)
-}
-
+/**
+ * This route acts as a secure server-side proxy.
+ * It receives the full event payload from the chatbot client,
+ * validates it, and forwards it to the specified n8n webhook URL.
+ * It then waits for the n8n response and relays it back to the client.
+ */
 export async function POST(request: NextRequest) {
-  const rawBody = await request.text()
+  let body: any;
 
-  if (!rawBody) {
-    console.error("[Webhook] Empty body received.")
-    return NextResponse.json({ error: "Empty body" }, { status: 400 })
-  }
-
-  let body: any
+  // 1. Parse the incoming JSON from the chatbot client
   try {
-    body = JSON.parse(rawBody)
-  } catch (err) {
-    console.error("[Webhook] Failed to parse JSON:", err, "Raw Body:", rawBody)
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
+    body = await request.json();
+  } catch (error) {
+    console.error("[API Proxy] Failed to parse JSON body:", error);
+    return NextResponse.json({ error: "Invalid JSON format." }, { status: 400 });
   }
 
-  const {
-    webhookUrl,
-    text,
-    session_id,
-    event_type = "user_message",
-    user_message,
-    source_url,
-    page_context,
-    chatbot_triggered,
-    conversion_tracked,
-    product_id,
-    product_name,
-    order_id,
-    audioData,
-    mimeType,
-    duration,
-    type, // <-- was missing before
-  } = body
+  // 2. Validate the essential parts of the payload
+  const { webhookUrl, id, session_id } = body;
 
-  if (!webhookUrl || (!text && !audioData)) {
-    console.error("[Webhook] Missing required fields", { webhookUrl, text, audioData })
-    return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
+  if (!webhookUrl || !id || !session_id) {
+    console.error("[API Proxy] Payload is missing critical fields.", { webhookUrl, id, session_id });
+    return NextResponse.json(
+      { error: "Payload must include webhookUrl, id, and session_id." },
+      { status: 400 }
+    );
   }
 
-  if (!session_id) {
-    console.error("[Webhook] Missing session_id in payload", body)
-    return NextResponse.json({ error: "Missing session_id" }, { status: 400 })
-  }
-
-  const messageType = type || (audioData ? "voice" : "text")
-  console.log("[Webhook] Received session_id:", session_id)
-
-  // 1. Send pre-Zeno event to n8n
-  const preZenoPayload = {
-    id: generateId(),
-    session_id,
-    timestamp: new Date().toISOString(),
-    event_type,
-    user_message: user_message || text,
-    type: messageType,
-    source_url,
-    page_context,
-    chatbot_triggered,
-    conversion_tracked,
-    product_id,
-    product_name,
-    order_id,
-  }
-
-  console.log("[Webhook] Sending pre-Zeno payload to:", webhookUrl)
-  console.log(JSON.stringify(preZenoPayload, null, 2))
-
+  // Log the incoming event for debugging purposes
+  console.log(`[API Proxy] Forwarding Event ID: ${id}`);
+  console.log(`[API Proxy] Session ID: ${session_id}`);
+  console.log(`[API Proxy] Event Type: ${body.event_type}`);
+  // Use a deep log for the full payload if needed for intense debugging
+  // console.log("[API Proxy] Full payload to n8n:", JSON.stringify(body, null, 2));
+  
+  // 3. Forward the ENTIRE payload to the n8n webhook
   try {
-    await fetch(webhookUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(preZenoPayload),
-    })
-  } catch (err) {
-    console.error("[Webhook] Failed to send pre-Zeno payload:", err)
-    return NextResponse.json({ error: "Failed to send pre-Zeno payload" }, { status: 500 })
-  }
-
-  // 2. Send Zeno AI request
-  const zenoInput = {
-    timestamp: new Date().toISOString(),
-    session_id,
-    type: messageType,
-    source: "chat-widget",
-    source_url,
-    page_context,
-    ...(audioData
-      ? { audioData, mimeType, duration }
-      : { text }),
-  }
-
-  console.log("[Webhook] Sending Zeno input:", JSON.stringify(zenoInput, null, 2))
-
-  let webhookRes
-  try {
-    webhookRes = await fetch(webhookUrl, {
+    const n8nResponse = await fetch(webhookUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "User-Agent": "Chat-Widget/2.0",
-        "X-Widget-Source": "chat-widget",
+        "User-Agent": "Shopify-Chat-Proxy/1.0", // Identify the source of the request
       },
-      body: JSON.stringify(zenoInput),
-    })
-  } catch (err) {
-    console.error("[Webhook] Failed to send Zeno request:", err)
-    return NextResponse.json({ error: "Failed to send Zeno request" }, { status: 500 })
-  }
+      // IMPORTANT: We send the *entire* body object received from the client.
+      // n8n will now get the full, correct payload in one go.
+      body: JSON.stringify(body), 
+    });
 
-  let responseData: any
-  try {
-    const contentType = webhookRes.headers.get("content-type") || ""
-    responseData = contentType.includes("application/json")
-      ? await webhookRes.json()
-      : await webhookRes.text()
-  } catch (err) {
-    console.error("[Webhook] Failed to parse Zeno response:", err)
-    return NextResponse.json({ error: "Invalid Zeno response" }, { status: 502 })
-  }
-
-  console.log("[Webhook] Zeno response:", responseData)
-
-  const zenoMessage =
-    responseData?.message ||
-    responseData?.response ||
-    responseData?.reply ||
-    responseData?.text ||
-    "Thanks for your message!"
-
-  const responseCards = Array.isArray(responseData?.cards) ? responseData.cards : []
-
-  // 3. Send upsell event if cards exist
-  if (responseCards.length > 0) {
-    const upsellEvent = {
-      session_id,
-      timestamp: new Date().toISOString(),
-      event_type: "upsell_sent",
-      product_id: responseCards[0].id,
-      product_name: responseCards[0].name,
+    // 4. Handle the response from n8n
+    if (!n8nResponse.ok) {
+      // If n8n returns an error (e.g., 400, 500), log it and forward the error status.
+      const errorText = await n8nResponse.text();
+      console.error(`[API Proxy] n8n webhook returned an error (${n8nResponse.status}):`, errorText);
+      return NextResponse.json(
+        { error: `The AI service failed with status: ${n8nResponse.status}`, details: errorText },
+        { status: n8nResponse.status }
+      );
     }
 
-    console.log("[Webhook] Sending upsell event:", JSON.stringify(upsellEvent, null, 2))
+    // 5. Relay the successful n8n response back to the chatbot client
+    const responseData = await n8nResponse.json();
+    console.log("[API Proxy] Received successful response from n8n.");
 
-    try {
-      await fetch(webhookUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(upsellEvent),
-      })
-    } catch (err) {
-      console.warn("[Webhook] Failed to send upsell event:", err)
-    }
+    return NextResponse.json(responseData, { status: 200 });
+
+  } catch (error) {
+    // This catches network errors, e.g., if the n8n webhook URL is unreachable.
+    console.error("[API Proxy] Failed to communicate with the n8n webhook:", error);
+    return NextResponse.json(
+      { error: "Could not connect to the AI service. Please try again later." },
+      { status: 502 } // 502 Bad Gateway is the appropriate status for a proxy failure.
+    );
   }
-
-  return NextResponse.json({
-    success: true,
-    response: zenoMessage,
-    transcription: responseData?.transcription || null,
-    status: webhookRes.status,
-    cards: responseCards,
-  })
 }
