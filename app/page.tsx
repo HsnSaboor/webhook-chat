@@ -213,7 +213,7 @@ export default function ChatWidget() {
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
   const messagesContainerRef = useRef<HTMLDivElement | null>(null)
 
-  const webhookUrl = "https://similarly-secure-mayfly.ngrok-free.app/webhook/chat"
+  const webhookUrl = "https://similarly-secure-mayfly.ngrok-free.app/webhook-test/chat"
 
 
   // Analytics tracking function
