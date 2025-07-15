@@ -32,8 +32,6 @@ export async function POST(request: NextRequest) {
   console.log(`[API Proxy] Forwarding Event ID: ${id}`);
   console.log(`[API Proxy] Session ID: ${session_id}`);
   console.log(`[API Proxy] Event Type: ${body.event_type}`);
-  // Use a deep log for the full payload if needed for intense debugging
-  // console.log("[API Proxy] Full payload to n8n:", JSON.stringify(body, null, 2));
   
   // 3. Forward the ENTIRE payload to the n8n webhook
   try {
@@ -41,10 +39,11 @@ export async function POST(request: NextRequest) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "User-Agent": "Shopify-Chat-Proxy/1.0", // Identify the source of the request
+        "User-Agent": "Shopify-Chat-Proxy/1.0",
+        // This header tells ngrok to skip its browser warning page.
+        "ngrok-skip-browser-warning": "true",
       },
       // IMPORTANT: We send the *entire* body object received from the client.
-      // n8n will now get the full, correct payload in one go.
       body: JSON.stringify(body), 
     });
 
@@ -66,8 +65,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(responseData, { status: 200 });
 
   } catch (error) {
-    // This catches network errors, e.g., if the n8n webhook URL is unreachable.
-    console.error("[API Proxy] Failed to communicate with the n8n webhook:", error);
+    // This catches network errors (like the ngrok issue) or JSON parsing errors.
+    console.error("[API Proxy] Failed to communicate with or parse response from n8n webhook:", error);
     return NextResponse.json(
       { error: "Could not connect to the AI service. Please try again later." },
       { status: 502 } // 502 Bad Gateway is the appropriate status for a proxy failure.
