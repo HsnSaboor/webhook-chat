@@ -192,6 +192,25 @@ const ParticleBackground = () => (
 )
 
 export default function ChatWidget() {
+  const [sessionId, setSessionId] = useState<string | null>(null)
+  const [sourceUrl, setSourceUrl] = useState<string | null>(null)
+  const [pageContext, setPageContext] = useState<string | null>(null)
+  const [cartCurrency, setCartCurrency] = useState<string | null>(null)
+  const [localization, setLocalization] = useState<string | null>(null)
+
+  // Fallback session ID generation if not received from parent
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!sessionId) {
+        console.warn("[Chatbot] No session_id received from parent after 3 seconds, generating fallback")
+        const fallbackSessionId = crypto.randomUUID()
+        console.log("[Chatbot] Generated fallback session_id:", fallbackSessionId)
+        setSessionId(fallbackSessionId)
+      }
+    }, 3000)
+
+    return () => clearTimeout(timer)
+  }, [sessionId])
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
@@ -209,12 +228,7 @@ export default function ChatWidget() {
   const [addedProductVariantId, setAddedProductVariantId] = useState<string | null>(null)
 
   // State for data from parent
-  const [sessionId, setSessionId] = useState<string | null>(null)
-  const [sourceUrl, setSourceUrl] = useState<string | null>(null)
-  const [pageContext, setPageContext] = useState<string | null>(null)
-  // ++ ADDED STATE FOR NEW DATA ++
-  const [cartCurrency, setCartCurrency] = useState<string | null>(null)
-  const [localization, setLocalization] = useState<string | null>(null)
+
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
@@ -299,7 +313,7 @@ export default function ChatWidget() {
       if (data?.type === "conversation-history-response") {
         console.log("[Chatbot] Received conversation history from parent:", data.history)
         const history: HistoryItem[] = data.history || []
-        
+
         // Convert history items to messages
         const historyMessages: Message[] = []
         history.forEach((item, index) => {
@@ -682,8 +696,9 @@ export default function ChatWidget() {
         sessionStorage.setItem("chat_started_logged", "true");
       }
 
-      // ++ FIXED PAYLOAD ++
-      const webhookPayload = {
+      console.log("[Chatbot] Current sessionId state before sending:", sessionId)
+
+    const webhookPayload = {
         id: crypto.randomUUID(),
         session_id: sessionId,
         timestamp: new Date().toISOString(),
@@ -699,6 +714,13 @@ export default function ChatWidget() {
         cart_currency: cartCurrency,
         localization: localization
       };
+
+      console.log("[Chatbot] Payload session_id check:", {
+        sessionId,
+        payload_session_id: webhookPayload.session_id,
+        sessionId_type: typeof sessionId,
+        payload_session_id_type: typeof webhookPayload.session_id
+      })
 
       console.log("[Chatbot] Sending webhook payload (text):", webhookPayload);
 
@@ -910,7 +932,7 @@ export default function ChatWidget() {
     if (!sessionId) return
 
     setLoadingConversations(true)
-    
+
     // Check if we're in an iframe and can communicate with parent
     if (window.parent && window.parent !== window) {
       console.log("[Chatbot] Requesting conversations from parent window")
@@ -938,7 +960,7 @@ export default function ChatWidget() {
     if (!sessionId) return
 
     setLoadingHistory(true)
-    
+
     // Check if we're in an iframe and can communicate with parent
     if (window.parent && window.parent !== window) {
       console.log("[Chatbot] Requesting conversation history from parent window")

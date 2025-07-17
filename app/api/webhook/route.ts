@@ -20,10 +20,26 @@ export async function POST(request: NextRequest) {
   // 2. Validate the essential parts of the payload
   const { webhookUrl, id, session_id } = body;
 
-  if (!webhookUrl || !id || !session_id) {
-    console.error("[API Proxy] Payload is missing critical fields.", { webhookUrl, id, session_id });
+  if (!webhookUrl) {
+    console.error("[API Proxy] Missing webhookUrl in payload");
     return NextResponse.json(
-      { error: "Payload must include webhookUrl, id, and session_id." },
+      { error: "Payload must include webhookUrl." },
+      { status: 400 }
+    );
+  }
+
+  if (!id) {
+    console.error("[API Proxy] Missing id in payload");
+    return NextResponse.json(
+      { error: "Payload must include id." },
+      { status: 400 }
+    );
+  }
+
+  if (!session_id) {
+    console.error("[API Proxy] Missing session_id in payload. Received:", { session_id, type: typeof session_id });
+    return NextResponse.json(
+      { error: "Payload must include session_id." },
       { status: 400 }
     );
   }
