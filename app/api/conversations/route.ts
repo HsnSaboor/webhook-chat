@@ -5,10 +5,17 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const sessionId = searchParams.get("session_id");
 
+  // CORS headers for Shopify store
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": "https://zenmato.myshopify.com",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  };
+
   if (!sessionId) {
     return NextResponse.json(
       { error: "session_id is required" },
-      { status: 400 }
+      { status: 400, headers: corsHeaders }
     );
   }
 
@@ -37,13 +44,29 @@ export async function GET(request: NextRequest) {
     const conversations = await response.json();
     console.log("[Conversations API] Successfully fetched conversations");
 
-    return NextResponse.json(conversations, { status: 200 });
+    return NextResponse.json(conversations, { 
+      status: 200,
+      headers: corsHeaders
+    });
 
   } catch (error) {
     console.error("[Conversations API] Error fetching conversations:", error);
     return NextResponse.json(
       { error: "Failed to fetch conversations" },
-      { status: 502 }
+      { status: 502, headers: corsHeaders }
     );
   }
+}
+
+// Handle preflight OPTIONS requests
+export async function OPTIONS() {
+  return new Response(null, {
+    status: 200,
+    headers: {
+      "Access-Control-Allow-Origin": "https://zenmato.myshopify.com",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    },
+  });
+}
 }

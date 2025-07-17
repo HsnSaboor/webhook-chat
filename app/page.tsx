@@ -266,7 +266,6 @@ export default function ChatWidget() {
   )
 
   // Listen for postMessage from parent (Shopify theme)
-  // Listen for postMessage from parent (Shopify theme)
   useEffect(() => {
     const handlePostMessage = (event: MessageEvent) => {
       // Security: Validate origin. Use your actual Shopify store domain.
@@ -281,9 +280,58 @@ export default function ChatWidget() {
         setSessionId(data.session_id)
         setSourceUrl(data.source_url || null)
         setPageContext(data.page_context || null)
-        // ++ CAPTURE NEW DATA ++
         setCartCurrency(data.cart_currency || null)
         setLocalization(data.localization || null)
+      }
+
+      // Handle conversation responses from parent
+      if (data?.type === "conversations-response") {
+        console.log("[Chatbot] Received conversations from parent:", data.conversations)
+        setConversations(data.conversations?.slice(0, 3) || [])
+        setLoadingConversations(false)
+      }
+
+      if (data?.type === "conversations-error") {
+        console.error("[Chatbot] Conversation fetch error:", data.error)
+        setLoadingConversations(false)
+      }
+
+      if (data?.type === "conversation-history-response") {
+        console.log("[Chatbot] Received conversation history from parent:", data.history)
+        const history: HistoryItem[] = data.history || []
+        
+        // Convert history items to messages
+        const historyMessages: Message[] = []
+        history.forEach((item, index) => {
+          if (item.user_message) {
+            historyMessages.push({
+              id: `history-user-${index}`,
+              content: item.user_message,
+              role: "user",
+              timestamp: new Date(item.timestamp),
+              type: "text",
+            })
+          }
+          if (item.ai_message) {
+            historyMessages.push({
+              id: `history-ai-${index}`,
+              content: item.ai_message,
+              role: "webhook",
+              timestamp: new Date(item.timestamp),
+              type: "text",
+              cards: item.cards || undefined,
+            })
+          }
+        })
+
+        setMessages(historyMessages)
+        setCurrentConversationId(data.conversationId)
+        setLoadingHistory(false)
+      }
+
+      if (data?.type === "conversation-history-error") {
+        console.error("[Chatbot] Conversation history fetch error:", data.error)
+        setLoadingHistory(false)
       }
     }
 
@@ -862,16 +910,26 @@ export default function ChatWidget() {
     if (!sessionId) return
 
     setLoadingConversations(true)
-    try {
-      const response = await fetch(`/api/conversations?session_id=${encodeURIComponent(sessionId)}`)
-      if (response.ok) {
-        const data = await response.json()
-        setConversations(data.slice(0, 3)) // Show max 3 recent conversations
+    
+    // Check if we're in an iframe and can communicate with parent
+    if (window.parent && window.parent !== window) {
+      console.log("[Chatbot] Requesting conversations from parent window")
+      window.parent.postMessage({
+        type: "get-conversations"
+      }, "https://zenmato.myshopify.com")
+    } else {
+      // Fallback to direct API call if not in iframe
+      try {
+        const response = await fetch(`/api/conversations?session_id=${encodeURIComponent(sessionId)}`)
+        if (response.ok) {
+          const data = await response.json()
+          setConversations(data.slice(0, 3))
+        }
+      } catch (error) {
+        console.error("Error fetching conversations:", error)
+      } finally {
+        setLoadingConversations(false)
       }
-    } catch (error) {
-      console.error("Error fetching conversations:", error)
-    } finally {
-      setLoadingConversations(false)
     }
   }
 
@@ -880,41 +938,53 @@ export default function ChatWidget() {
     if (!sessionId) return
 
     setLoadingHistory(true)
-    try {
-      const response = await fetch(`/api/conversations/${conversationId}?session_id=${encodeURIComponent(sessionId)}`)
-      if (response.ok) {
-        const history: HistoryItem[] = await response.json()
+    
+    // Check if we're in an iframe and can communicate with parent
+    if (window.parent && window.parent !== window) {
+      console.log("[Chatbot] Requesting conversation history from parent window")
+      window.parent.postMessage({
+        type: "get-conversation-history",
+        payload: { conversationId }
+      }, "https://zenmato.myshopify.com")
+    } else {
+      // Fallback to direct API call if not in iframe
+      try {
+        const response = await fetch(`/api/conversations/${conversationId}?session_id=${encodeURIComponent(sessionId)}`)
+        if (response.ok) {
+          const history: HistoryItem[] = await response.json()
 
-        // Convert history items to messages
-        const historyMessages: Message[] = []
-        history.forEach((item, index) => {
-          if (item.user_message) {
-            historyMessages.push({
-              id: `history-user-${index}`,
-              content: item.user_message,
-              role: "user",              timestamp: new Date(item.timestamp),
-              type: "text",
-            })
-          }
-          if (item.ai_message) {
-            historyMessages.push({
-              id: `history-ai-${index}`,
-              content: item.ai_message,
-              role: "webhook",
-              timestamp: new Date(item.timestamp),
-              type: "text",
-              cards: item.cards || undefined,
-            })
-          }
-        })
+          // Convert history items to messages
+          const historyMessages: Message[] = []
+          history.forEach((item, index) => {
+            if (item.user_message) {
+              historyMessages.push({
+                id: `history-user-${index}`,
+                content: item.user_message,
+                role: "user",
+                timestamp: new Date(item.timestamp),
+                type: "text",
+              })
+            }
+            if (item.ai_message) {
+              historyMessages.push({
+                id: `history-ai-${index}`,
+                content: item.ai_message,
+                role: "webhook",
+                timestamp: new Date(item.timestamp),
+                type: "text",
+                cards: item.cards || undefined,
+              })
+            }
+          })
 
-        setMessages(historyMessages)
-        setCurrentConversationId(conversationId)
+          setMessages(historyMessages)
+          setCurrentConversationId(conversationId)
+        }
+      } catch (error) {
+        console.error("Error loading conversation history:", error)
+      } finally {
+        setLoadingHistory(false)
       }
-    } catch (error) {
-      console.error("Error loading conversation history:", error)
-    } finally {
-      setLoadingHistory(false)
     }
   }
 

@@ -1,3 +1,4 @@
+
 <iframe
         id="chatbot"
         src="https://v0-custom-chat-interface-kappa.vercel.app"
@@ -149,7 +150,7 @@
 
     // --- Helper functions for conversation management ---
     function fetchConversations(sessionId) {
-      return fetch(`/apps/chatbot/conversations?session_id=${encodeURIComponent(sessionId)}`, {
+      return fetch(`${chatbotOrigin}/api/conversations?session_id=${encodeURIComponent(sessionId)}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -163,7 +164,7 @@
     }
 
     function fetchConversationHistory(conversationId, sessionId) {
-      return fetch(`/apps/chatbot/conversations/${conversationId}?session_id=${encodeURIComponent(sessionId)}`, {
+      return fetch(`${chatbotOrigin}/api/conversations/${conversationId}?session_id=${encodeURIComponent(sessionId)}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
