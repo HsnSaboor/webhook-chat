@@ -640,7 +640,7 @@ export default function ChatWidget() {
       if (response.ok) {
         const webhookMessage: Message = {
           id: (Date.now() + 1).toString(),
-          content: data.message || data.response || data.transcription || "Voice message received successfully",
+          content: data.ai_message || data.message || data.response || data.transcription || "Voice message received successfully",
           role: "webhook",
           timestamp: new Date(),
           type: "text",
@@ -774,7 +774,7 @@ export default function ChatWidget() {
       if (response.ok) {
         const webhookMessage: Message = {
           id: (Date.now() + 1).toString(),
-          content: data.message || data.response || data.transcription || "Message received successfully",
+          content: data.ai_message || data.message || data.response || data.transcription || "Message received successfully",
           role: "webhook",
           timestamp: new Date(),
           type: "text",
@@ -883,8 +883,8 @@ export default function ChatWidget() {
     if (isDragging && isMobile) {
       e.preventDefault()
       const deltaY = dragStartY.current - e.touches[0].clientY
-      const newHeight = Math.min(Math.max(dragStartHeight.current + deltaY, 300), window.innerHeight * 0.9)
-      setChatHeight(newHeight)
+      const newHeight = Math.min(Math.max(dragStartHeight.current + deltaY, 300), window.innerHeight * 0.9);
+      setChatHeight(newHeight);
     }
   }
 
@@ -1145,7 +1145,7 @@ export default function ChatWidget() {
                     <MessageCircle className="h-6 w-6 animate-bounce" />
                   </div>
                   <div className="absolute -top-1 -right-1 h-5 w-5 bg-gradient-to-r from-green-400 to-emerald-400 rounded-full border-2 border-white shadow-lg animate-bounce-in">
-                    <div className="absolute inset-0 w-5 h-5 bg-green-400 rounded-full animate-ping opacity-40"></div>
+                    <div className="absolute inset-0 bg-green-400 rounded-full animate-ping opacity-40"></div>
                   </div>
                 </div>
                 <div>
