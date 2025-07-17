@@ -883,7 +883,8 @@ export default function ChatWidget() {
     if (isDragging && isMobile) {
       e.preventDefault()
       const deltaY = dragStartY.current - e.touches[0].clientY
-      const newHeight = Math.min(Math.max(dragStartHeight.current + deltaY, 300), window.innerHeight * 0.9)      setChatHeight(newHeight)
+      const newHeight = Math.min(Math.max(dragStartHeight.current + deltaY, 300), window.innerHeight * 0.9)
+      setChatHeight(newHeight)
     }
   }
 
