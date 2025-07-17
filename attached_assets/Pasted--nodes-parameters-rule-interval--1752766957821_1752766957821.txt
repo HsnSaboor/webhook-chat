@@ -22,7 +22,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "UPDATE conversations\nSET ended_at = now(),\n    updated_at = now()\nWHERE\n  ended_at IS NULL\n  AND NOT EXISTS (\n    SELECT 1\n    FROM chatbot_events e\n    WHERE\n      e.conversation_id = conversations.id\n      AND e.event_type = 'user_message'\n      AND now() - e.timestamp <= interval '15 minutes'\n  )\nRETURNING id;\n",
+        "query": "UPDATE conversations\nSET ended_at = now(),\n    updated_at = now()\nWHERE\n  ended_at IS NULL\n  AND created_at IS NOT NULL\n  AND NOT EXISTS (\n    SELECT 1\n    FROM chatbot_events e\n    WHERE\n      e.conversation_id = conversations.id\n      AND e.event_type = 'user_message'\n      AND now() - e.timestamp <= interval '15 minutes'\n  )\nRETURNING id;\n",
         "options": {}
       },
       "id": "6f902a2a-5914-4b89-a3ca-4384e0e8be28",

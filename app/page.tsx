@@ -671,6 +671,30 @@ export default function ChatWidget() {
     }
   }
 
+  // Save conversation when it starts
+  const saveConversation = async (conversationId: string, sessionId: string) => {
+    try {
+      const response = await fetch("/api/webhook", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          webhookUrl: `${process.env.NEXT_PUBLIC_N8N_SAVE_CONVERSATION_WEBHOOK || 'https://similarly-secure-mayfly.ngrok-free.app/webhook/save-conversation'}`,
+          conversation_id: conversationId,
+          session_id: sessionId
+        }),
+      })
+
+      if (!response.ok) {
+        console.error("Failed to save conversation:", await response.text())
+      }
+    } catch (error) {
+      console.error("Error saving conversation:", error)
+    }
+  }
+
+  // Send message function
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
@@ -697,6 +721,18 @@ export default function ChatWidget() {
       }
 
       console.log("[Chatbot] Current sessionId state before sending:", sessionId)
+
+      // Create conversation ID if we don't have one
+      let newConversationId = currentConversationId
+    if (!currentConversationId) {
+      newConversationId = crypto.randomUUID()
+      setCurrentConversationId(newConversationId)
+
+      // Save the conversation to the database immediately
+      if (sessionId) {
+        await saveConversation(newConversationId, sessionId)
+      }
+    }
 
     const webhookPayload = {
         id: crypto.randomUUID(),
@@ -847,8 +883,7 @@ export default function ChatWidget() {
     if (isDragging && isMobile) {
       e.preventDefault()
       const deltaY = dragStartY.current - e.touches[0].clientY
-      const newHeight = Math.min(Math.max(dragStartHeight.current + deltaY, 300), window.innerHeight * 0.9)
-      setChatHeight(newHeight)
+      const newHeight = Math.min(Math.max(dragStartHeight.current + deltaY, 300), window.innerHeight * 0.9)      setChatHeight(newHeight)
     }
   }
 
