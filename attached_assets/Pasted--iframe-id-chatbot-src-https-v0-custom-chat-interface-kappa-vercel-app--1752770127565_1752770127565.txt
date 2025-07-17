@@ -1,4 +1,5 @@
 
+
 <iframe
         id="chatbot"
         src="https://v0-custom-chat-interface-kappa.vercel.app"
@@ -199,20 +200,21 @@
       });
     }
 
-    // --- NEW: Save conversation function ---
+    // --- Save conversation function with proper timestamp ---
     function saveConversation(conversationId, sessionId) {
       const saveConversationWebhook = "https://similarly-secure-mayfly.ngrok-free.app/webhook/save-conversation";
       
-      return fetch(`${chatbotOrigin}/api/webhook`, {
+      return fetch(saveConversationWebhook, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Accept": "application/json"
+          "Accept": "application/json",
+          "ngrok-skip-browser-warning": "true"
         },
         body: JSON.stringify({
-          webhookUrl: saveConversationWebhook,
           conversation_id: conversationId,
-          session_id: sessionId
+          session_id: sessionId,
+          created_at: new Date().toISOString()
         })
       })
       .then(r => {
@@ -281,3 +283,4 @@
     console.log("[Shopify Theme] Chatbot system initialized.");
   })();
 </script>
+
