@@ -42,7 +42,7 @@
     // --- The origin of your chatbot iframe ---
     const chatbotOrigin = "https://v0-custom-chat-interface-kappa.vercel.app";
 
-    // --- Listen for messages coming FROM the iframe (e.g., add-to-cart) ---
+    // --- Listen for messages coming FROM the iframe (e.g., add-to-cart, conversation requests) ---
     window.addEventListener("message", function (event) {
       // ✅ FIX: Only accept messages from the trusted chatbot iframe origin.
       // This prevents the listener from reacting to other scripts or its own page events.
@@ -54,6 +54,44 @@
       // We have a trusted message, now process it.
       const { type, payload } = event.data || {};
       console.log("[Shopify Theme] Received message from iframe:", type, payload);
+
+      // Handle conversation list requests
+      if (type === "get-conversations") {
+        fetchConversations(sessionId)
+          .then(conversations => {
+            iframe.contentWindow.postMessage({
+              type: "conversations-response",
+              conversations: conversations
+            }, chatbotOrigin);
+          })
+          .catch(err => {
+            console.error("[Shopify Theme] Failed to fetch conversations:", err);
+            iframe.contentWindow.postMessage({
+              type: "conversations-error",
+              error: err.message
+            }, chatbotOrigin);
+          });
+      }
+
+      // Handle conversation history requests
+      if (type === "get-conversation-history" && payload?.conversationId) {
+        fetchConversationHistory(payload.conversationId, sessionId)
+          .then(history => {
+            iframe.contentWindow.postMessage({
+              type: "conversation-history-response",
+              conversationId: payload.conversationId,
+              history: history
+            }, chatbotOrigin);
+          })
+          .catch(err => {
+            console.error("[Shopify Theme] Failed to fetch conversation history:", err);
+            iframe.contentWindow.postMessage({
+              type: "conversation-history-error",
+              conversationId: payload.conversationId,
+              error: err.message
+            }, chatbotOrigin);
+          });
+      }
 
       // This listener is now only for events that must be handled by the parent page.
       if (type === "add-to-cart" && payload) {
@@ -81,8 +119,10 @@
     });
 
     // --- Iframe Initialization: Send data TO the iframe ---
+    let iframe; // Store iframe reference for conversation requests
+    
     document.addEventListener("DOMContentLoaded", () => {
-      const iframe = document.getElementById("chatbot");
+      iframe = document.getElementById("chatbot");
       if (!iframe) {
         console.error("[Shopify Theme] Chatbot iframe not found.");
         return;
@@ -106,6 +146,35 @@
         console.log("[Shopify Theme] Sent init data to chatbot iframe:", initPayload);
       });
     });
+
+    // --- Helper functions for conversation management ---
+    function fetchConversations(sessionId) {
+      return fetch(`/apps/chatbot/conversations?session_id=${encodeURIComponent(sessionId)}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        }
+      })
+      .then(r => {
+        if (!r.ok) throw new Error(`Failed to fetch conversations: ${r.status}`);
+        return r.json();
+      });
+    }
+
+    function fetchConversationHistory(conversationId, sessionId) {
+      return fetch(`/apps/chatbot/conversations/${conversationId}?session_id=${encodeURIComponent(sessionId)}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        }
+      })
+      .then(r => {
+        if (!r.ok) throw new Error(`Failed to fetch conversation history: ${r.status}`);
+        return r.json();
+      });
+    }
 
     // --- Helper functions for cart interactions and notifications ---
     function addItemToCart(variantId, quantity, sessionId) {
