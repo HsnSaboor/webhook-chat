@@ -1,0 +1,357 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes"
+            }
+          ]
+        }
+      },
+      "id": "b4723747-68b2-4057-a8e5-1fcd4b9de8be",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1560,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE conversations\nSET ended_at = now(),\n    updated_at = now()\nWHERE\n  ended_at IS NULL\n  AND NOT EXISTS (\n    SELECT 1\n    FROM chatbot_events e\n    WHERE\n      e.conversation_id = conversations.id\n      AND e.event_type = 'user_message'\n      AND now() - e.timestamp <= interval '15 minutes'\n  )\nRETURNING id;\n",
+        "options": {}
+      },
+      "id": "6f902a2a-5914-4b89-a3ca-4384e0e8be28",
+      "name": "Execute SQL to End Inactive Conversations",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        -1340,
+        720
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "Jc2co9tl3jbXLNeG",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  id AS conversation_id,\n  session_id\nFROM conversations\nWHERE\n  ended_at IS NOT NULL\n  AND name IS NULL;",
+        "options": {}
+      },
+      "id": "28d9a0d8-7810-4c3f-a6e2-1e8f19f0b510",
+      "name": "Execute SQL to End Inactive Conversations1",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        -1080,
+        720
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "Jc2co9tl3jbXLNeG",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  conversation_id,\n  event_type,\n  user_message,\n  ai_message,\n  timestamp\nFROM chatbot_events\nWHERE conversation_id = '{{ $json.conversation_id }}'\nORDER BY timestamp ASC;",
+        "options": {}
+      },
+      "id": "2aa735b3-e0c2-49bb-b7e8-133e032617f6",
+      "name": "Execute SQL to End Inactive Conversations2",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        -800,
+        720
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "Jc2co9tl3jbXLNeG",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const grouped = {};\n\nfor (const item of items) {\n  const data = item.json;\n\n  // For testing only – fallback if conversation_id is missing\n  const conversationId = data.conversation_id || 'test-convo';\n\n  if (!grouped[conversationId]) {\n    grouped[conversationId] = [];\n  }\n\n  if (data.user_message && data.event_type === \"user_message\") {\n    grouped[conversationId].push({\n      role: \"user\",\n      content: data.user_message.trim()\n    });\n  }\n\n  if (data.ai_message) {\n    grouped[conversationId].push({\n      role: \"assistant\",\n      content: data.ai_message.trim()\n    });\n  }\n}\n\n// Convert to array\nconst conversations = Object.entries(grouped).map(([conversation_id, history]) => ({\n  conversation_id,\n  history\n}));\n\nreturn conversations.map(c => ({ json: c }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -560,
+        720
+      ],
+      "id": "3d268831-0a57-4332-a9bf-8b3ff0068ec1",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json}}",
+        "options": {
+          "systemMessage": "Here’s a powerful **system prompt** you can use to generate **conversation titles** based on the `history` JSON (user & AI messages) per conversation.\n\n---\n\n### 🧠 System Prompt for GPT (Conversation Title Generator)\n\n````text\nYou are a conversation summarizer AI that generates short, clear titles for customer support conversations. You will receive an array of conversations. Each conversation contains a list of user and assistant messages (chat history).\n\nYour job is to:\n\n1. Understand the **main intent** of the conversation based on the messages.\n2. Generate a **brief, relevant, engaging title** (3–8 words) summarizing the core topic or goal.\n3. Return a JSON array with `conversation_id` and `title`.\n\nRules:\n- Use **title case** (capitalize each major word).\n- Never use punctuation at the end.\n- Be concise, no longer than 8 words.\n- Prefer intent-based titles (e.g., \"Track Order\", \"Anime Tee Inquiry\", \"Shipping Policy Questions\", \"Size Guide Help\").\n- Ignore greetings like \"hi\", \"hello\" unless that’s all there is.\n- If the conversation is too vague or contains only greetings, return a generic title like `\"General Inquiry\"`.\n\nInput format:\n```json\n[\n  {\n    \"conversation_id\": \"abc123\",\n    \"history\": [\n      { \"role\": \"user\", \"content\": \"Hi there, I want to know where my order is.\" },\n      { \"role\": \"assistant\", \"content\": \"Sure! Can you provide your order ID?\" }\n    ]\n  },\n  {\n    \"conversation_id\": \"def456\",\n    \"history\": [\n      { \"role\": \"user\", \"content\": \"Hi\" },\n      { \"role\": \"assistant\", \"content\": \"Welcome! How can I help?\" }\n    ]\n  }\n]\n````\n\nExpected output:\n\n```json\n[\n  { \"conversation_id\": \"abc123\", \"title\": \"Track Order\" },\n  { \"conversation_id\": \"def456\", \"title\": \"General Inquiry\" }\n]\n```\n\n```\n\n---\n\n### 🔁 How to Use in Workflow\n\nFeed the **Code node output** (grouped conversation histories) directly to GPT using this system prompt.\n\nLet me know if you want me to generate the next step as an OpenAI node in n8n, or if you want the code to call GPT-4 with this prompt using the API.\n```\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        -340,
+        720
+      ],
+      "id": "a505b661-6560-46ab-bc24-dff40291a962",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "moonshotai/kimi-k2-instruct",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -340,
+        940
+      ],
+      "id": "36dd9c59-f9d2-409e-952a-c0e26b891fde",
+      "name": "Groq Chat Model1",
+      "credentials": {
+        "groqApi": {
+          "id": "kEc1aoL1zwFA06WE",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const cleaned = [];\n\nfor (const item of items) {\n  let raw = item.json.output;\n\n  // Remove ```json or ``` wrapping\n  raw = raw.replace(/```json\\n?/g, '').replace(/```/g, '').trim();\n\n  try {\n    const parsed = JSON.parse(raw);\n    if (Array.isArray(parsed)) {\n      for (const convo of parsed) {\n        if (convo.conversation_id && convo.title) {\n          cleaned.push({ json: convo });\n        }\n      }\n    }\n  } catch (err) {\n    console.error('Failed to parse AI output:', err);\n  }\n}\n\nreturn cleaned;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        20,
+        720
+      ],
+      "id": "6eed9d87-b932-4a79-b8a7-b18aee2cbe74",
+      "name": "Code2"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "conversations",
+          "mode": "list",
+          "cachedResultName": "conversations"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.conversation_id }}",
+            "name": "={{ $json.title }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "session_id",
+              "displayName": "session_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false,
+              "removed": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false,
+              "removed": true
+            },
+            {
+              "id": "ended_at",
+              "displayName": "ended_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false,
+              "removed": true
+            },
+            {
+              "id": "started_at",
+              "displayName": "started_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false,
+              "removed": true
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        240,
+        720
+      ],
+      "id": "682fdb2f-2291-4f69-8e36-fee5276e9b8b",
+      "name": "Insert or update rows in a table1",
+      "credentials": {
+        "postgres": {
+          "id": "Jc2co9tl3jbXLNeG",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Execute SQL to End Inactive Conversations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute SQL to End Inactive Conversations": {
+      "main": [
+        [
+          {
+            "node": "Execute SQL to End Inactive Conversations1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute SQL to End Inactive Conversations1": {
+      "main": [
+        [
+          {
+            "node": "Execute SQL to End Inactive Conversations2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute SQL to End Inactive Conversations2": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code2": {
+      "main": [
+        [
+          {
+            "node": "Insert or update rows in a table1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4004a46fb0ea6cf9e1ebfd94bddadb20b9a6fd96d56937adf96616bf737240f5"
+  }
+}
