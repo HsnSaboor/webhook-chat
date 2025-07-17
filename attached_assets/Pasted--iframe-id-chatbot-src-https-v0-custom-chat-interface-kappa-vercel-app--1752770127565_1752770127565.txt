@@ -1,3 +1,4 @@
+
 <iframe
         id="chatbot"
         src="https://v0-custom-chat-interface-kappa.vercel.app"
@@ -93,6 +94,28 @@
           });
       }
 
+      // Handle save conversation requests from chatbot
+      if (type === "save-conversation" && payload?.conversationId) {
+        saveConversation(payload.conversationId, sessionId)
+          .then(() => {
+            console.log("[Shopify Theme] Conversation saved successfully:", payload.conversationId);
+            iframe.contentWindow.postMessage({
+              type: "conversation-saved",
+              conversationId: payload.conversationId,
+              success: true
+            }, chatbotOrigin);
+          })
+          .catch(err => {
+            console.error("[Shopify Theme] Failed to save conversation:", err);
+            iframe.contentWindow.postMessage({
+              type: "conversation-saved",
+              conversationId: payload.conversationId,
+              success: false,
+              error: err.message
+            }, chatbotOrigin);
+          });
+      }
+
       // This listener is now only for events that must be handled by the parent page.
       if (type === "add-to-cart" && payload) {
         const { variantId, quantity = 1, redirect = false } = payload;
@@ -172,6 +195,28 @@
       })
       .then(r => {
         if (!r.ok) throw new Error(`Failed to fetch conversation history: ${r.status}`);
+        return r.json();
+      });
+    }
+
+    // --- NEW: Save conversation function ---
+    function saveConversation(conversationId, sessionId) {
+      const saveConversationWebhook = "https://similarly-secure-mayfly.ngrok-free.app/webhook/save-conversation";
+      
+      return fetch(`${chatbotOrigin}/api/webhook`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: JSON.stringify({
+          webhookUrl: saveConversationWebhook,
+          conversation_id: conversationId,
+          session_id: sessionId
+        })
+      })
+      .then(r => {
+        if (!r.ok) throw new Error(`Failed to save conversation: ${r.status}`);
         return r.json();
       });
     }
