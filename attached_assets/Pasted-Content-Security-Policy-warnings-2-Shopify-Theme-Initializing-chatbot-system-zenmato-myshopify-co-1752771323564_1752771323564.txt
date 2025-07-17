@@ -1,0 +1,34 @@
+Content-Security-Policy warnings 2
+[Shopify Theme] Initializing chatbot system… zenmato.myshopify.com:2284:13
+[Chatbot] Determined session_id: 78ddfd09-7df6-4750-8e83-41e67f9b21b9 zenmato.myshopify.com:2309:13
+[Shopify Theme] Chatbot system initialized. zenmato.myshopify.com:2550:13
+Cookie “_shopify_test” has been rejected for invalid domain. 4 zenmato.myshopify.com
+Partitioned cookie or storage access was provided to “https://v0-custom-chat-interface-kappa.vercel.app/” because it is loaded in the third-party context and dynamic state partitioning is enabled. webpack-9ce1feb1a7ba3ba5.js:2:60
+Cookie “_shopify_s” has been rejected for invalid domain. zenmato.myshopify.com
+Cookie “_shopify_sa_p” has been rejected for invalid domain. zenmato.myshopify.com
+Cookie “_shopify_sa_t” has been rejected for invalid domain. zenmato.myshopify.com
+Cookie “_shopify_y” has been rejected for invalid domain. zenmato.myshopify.com
+Content-Security-Policy: Ignoring ‘block-all-mixed-content’ because mixed content display upgrading makes block-all-mixed-content obsolete. modern
+Layout was forced before the page was fully loaded. If stylesheets are not yet loaded this may cause a flash of unstyled content. modern
+In a sandboxed environment, addEventListener may not behave as expected. modern:7:71139
+No style found! bluesky-toolkit.js:33:29
+[Chatbot] No session_id received from parent after 3 seconds, generating fallback page-515cda0732290ea6.js:1:10095
+[Chatbot] Generated fallback session_id: b3e206cc-7bc5-4546-bb19-64452a992a41 page-515cda0732290ea6.js:1:10219
+[Chatbot] Requesting conversations from parent window page-515cda0732290ea6.js:1:21527
+[Shopify Theme] Received message from iframe: get-conversations undefined zenmato.myshopify.com:2325:15
+[Shopify Theme] Failed to fetch conversations: Error: Failed to fetch conversations: 502
+    fetchConversations https://zenmato.myshopify.com/?pb=0:2451
+zenmato.myshopify.com:2337:21
+[Chatbot] Conversation fetch error: Failed to fetch conversations: 502 954-afcbf4d36871b7ad.js:1:17078
+[Chatbot] Current sessionId state before sending: b3e206cc-7bc5-4546-bb19-64452a992a41 page-515cda0732290ea6.js:1:18171
+[Chatbot] Payload session_id check: 
+Object { sessionId: "b3e206cc-7bc5-4546-bb19-64452a992a41", payload_session_id: "b3e206cc-7bc5-4546-bb19-64452a992a41", sessionId_type: "string", payload_session_id_type: "string" }
+page-515cda0732290ea6.js:1:18480
+[Chatbot] Sending webhook payload (text): 
+Object { id: "cf989f32-d8fa-498d-9497-61ca14f6eadb", session_id: "b3e206cc-7bc5-4546-bb19-64452a992a41", timestamp: "2025-07-17T16:53:33.161Z", event_type: "user_message", user_message: "hi", webhookUrl: "https://similarly-secure-mayfly.ngrok-free.app/webhook/chat", source_url: null, page_context: null, chatbot_triggered: true, conversion_tracked: false, … }
+page-515cda0732290ea6.js:1:18645
+The resource at “https://zenmato.myshopify.com/cdn/fonts/dm_sans/dmsans_n4.ec80bd4dd7e1a334c969c265873491ae56018d72.woff2?h1=ZHJvcHNoaXBlbGVjdGlvbjIwMjQuYWNjb3VudC5teXNob3BpZnkuY29t&h2=emVubWF0by5teXNob3BpZnkuY29t&hmac=a9634ea6c9eb8cfa3f6eba02e453843df9424d7e579fba67426d5404833284a4” preloaded with link preload was not used within a few seconds. Make sure all attributes of the preload tag are set correctly. zenmato.myshopify.com
+The resource at “https://zenmato.myshopify.com/cdn/fonts/avenir_next/avenirnext_n6.dce2bdac497386d21072e6d18a9651d6fab43f93.woff2?h1=ZHJvcHNoaXBlbGVjdGlvbjIwMjQuYWNjb3VudC5teXNob3BpZnkuY29t&h2=emVubWF0by5teXNob3BpZnkuY29t&hmac=f00467bcde457b62a36fa4f16ede86fa6abb52bba97a91916e9a7036b9f24ceb” preloaded with link preload was not used within a few seconds. Make sure all attributes of the preload tag are set correctly. zenmato.myshopify.com
+[Chatbot] Received webhook response: 
+Object { error: "Could not connect to the AI service. Please try again later." }
+page-515cda0732290ea6.js:1:18841
