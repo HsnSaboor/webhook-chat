@@ -1,0 +1,65 @@
+Here’s a concise “AI‑coder” prompt you can drop into your ticketing or src comment to drive the work:
+
+---
+
+**Title:** Integrate Conversation List & History Endpoints into Chat UI
+
+**Description:**
+
+We’ve just added three new n8n webhook workflows:
+
+1. **List Conversations** (`GET /api/conversations?session_id=…`)
+
+   * Returns all convo metadata for the current visitor (id, name, started\_at, ended\_at).
+2. **Get Single Conversation** (`GET /api/conversations/:conversation_id`)
+
+   * Returns full message history (user + AI, plus cards JSON) for a given convo.
+3. **Name Ended Conversations** (Scheduled n8n job)
+
+   * Periodically marks inactive convos as ended and populates their `name` via GPT.
+
+We need you to wire these up in our Next.js chat widget:
+
+---
+
+### Tasks
+
+1. **Expose Conversation List endpoint in Next.js:**
+
+   * Create `pages/api/conversations.ts` that proxies to our n8n “list conversations” webhook.
+   * Accepts `session_id` (read from `_shopify_y` cookie).
+   * Returns `[{ conversation_id, name, started_at, ended_at }]`.
+
+2. **Expose Conversation History endpoint:**
+
+   * Create `pages/api/conversations/[id].ts` that forwards `conversation_id` and `session_id` to the n8n “single conversation” webhook.
+   * Returns full history array:
+
+     ```ts
+     type HistoryItem = {
+       event_type: string;
+       user_message: string;
+       ai_message: string;
+       cards?: Card[];
+       timestamp: string;
+     };
+     ```
+
+3. **Chat UI:**
+
+   * On widget mount, fetch `/api/conversations?session_id=…` → show a “Recent Chats” dropdown (max 3).
+   * When user selects a past convo, call `/api/conversations/:id` to load its history into the chat window.
+   * Ensure `cards` are rendered as product thumbnails when present.
+
+4. **Fallback to New Chat:**
+
+   * If no recent convos exist, defaults to blank new chat (chat\_started flow).
+
+5. **Testing:**
+
+   * Write simple unit tests for both API routes (mock n8n responses).
+   * Manually verify in dev that ended convos get names (via scheduled job) and appear in the dropdown.
+
+---
+
+Please implement the above in the existing Next.js chatbot codebase, minimizing duplication and following our coding style. Let me know if any webhook details need clarification!
