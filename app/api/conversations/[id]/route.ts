@@ -24,8 +24,16 @@ export async function GET(
   }
 
   try {
-    // Get the n8n webhook URL from environment or use a default
-    const webhookUrl = process.env.N8N_CONVERSATION_HISTORY_WEBHOOK || "https://your-n8n-instance.com/webhook/conversation-history";
+    // Get the n8n webhook URL from environment
+    const webhookUrl = process.env.N8N_CONVERSATION_HISTORY_WEBHOOK;
+    
+    if (!webhookUrl) {
+      console.error("[Conversation History API] N8N_CONVERSATION_HISTORY_WEBHOOK environment variable not set");
+      return NextResponse.json(
+        { error: "Configuration error: webhook URL not configured" },
+        { status: 500, headers: corsHeaders }
+      );
+    }
     
     const response = await fetch(webhookUrl, {
       method: "POST",

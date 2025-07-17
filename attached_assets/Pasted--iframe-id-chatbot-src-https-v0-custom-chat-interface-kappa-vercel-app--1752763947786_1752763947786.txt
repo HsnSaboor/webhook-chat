@@ -67,9 +67,10 @@
           })
           .catch(err => {
             console.error("[Shopify Theme] Failed to fetch conversations:", err);
+            // Send empty conversations array as fallback
             iframe.contentWindow.postMessage({
-              type: "conversations-error",
-              error: err.message
+              type: "conversations-response",
+              conversations: []
             }, chatbotOrigin);
           });
       }
@@ -86,10 +87,11 @@
           })
           .catch(err => {
             console.error("[Shopify Theme] Failed to fetch conversation history:", err);
+            // Send empty history as fallback
             iframe.contentWindow.postMessage({
-              type: "conversation-history-error",
+              type: "conversation-history-response",
               conversationId: payload.conversationId,
-              error: err.message
+              history: []
             }, chatbotOrigin);
           });
       }
