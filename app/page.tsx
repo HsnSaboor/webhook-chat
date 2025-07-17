@@ -40,6 +40,21 @@ interface Message {
   cards?: ProductCardData[]
 }
 
+interface Conversation {
+  conversation_id: string
+  name: string
+  started_at: string
+  ended_at?: string
+}
+
+interface HistoryItem {
+  event_type: string
+  user_message: string
+  ai_message: string
+  cards?: ProductCardData[]
+  timestamp: string
+}
+
 // Enhanced Animated Waveform Component with Audio Levels
 const AnimatedWaveform = ({ isRecording, audioLevel = 0 }: { isRecording: boolean; audioLevel?: number }) => {
   const bars = Array.from({ length: 12 }, (_, i) => i)
@@ -192,7 +207,7 @@ export default function ChatWidget() {
   const [isHovered, setIsHovered] = useState(false)
   const [showScrollToBottom, setShowScrollToBottom] = useState(false)
   const [addedProductVariantId, setAddedProductVariantId] = useState<string | null>(null)
-  
+
   // State for data from parent
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [sourceUrl, setSourceUrl] = useState<string | null>(null)
@@ -215,6 +230,11 @@ export default function ChatWidget() {
 
   const webhookUrl = "https://similarly-secure-mayfly.ngrok-free.app/webhook-test/chat"
 
+  // New states for conversation history
+  const [conversations, setConversations] = useState<Conversation[]>([])
+  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null)
+  const [loadingConversations, setLoadingConversations] = useState(false)
+  const [loadingHistory, setLoadingHistory] = useState(false)
 
   // Analytics tracking function
   const trackEvent = useCallback(
@@ -516,7 +536,7 @@ export default function ChatWidget() {
     try {
       const arrayBuffer = await audioBlob.arrayBuffer();
       const base64Audio = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-      
+
       let eventType = "user_message";
       if (!sessionStorage.getItem("chat_started_logged")) {
         eventType = "chat_started";
@@ -831,6 +851,79 @@ export default function ChatWidget() {
       })
   }
 
+  useEffect(() => {
+    if (sessionId) {
+      fetchConversations()
+    }
+  }, [sessionId])
+
+  // Fetch conversation list
+  const fetchConversations = async () => {
+    if (!sessionId) return
+
+    setLoadingConversations(true)
+    try {
+      const response = await fetch(`/api/conversations?session_id=${encodeURIComponent(sessionId)}`)
+      if (response.ok) {
+        const data = await response.json()
+        setConversations(data.slice(0, 3)) // Show max 3 recent conversations
+      }
+    } catch (error) {
+      console.error("Error fetching conversations:", error)
+    } finally {
+      setLoadingConversations(false)
+    }
+  }
+
+  // Load conversation history
+  const loadConversationHistory = async (conversationId: string) => {
+    if (!sessionId) return
+
+    setLoadingHistory(true)
+    try {
+      const response = await fetch(`/api/conversations/${conversationId}?session_id=${encodeURIComponent(sessionId)}`)
+      if (response.ok) {
+        const history: HistoryItem[] = await response.json()
+
+        // Convert history items to messages
+        const historyMessages: Message[] = []
+        history.forEach((item, index) => {
+          if (item.user_message) {
+            historyMessages.push({
+              id: `history-user-${index}`,
+              content: item.user_message,
+              role: "user",              timestamp: new Date(item.timestamp),
+              type: "text",
+            })
+          }
+          if (item.ai_message) {
+            historyMessages.push({
+              id: `history-ai-${index}`,
+              content: item.ai_message,
+              role: "webhook",
+              timestamp: new Date(item.timestamp),
+              type: "text",
+              cards: item.cards || undefined,
+            })
+          }
+        })
+
+        setMessages(historyMessages)
+        setCurrentConversationId(conversationId)
+      }
+    } catch (error) {
+      console.error("Error loading conversation history:", error)
+    } finally {
+      setLoadingHistory(false)
+    }
+  }
+
+  // Start new conversation
+  const startNewConversation = () => {
+    setMessages([])
+    setCurrentConversationId(null)
+  }
+
   return (
     <>
       {/* Enhanced Chat Widget Button with Advanced Animations */}
@@ -1018,23 +1111,42 @@ export default function ChatWidget() {
                     <div className="w-full max-w-sm rounded-lg border border-border p-4 bg-card shadow-lg animate-in fade-in slide-in-from-bottom-4 delay-200 mt-8 mx-auto">
                       <h3 className="text-lg font-semibold text-foreground mb-3">Recent Chats</h3>
                       <div className="space-y-2">
-                        {/* Placeholder for recent chats */}
-                        {[
-                          { id: "1", title: "Product Inquiry", time: "Yesterday" },
-                          { id: "2", title: "Order #12345", time: "2 days ago" },
-                          { id: "3", title: "Shipping Info", time: "Last week" },
-                        ].map((chat, idx) => (
-                          <div
-                            key={chat.id}
-                            className="py-2 px-3 rounded-md hover:bg-secondary/50 transition-colors duration-200 cursor-pointer flex justify-between items-center"
-                          >
-                            <span className="text-foreground font-medium">{chat.title}</span>
-                            <span className="text-muted-foreground text-sm">{chat.time}</span>
+                        {loadingConversations ? (
+                          <div className="text-sm text-muted-foreground animate-pulse">
+                            Loading conversations...
                           </div>
-                        ))}
+                        ) : conversations.length > 0 ? (
+                          <>
+                            {conversations.map((conversation) => (
+                              <button
+                                key={conversation.conversation_id}
+                                onClick={() => loadConversationHistory(conversation.conversation_id)}
+                                disabled={loadingHistory}
+                                className="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800 transition-colors duration-200 disabled:opacity-50"
+                              >
+                                <div className="font-medium text-sm text-foreground truncate">
+                                  {conversation.name || "Untitled Conversation"}
+                                </div>
+                                <div className="text-xs text-muted-foreground mt-1">
+                                  {new Date(conversation.started_at).toLocaleDateString()}
+                                </div>
+                              </button>
+                            ))}
+                            <button
+                              onClick={startNewConversation}
+                              className="w-full text-left p-3 rounded-lg border-2 border-dashed border-blue-300 hover:border-blue-400 hover:bg-blue-50 dark:border-blue-600 dark:hover:border-blue-500 dark:hover:bg-blue-900/20 transition-colors duration-200"
+                            >
+                              <div className="font-medium text-sm text-blue-600 dark:text-blue-400">
+                                + Start New Chat
+                              </div>
+                            </button>
+                          </>
+                        ) : (
+                          <div className="text-sm text-muted-foreground">
+                            No recent conversations. Start chatting to see your history here!
+                          </div>
+                        )}
                       </div>
-                      <div className="border-b border-border my-4"></div> {/* Line divider */}
-                      <p className="text-sm text-muted-foreground">No recent chats yet. Start a new one!</p>
                     </div>
                   </div>
                 </div>
@@ -1212,6 +1324,21 @@ export default function ChatWidget() {
               </form>
             </CardFooter>
           </Card>
+        </div>
+      )}
+       {loadingHistory && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-xl max-w-sm w-full mx-4">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                Loading conversation history...
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Please wait while we restore your chat
+              </p>
+            </div>
+          </div>
         </div>
       )}
     </>
