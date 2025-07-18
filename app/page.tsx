@@ -202,12 +202,12 @@ export default function ChatWidget() {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (!sessionId) {
-        console.warn("[Chatbot] No session_id received from parent after 3 seconds, generating fallback")
+        console.warn("[Chatbot] No session_id received from parent after 5 seconds, generating fallback")
         const fallbackSessionId = crypto.randomUUID()
         console.log("[Chatbot] Generated fallback session_id:", fallbackSessionId)
         setSessionId(fallbackSessionId)
       }
-    }, 3000)
+    }, 5000) // Extended to 5 seconds
 
     return () => clearTimeout(timer)
   }, [sessionId])
@@ -242,7 +242,7 @@ export default function ChatWidget() {
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
   const messagesContainerRef = useRef<HTMLDivElement | null>(null)
 
-  const webhookUrl = "https://similarly-secure-mayfly.ngrok-free.app/webhook/chat"
+  const webhookUrl = process.env.NEXT_PUBLIC_N8N_CHAT_WEBHOOK || "https://similarly-secure-mayfly.ngrok-free.app/webhook/chat"
 
   // New states for conversation history
   const [conversations, setConversations] = useState<Conversation[]>([])
@@ -289,6 +289,8 @@ export default function ChatWidget() {
       }
 
       const data = event.data
+      console.log("[Chatbot] Received message from parent:", data)
+      
       if (data?.type === "init" && data.session_id) {
         console.log("[Chatbot] Received init data from parent:", data)
         setSessionId(data.session_id)
@@ -679,27 +681,36 @@ export default function ChatWidget() {
   // Save conversation when it starts
   const saveConversation = async (conversationId: string, sessionId: string) => {
     try {
+      const payload = {
+        id: crypto.randomUUID(),
+        session_id: sessionId,
+        conversation_id: conversationId,
+        timestamp: new Date().toISOString(),
+        event_type: "conversation_created",
+        webhookUrl: process.env.NEXT_PUBLIC_N8N_SAVE_CONVERSATION_WEBHOOK || "https://similarly-secure-mayfly.ngrok-free.app/webhook/save-conversation",
+        source_url: sourceUrl || "https://zenmato.myshopify.com/",
+        page_context: pageContext || "Chat Widget",
+        chatbot_triggered: true,
+        conversion_tracked: false,
+        cart_currency: cartCurrency,
+        localization: localization
+      }
+
+      console.log("[Chatbot] Saving conversation with payload:", payload)
+
       const response = await fetch("/api/webhook", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          id: crypto.randomUUID(),
-          session_id: sessionId,
-          timestamp: new Date().toISOString(),
-          event_type: "conversation_created",
-          webhookUrl: "https://similarly-secure-mayfly.ngrok-free.app/webhook/save-conversation",
-          conversation_id: conversationId,
-          source_url: sourceUrl,
-          page_context: pageContext,
-          chatbot_triggered: true,
-          conversion_tracked: false
-        }),
+        body: JSON.stringify(payload),
       })
 
       if (!response.ok) {
-        console.error("Failed to save conversation:", await response.text())
+        const errorText = await response.text()
+        console.error("Failed to save conversation:", errorText)
+      } else {
+        console.log("[Chatbot] Conversation saved successfully")
       }
     } catch (error) {
       console.error("Error saving conversation:", error)
@@ -977,16 +988,25 @@ export default function ChatWidget() {
 
   // Fetch conversation list
   const fetchConversations = async () => {
-    if (!sessionId) return
+    if (!sessionId) {
+      console.warn("[Chatbot] Cannot fetch conversations: No session ID available")
+      return
+    }
 
     setLoadingConversations(true)
 
     // Check if we're in an iframe and can communicate with parent
     if (window.parent && window.parent !== window) {
-      console.log("[Chatbot] Requesting conversations from parent window")
+      console.log("[Chatbot] Requesting conversations from parent window for session:", sessionId)
       window.parent.postMessage({
-        type: "get-conversations"
+        type: "get-conversations",
+        session_id: sessionId
       }, "https://zenmato.myshopify.com")
+
+      // Set a timeout to stop loading if no response received
+      setTimeout(() => {
+        setLoadingConversations(false)
+      }, 10000) // 10 second timeout
     } else {
       // Fallback to direct API call if not in iframe
       try {
@@ -994,6 +1014,8 @@ export default function ChatWidget() {
         if (response.ok) {
           const data = await response.json()
           setConversations(data.slice(0, 3))
+        } else {
+          console.error("Failed to fetch conversations:", response.status, response.statusText)
         }
       } catch (error) {
         console.error("Error fetching conversations:", error)

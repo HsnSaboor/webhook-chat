@@ -7,85 +7,94 @@ import { type NextRequest, NextResponse } from "next/server";
  * It then waits for the n8n response and relays it back to the client.
  */
 export async function POST(request: NextRequest) {
-  let body: any;
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": "https://zenmato.myshopify.com",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  };
 
-  // 1. Parse the incoming JSON from the chatbot client
   try {
-    body = await request.json();
-  } catch (error) {
-    console.error("[API Proxy] Failed to parse JSON body:", error);
-    return NextResponse.json({ error: "Invalid JSON format." }, { status: 400 });
-  }
+    const body = await request.json();
+    console.log("Webhook request body:", JSON.stringify(body, null, 2));
 
-  // 2. Validate the essential parts of the payload
-  const { webhookUrl, id, session_id } = body;
+    // Validate required fields
+    if (!body.id) {
+      console.error("Missing required field: id");
+      return NextResponse.json(
+        { error: "Payload must include id." },
+        { status: 400, headers: corsHeaders }
+      );
+    }
 
-  if (!webhookUrl) {
-    console.error("[API Proxy] Missing webhookUrl in payload");
-    return NextResponse.json(
-      { error: "Payload must include webhookUrl." },
-      { status: 400 }
-    );
-  }
+    if (!body.session_id) {
+      console.error("Missing required field: session_id");
+      return NextResponse.json(
+        { error: "Payload must include session_id." },
+        { status: 400, headers: corsHeaders }
+      );
+    }
 
-  if (!id) {
-    console.error("[API Proxy] Missing id in payload");
-    return NextResponse.json(
-      { error: "Payload must include id." },
-      { status: 400 }
-    );
-  }
+    // Extract the webhook URL from the body
+    const webhookUrl = body.webhookUrl;
+    if (!webhookUrl) {
+      console.error("Missing webhookUrl in request body");
+      return NextResponse.json(
+        { error: "webhookUrl is required" },
+        { status: 400, headers: corsHeaders }
+      );
+    }
 
-  if (!session_id) {
-    console.error("[API Proxy] Missing session_id in payload. Received:", { session_id, type: typeof session_id });
-    return NextResponse.json(
-      { error: "Payload must include session_id." },
-      { status: 400 }
-    );
-  }
+    console.log("Forwarding request to webhook:", webhookUrl);
 
-  // Log the incoming event for debugging purposes
-  console.log(`[API Proxy] Forwarding Event ID: ${id}`);
-  console.log(`[API Proxy] Session ID: ${session_id}`);
-  console.log(`[API Proxy] Event Type: ${body.event_type}`);
-  
-  // 3. Forward the ENTIRE payload to the n8n webhook
-  try {
-    const n8nResponse = await fetch(webhookUrl, {
+    // Forward the request to the external webhook
+    const response = await fetch(webhookUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "User-Agent": "Shopify-Chat-Proxy/1.0",
-        // This header tells ngrok to skip its browser warning page.
         "ngrok-skip-browser-warning": "true",
       },
-      // IMPORTANT: We send the *entire* body object received from the client.
-      body: JSON.stringify(body), 
+      body: JSON.stringify(body),
     });
 
-    // 4. Handle the response from n8n
-    if (!n8nResponse.ok) {
-      // If n8n returns an error (e.g., 400, 500), log it and forward the error status.
-      const errorText = await n8nResponse.text();
-      console.error(`[API Proxy] n8n webhook returned an error (${n8nResponse.status}):`, errorText);
+    console.log("Webhook response status:", response.status);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Webhook error (${response.status}):`, errorText);
+
+      // Check if it's a CORS or ngrok issue
+      if (response.status === 404) {
+        return NextResponse.json(
+          { error: "The ngrok tunnel appears to be offline. Please restart your ngrok tunnel." },
+          { status: 502, headers: corsHeaders }
+        );
+      }
+
       return NextResponse.json(
-        { error: `The AI service failed with status: ${n8nResponse.status}`, details: errorText },
-        { status: n8nResponse.status }
+        { error: `The AI service failed with status: ${response.status}`, details: errorText },
+        { status: 502, headers: corsHeaders }
       );
     }
 
-    // 5. Relay the successful n8n response back to the chatbot client
-    const responseData = await n8nResponse.json();
-    console.log("[API Proxy] Received successful response from n8n.");
-
-    return NextResponse.json(responseData, { status: 200 });
+    const data = await response.json();
+    console.log("Webhook response data:", JSON.stringify(data, null, 2));
+    return NextResponse.json(data, { headers: corsHeaders });
 
   } catch (error) {
-    // This catches network errors (like the ngrok issue) or JSON parsing errors.
-    console.error("[API Proxy] Failed to communicate with or parse response from n8n webhook:", error);
+    console.error("Webhook proxy error:", error);
+
+    // Check if it's a network error
+    if (error instanceof TypeError && error.message.includes("fetch")) {
+      return NextResponse.json(
+        { error: "Cannot connect to the AI service. Please check if your ngrok tunnel is running." },
+        { status: 502, headers: corsHeaders }
+      );
+    }
+
     return NextResponse.json(
       { error: "Could not connect to the AI service. Please try again later." },
-      { status: 502 } // 502 Bad Gateway is the appropriate status for a proxy failure.
+      { status: 502, headers: corsHeaders }
     );
   }
 }
