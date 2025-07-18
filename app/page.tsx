@@ -685,9 +685,16 @@ export default function ChatWidget() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          webhookUrl: `${process.env.NEXT_PUBLIC_N8N_SAVE_CONVERSATION_WEBHOOK || 'https://similarly-secure-mayfly.ngrok-free.app/webhook/save-conversation'}`,
+          id: crypto.randomUUID(),
+          session_id: sessionId,
+          timestamp: new Date().toISOString(),
+          event_type: "conversation_created",
+          webhookUrl: "https://similarly-secure-mayfly.ngrok-free.app/webhook/save-conversation",
           conversation_id: conversationId,
-          session_id: sessionId
+          source_url: sourceUrl,
+          page_context: pageContext,
+          chatbot_triggered: true,
+          conversion_tracked: false
         }),
       })
 
