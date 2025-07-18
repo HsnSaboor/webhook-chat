@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
                       process.env.NEXT_PUBLIC_N8N_CONVERSATIONS_LIST_WEBHOOK ||
                       "https://similarly-secure-mayfly.ngrok-free.app/webhook/get-allconversations";
     
+    console.log("[Conversations API] Fetching conversations for session:", sessionId);
     console.log("[Conversations API] Using webhook URL:", webhookUrl);
     
     const response = await fetch(`${webhookUrl}?session_id=${encodeURIComponent(sessionId)}`, {
@@ -36,6 +37,8 @@ export async function GET(request: NextRequest) {
         "Access-Control-Allow-Origin": "*",
       },
     });
+
+    console.log("[Conversations API] Response status:", response.status);
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -57,9 +60,13 @@ export async function GET(request: NextRequest) {
     }
 
     const conversations = await response.json();
-    console.log("[Conversations API] Successfully fetched conversations:", conversations?.length || 0, "items");
+    console.log("[Conversations API] Raw response:", conversations);
+    console.log("[Conversations API] Successfully fetched conversations:", Array.isArray(conversations) ? conversations.length : 'Not an array', "items");
 
-    return NextResponse.json(conversations, { 
+    // Ensure we return an array
+    const conversationsArray = Array.isArray(conversations) ? conversations : [];
+
+    return NextResponse.json(conversationsArray, { 
       status: 200,
       headers: corsHeaders
     });

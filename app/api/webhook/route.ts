@@ -37,6 +37,16 @@ export async function POST(request: NextRequest) {
       // Use the webhookUrl from the payload, or fall back to default
       const webhookUrl = body.webhookUrl || "https://similarly-secure-mayfly.ngrok-free.app/webhook/save-conversation";
 
+      // Ensure timestamp is properly formatted and not null
+      const savePayload = {
+        ...body,
+        timestamp: body.timestamp || new Date().toISOString(),
+        session_id: body.session_id || null,
+        conversation_id: body.conversation_id || null,
+      };
+
+      console.log("[Webhook Proxy] Save conversation payload:", savePayload);
+
       // Forward the request to the n8n webhook
       const response = await fetch(webhookUrl, {
         method: "POST",
@@ -45,7 +55,7 @@ export async function POST(request: NextRequest) {
           "User-Agent": "Shopify-Chat-Proxy/1.0",
           "ngrok-skip-browser-warning": "true",
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify(savePayload),
       });
 
       console.log(`[Webhook Proxy] Save conversation response status: ${response.status}`);

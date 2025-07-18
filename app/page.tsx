@@ -395,13 +395,11 @@ export default function ChatWidget() {
     if (isOpen) {
       if (sessionId) {
         trackEvent("chat_opened", { initialMessagesCount: messages.length })
-        // Fetch conversations when chat opens if we don't have any
-        if (conversations.length === 0) {
-          fetchConversations()
-        }
+        // Always fetch conversations when chat opens to get latest data
+        fetchConversations()
       }
-      if (messages.length === 0) {
-        // Only add welcome message if chat is empty
+      if (messages.length === 0 && !currentConversationId) {
+        // Only add welcome message if chat is empty and no conversation is active
         setMessages([
           {
             id: "welcome",
@@ -996,21 +994,29 @@ export default function ChatWidget() {
     }
 
     setLoadingConversations(true)
+    console.log("[Chatbot] Fetching conversations for session:", sessionId)
 
     try {
       // First try using our local API route
       const response = await fetch(`/api/conversations?session_id=${encodeURIComponent(sessionId)}`)
+      console.log("[Chatbot] API response status:", response.status)
+      
       if (response.ok) {
         const data = await response.json()
-        setConversations(data.slice(0, 3))
-        console.log("[Chatbot] Successfully fetched conversations via API:", data)
+        console.log("[Chatbot] Raw conversations data:", data)
+        
+        // Handle both array and object responses
+        const conversationsArray = Array.isArray(data) ? data : (data.conversations || [])
+        setConversations(conversationsArray.slice(0, 3))
+        console.log("[Chatbot] Successfully fetched conversations via API:", conversationsArray.length, "conversations")
         setLoadingConversations(false)
         return
       } else {
-        console.warn("[Chatbot] API route failed, trying parent window...")
+        const errorText = await response.text()
+        console.warn("[Chatbot] API route failed with status:", response.status, "Error:", errorText)
       }
     } catch (error) {
-      console.warn("[Chatbot] API route error, trying parent window:", error)
+      console.warn("[Chatbot] API route error:", error)
     }
 
     // Fallback to parent window communication if API fails
@@ -1023,70 +1029,96 @@ export default function ChatWidget() {
 
       // Set a timeout to stop loading if no response received
       setTimeout(() => {
-        setLoadingConversations(false)
+        if (loadingConversations) {
+          console.warn("[Chatbot] Timeout waiting for conversations from parent")
+          setLoadingConversations(false)
+        }
       }, 10000) // 10 second timeout
     } else {
+      console.log("[Chatbot] Not in iframe context, setting empty conversations")
+      setConversations([])
       setLoadingConversations(false)
     }
   }
 
   // Load conversation history
   const loadConversationHistory = async (conversationId: string) => {
-    if (!sessionId) return
+    if (!sessionId) {
+      console.warn("[Chatbot] Cannot load conversation history: No session ID available")
+      return
+    }
 
     setLoadingHistory(true)
+    console.log("[Chatbot] Loading conversation history for:", conversationId)
 
-    // Check if we're in an iframe and can communicate with parent
+    try {
+      // First try using our local API route
+      const response = await fetch(`/api/conversations/${conversationId}?session_id=${encodeURIComponent(sessionId)}`)
+      console.log("[Chatbot] History API response status:", response.status)
+      
+      if (response.ok) {
+        const history: HistoryItem[] = await response.json()
+        console.log("[Chatbot] Successfully fetched conversation history:", history.length, "items")
+
+        // Convert history items to messages
+        const historyMessages: Message[] = []
+        history.forEach((item, index) => {
+          if (item.user_message) {
+            historyMessages.push({
+              id: `history-user-${index}`,
+              content: item.user_message,
+              role: "user",
+              timestamp: new Date(item.timestamp),
+              type: "text",
+            })
+          }
+          if (item.ai_message) {
+            historyMessages.push({
+              id: `history-ai-${index}`,
+              content: item.ai_message,
+              role: "webhook",
+              timestamp: new Date(item.timestamp),
+              type: "text",
+              cards: item.cards || undefined,
+            })
+          }
+        })
+
+        setMessages(historyMessages)
+        setCurrentConversationId(conversationId)
+        setLoadingHistory(false)
+        return
+      } else {
+        const errorText = await response.text()
+        console.warn("[Chatbot] History API failed with status:", response.status, "Error:", errorText)
+      }
+    } catch (error) {
+      console.error("[Chatbot] Error loading conversation history via API:", error)
+    }
+
+    // Fallback to parent window communication if API fails
     if (window.parent && window.parent !== window) {
       console.log("[Chatbot] Requesting conversation history from parent window")
       window.parent.postMessage({
         type: "get-conversation-history",
         payload: { conversationId }
       }, "https://zenmato.myshopify.com")
-    } else {
-      // Fallback to direct API call if not in iframe
-      try {
-        const response = await fetch(`/api/conversations/${conversationId}?session_id=${encodeURIComponent(sessionId)}`)
-        if (response.ok) {
-          const history: HistoryItem[] = await response.json()
 
-          // Convert history items to messages
-          const historyMessages: Message[] = []
-          history.forEach((item, index) => {
-            if (item.user_message) {
-              historyMessages.push({
-                id: `history-user-${index}`,
-                content: item.user_message,
-                role: "user",
-                timestamp: new Date(item.timestamp),
-                type: "text",
-              })
-            }
-            if (item.ai_message) {
-              historyMessages.push({
-                id: `history-ai-${index}`,
-                content: item.ai_message,
-                role: "webhook",
-                timestamp: new Date(item.timestamp),
-                type: "text",
-                cards: item.cards || undefined,
-              })
-            }
-          })
-
-          setMessages(historyMessages)
-          setCurrentConversationId(conversationId)
+      // Set a timeout to stop loading if no response received
+      setTimeout(() => {
+        if (loadingHistory) {
+          console.warn("[Chatbot] Timeout waiting for conversation history from parent")
+          setLoadingHistory(false)
         }
-      } catch (error) {
-        console.error("Error loading conversation history:", error)
-      } finally {
-        setLoadingHistory(false)
-      }
+      }, 10000) // 10 second timeout
+    } else {
+      setLoadingHistory(false)
     }
   }
 
   // Start new conversation
   const startNewConversation = () => {
+    console.log("[Chatbot] Starting new conversation")
     setMessages([
       {
         id: "welcome",
@@ -1097,8 +1129,9 @@ export default function ChatWidget() {
       },
     ])
     setCurrentConversationId(null)
-    // Refresh conversations list when going back to home
+    // Always refresh conversations list when going back to home
     if (sessionId) {
+      console.log("[Chatbot] Refreshing conversations list")
       fetchConversations()
     }
   }
