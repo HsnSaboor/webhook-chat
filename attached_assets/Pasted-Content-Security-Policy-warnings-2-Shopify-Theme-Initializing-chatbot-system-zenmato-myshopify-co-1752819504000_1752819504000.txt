@@ -1,0 +1,82 @@
+Content-Security-Policy warnings 2
+[Shopify Theme] Initializing chatbot system… zenmato.myshopify.com:2284:13
+[Chatbot] Determined session_id: 78ddfd09-7df6-4750-8e83-41e67f9b21b9 zenmato.myshopify.com:2309:13
+[Shopify Theme] Chatbot system initialized. zenmato.myshopify.com:2550:13
+Cookie “_shopify_test” has been rejected for invalid domain. zenmato.myshopify.com
+Cookie “_shopify_test” has been rejected for invalid domain. zenmato.myshopify.com
+Cookie “_shopify_test” has been rejected for invalid domain. zenmato.myshopify.com
+Cookie “_shopify_test” has been rejected for invalid domain. zenmato.myshopify.com
+Cookie “_shopify_s” has been rejected for invalid domain. zenmato.myshopify.com
+Cookie “_shopify_sa_p” has been rejected for invalid domain. zenmato.myshopify.com
+Cookie “_shopify_sa_t” has been rejected for invalid domain. zenmato.myshopify.com
+Cookie “_shopify_y” has been rejected for invalid domain. zenmato.myshopify.com
+Multiple import maps are not allowed. srcdoc:1:155
+Content-Security-Policy: Ignoring ‘block-all-mixed-content’ because mixed content display upgrading makes block-all-mixed-content obsolete. modern
+In a sandboxed environment, addEventListener may not behave as expected. modern:7:71139
+Partitioned cookie or storage access was provided to “https://v0-custom-chat-interface-kappa.vercel.app/” because it is loaded in the third-party context and dynamic state partitioning is enabled. webpack-9ce1feb1a7ba3ba5.js:2:60
+[Shopify Theme] Sent init data to chatbot iframe: 
+Object { type: "init", session_id: "78ddfd09-7df6-4750-8e83-41e67f9b21b9", source_url: "https://zenmato.myshopify.com/", page_context: "EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "PK" }
+zenmato.myshopify.com:2437:17
+[Chatbot] Received init data from parent: 
+Object { type: "init", session_id: "78ddfd09-7df6-4750-8e83-41e67f9b21b9", source_url: "https://zenmato.myshopify.com/", page_context: "EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "PK" }
+page-7d747500cfd0b2dd.js:1:11774
+[Chatbot] Requesting conversations from parent window page-7d747500cfd0b2dd.js:1:22190
+[Shopify Theme] Received message from iframe: get-conversations undefined zenmato.myshopify.com:2325:15
+XHRGET
+https://v0-custom-chat-interface-kappa.vercel.app/api/conversations?session_id=78ddfd09-7df6-4750-8e83-41e67f9b21b9
+[HTTP/2 502  541ms]
+
+No style found! bluesky-toolkit.js:33:29
+[Shopify Theme] Failed to fetch conversations: Error: Failed to fetch conversations: 502
+    fetchConversations https://zenmato.myshopify.com/:2451
+    promise callback*fetchConversations https://zenmato.myshopify.com/:2450
+    <anonymous> https://zenmato.myshopify.com/:2329
+    EventListener.handleEvent* https://zenmato.myshopify.com/:2315
+    <anonymous> https://zenmato.myshopify.com/:2551
+zenmato.myshopify.com:2337:21
+[Chatbot] Conversation fetch error: Failed to fetch conversations: 502 954-afcbf4d36871b7ad.js:1:17078
+The resource at “https://zenmato.myshopify.com/cdn/fonts/dm_sans/dmsans_n4.ec80bd4dd7e1a334c969c265873491ae56018d72.woff2?h1=ZHJvcHNoaXBlbGVjdGlvbjIwMjQuYWNjb3VudC5teXNob3BpZnkuY29t&h2=emVubWF0by5teXNob3BpZnkuY29t&hmac=a9634ea6c9eb8cfa3f6eba02e453843df9424d7e579fba67426d5404833284a4” preloaded with link preload was not used within a few seconds. Make sure all attributes of the preload tag are set correctly. zenmato.myshopify.com
+The resource at “https://zenmato.myshopify.com/cdn/fonts/avenir_next/avenirnext_n6.dce2bdac497386d21072e6d18a9651d6fab43f93.woff2?h1=ZHJvcHNoaXBlbGVjdGlvbjIwMjQuYWNjb3VudC5teXNob3BpZnkuY29t&h2=emVubWF0by5teXNob3BpZnkuY29t&hmac=f00467bcde457b62a36fa4f16ede86fa6abb52bba97a91916e9a7036b9f24ceb” preloaded with link preload was not used within a few seconds. Make sure all attributes of the preload tag are set correctly. zenmato.myshopify.com
+[Chatbot] Requesting conversations from parent window page-7d747500cfd0b2dd.js:1:22190
+[Shopify Theme] Received message from iframe: get-conversations undefined zenmato.myshopify.com:2325:15
+XHRGET
+https://v0-custom-chat-interface-kappa.vercel.app/api/conversations?session_id=78ddfd09-7df6-4750-8e83-41e67f9b21b9
+[HTTP/2 502  1006ms]
+
+[Shopify Theme] Failed to fetch conversations: Error: Failed to fetch conversations: 502
+    fetchConversations https://zenmato.myshopify.com/:2451
+    promise callback*fetchConversations https://zenmato.myshopify.com/:2450
+    <anonymous> https://zenmato.myshopify.com/:2329
+    EventListener.handleEvent* https://zenmato.myshopify.com/:2315
+    <anonymous> https://zenmato.myshopify.com/:2551
+zenmato.myshopify.com:2337:21
+[Chatbot] Conversation fetch error: Failed to fetch conversations: 502 954-afcbf4d36871b7ad.js:1:17078
+[Chatbot] Current sessionId state before sending: 78ddfd09-7df6-4750-8e83-41e67f9b21b9 page-7d747500cfd0b2dd.js:1:18759
+XHRPOST
+https://v0-custom-chat-interface-kappa.vercel.app/api/webhook
+[HTTP/2 502  1867ms]
+
+Failed to save conversation: {"error":"Could not connect to the AI service. Please try again later."} 954-afcbf4d36871b7ad.js:1:17078
+[Chatbot] Payload session_id check: 
+Object { sessionId: "78ddfd09-7df6-4750-8e83-41e67f9b21b9", payload_session_id: "78ddfd09-7df6-4750-8e83-41e67f9b21b9", sessionId_type: "string", payload_session_id_type: "string" }
+page-7d747500cfd0b2dd.js:1:19129
+[Chatbot] Sending webhook payload (text): 
+Object { id: "1cf9ef3d-d949-42bd-b9c6-8fb50110812c", session_id: "78ddfd09-7df6-4750-8e83-41e67f9b21b9", timestamp: "2025-07-18T06:16:05.638Z", event_type: "user_message", user_message: "hi", webhookUrl: "https://similarly-secure-mayfly.ngrok-free.app/webhook/chat", source_url: "https://zenmato.myshopify.com/", page_context: "EcomHQ Zenmato Demo – ZENMATO", chatbot_triggered: true, conversion_tracked: false, … }
+page-7d747500cfd0b2dd.js:1:19294
+[Chatbot] Received webhook response: 
+Object { timestamp: "2025-07-18T06:16:05.638Z", session_id: "78ddfd09-7df6-4750-8e83-41e67f9b21b9", event_type: "greeting", user_message: "hi", product_id: null, product_name: null, order_id: null, source_url: "https://zenmato.myshopify.com/", page_context: "EcomHQ Zenmato Demo – ZENMATO", chatbot_triggered: true, … }
+page-7d747500cfd0b2dd.js:1:19490
+[Chatbot] Requesting conversations from parent window page-7d747500cfd0b2dd.js:1:22190
+[Shopify Theme] Received message from iframe: get-conversations undefined zenmato.myshopify.com:2325:15
+XHRGET
+https://v0-custom-chat-interface-kappa.vercel.app/api/conversations?session_id=78ddfd09-7df6-4750-8e83-41e67f9b21b9
+[HTTP/2 502  441ms]
+
+[Shopify Theme] Failed to fetch conversations: Error: Failed to fetch conversations: 502
+    fetchConversations https://zenmato.myshopify.com/:2451
+    promise callback*fetchConversations https://zenmato.myshopify.com/:2450
+    <anonymous> https://zenmato.myshopify.com/:2329
+    EventListener.handleEvent* https://zenmato.myshopify.com/:2315
+    <anonymous> https://zenmato.myshopify.com/:2551
+zenmato.myshopify.com:2337:21
+[Chatbot] Conversation fetch error: Failed to fetch conversations: 502 954-afcbf4d36871b7ad.js:1:17078
