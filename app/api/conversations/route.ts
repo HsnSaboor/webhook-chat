@@ -28,14 +28,17 @@ export async function GET(request: NextRequest) {
     console.log("[Conversations API] Fetching conversations for session:", sessionId);
     console.log("[Conversations API] Using webhook URL:", webhookUrl);
     
-    const response = await fetch(`${webhookUrl}?session_id=${encodeURIComponent(sessionId)}`, {
-      method: "GET",
+    // Make the request to n8n webhook
+    const response = await fetch(webhookUrl, {
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
         "User-Agent": "Shopify-Chat-Proxy/1.0",
         "ngrok-skip-browser-warning": "true",
-        "Access-Control-Allow-Origin": "*",
       },
+      body: JSON.stringify({
+        session_id: sessionId
+      }),
     });
 
     console.log("[Conversations API] Response status:", response.status);

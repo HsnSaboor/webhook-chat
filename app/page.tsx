@@ -290,7 +290,7 @@ export default function ChatWidget() {
 
       const data = event.data
       console.log("[Chatbot] Received message from parent:", data)
-      
+
       if (data?.type === "init" && data.session_id) {
         console.log("[Chatbot] Received init data from parent:", data)
         setSessionId(data.session_id)
@@ -885,6 +885,7 @@ export default function ChatWidget() {
     }
   }
 
+```text
   const handleTouchStart = (e: React.TouchEvent) => {
     if (isMobile) {
       e.preventDefault()
@@ -1000,11 +1001,11 @@ export default function ChatWidget() {
       // First try using our local API route
       const response = await fetch(`/api/conversations?session_id=${encodeURIComponent(sessionId)}`)
       console.log("[Chatbot] API response status:", response.status)
-      
+
       if (response.ok) {
         const data = await response.json()
         console.log("[Chatbot] Raw conversations data:", data)
-        
+
         // Handle both array and object responses
         const conversationsArray = Array.isArray(data) ? data : (data.conversations || [])
         setConversations(conversationsArray.slice(0, 3))
@@ -1055,7 +1056,7 @@ export default function ChatWidget() {
       // First try using our local API route
       const response = await fetch(`/api/conversations/${conversationId}?session_id=${encodeURIComponent(sessionId)}`)
       console.log("[Chatbot] History API response status:", response.status)
-      
+
       if (response.ok) {
         const history: HistoryItem[] = await response.json()
         console.log("[Chatbot] Successfully fetched conversation history:", history.length, "items")
