@@ -1,0 +1,54 @@
+Content-Security-Policy warnings 2
+[Shopify Theme] Initializing chatbot system... zenmato.myshopify.com:2660:11
+[Chatbot] Determined session_id: session_0lur6a8ab_1752820119301 zenmato.myshopify.com:2669:11
+Uncaught TypeError: can't access property "closest", discountBlock is null
+    handleGenerateDiscountBlock https://cdn.shopify.com/extensions/e5160c7c-70b8-442a-aabf-bc586a4cca11/ns-discount-in-cart-49/assets/bluesky-toolkit.js:282
+    <anonymous> https://cdn.shopify.com/extensions/e5160c7c-70b8-442a-aabf-bc586a4cca11/ns-discount-in-cart-49/assets/bluesky-toolkit.js:294
+bluesky-toolkit.js:282:5
+Cookie “_shopify_test” has been rejected for invalid domain. 4 zenmato.myshopify.com
+Cookie “_shopify_s” has been rejected for invalid domain. zenmato.myshopify.com
+Cookie “_shopify_sa_p” has been rejected for invalid domain. zenmato.myshopify.com
+Cookie “_shopify_sa_t” has been rejected for invalid domain. zenmato.myshopify.com
+Cookie “_shopify_y” has been rejected for invalid domain. zenmato.myshopify.com
+[Shopify Theme] Chatbot system initialized. zenmato.myshopify.com:2963:13
+Content-Security-Policy: Ignoring ‘block-all-mixed-content’ because mixed content display upgrading makes block-all-mixed-content obsolete. modern
+Layout was forced before the page was fully loaded. If stylesheets are not yet loaded this may cause a flash of unstyled content. modern
+In a sandboxed environment, addEventListener may not behave as expected. modern:7:71139
+[Shopify Theme] Ignoring message from untrusted origin: null zenmato.myshopify.com:2797:15
+[Shopify Theme] Ignoring message from untrusted origin: https://zenmato.myshopify.com zenmato.myshopify.com:2797:15
+[Shopify Theme] Ignoring message from untrusted origin: null 5 zenmato.myshopify.com:2797:15
+[Shopify Theme] Sent init data to chatbot iframe: 
+Object { type: "init", session_id: "session_0lur6a8ab_1752820119301", source_url: "https://zenmato.myshopify.com/", page_context: "EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en" }
+zenmato.myshopify.com:2958:15
+Partitioned cookie or storage access was provided to “https://v0-custom-chat-interface-kappa.vercel.app/” because it is loaded in the third-party context and dynamic state partitioning is enabled. webpack-9ce1feb1a7ba3ba5.js:2:60
+[Chatbot] Received message from parent: 
+Object { type: "init", session_id: "session_0lur6a8ab_1752820119301", source_url: "https://zenmato.myshopify.com/", page_context: "EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en" }
+page-5c6be8d28c47eb5e.js:1:11780
+[Chatbot] Received init data from parent: 
+Object { type: "init", session_id: "session_0lur6a8ab_1752820119301", source_url: "https://zenmato.myshopify.com/", page_context: "EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en" }
+page-5c6be8d28c47eb5e.js:1:11886
+[Chatbot] Successfully fetched conversations via API: 
+Array []
+page-5c6be8d28c47eb5e.js:1:22802
+[Chatbot] Successfully fetched conversations via API: 
+Array []
+page-5c6be8d28c47eb5e.js:1:22802
+[Chatbot] Current sessionId state before sending: session_0lur6a8ab_1752820119301 page-5c6be8d28c47eb5e.js:1:19193
+[Chatbot] Saving conversation with payload: 
+Object { id: "5eea89f5-c428-488c-ab2c-cdbbab195cda", session_id: "session_0lur6a8ab_1752820119301", conversation_id: "4530e4c7-aa98-4fe7-8375-ab521b0e935f", timestamp: "2025-07-18T09:24:43.037Z", event_type: "conversation_created", webhookUrl: "https://similarly-secure-mayfly.ngrok-free.app/webhook/save-conversation", source_url: "https://zenmato.myshopify.com/", page_context: "EcomHQ Zenmato Demo – ZENMATO", chatbot_triggered: true, conversion_tracked: false, … }
+page-5c6be8d28c47eb5e.js:1:18411
+Failed to save conversation: 
+Object { error: "Internal server error" }
+954-afcbf4d36871b7ad.js:1:17078
+[Chatbot] Payload session_id check: 
+Object { sessionId: "session_0lur6a8ab_1752820119301", payload_session_id: "session_0lur6a8ab_1752820119301", sessionId_type: "string", payload_session_id_type: "string" }
+page-5c6be8d28c47eb5e.js:1:19563
+[Chatbot] Sending webhook payload (text): 
+Object { id: "2d4ce1dd-f12b-4354-aff0-121c5f33372e", session_id: "session_0lur6a8ab_1752820119301", timestamp: "2025-07-18T09:24:44.907Z", event_type: "chat_started", user_message: "hi", webhookUrl: "https://similarly-secure-mayfly.ngrok-free.app/webhook/chat", source_url: "https://zenmato.myshopify.com/", page_context: "EcomHQ Zenmato Demo – ZENMATO", chatbot_triggered: true, conversion_tracked: false, … }
+page-5c6be8d28c47eb5e.js:1:19728
+[Chatbot] Received webhook response: 
+Object { timestamp: "2025-07-18T09:24:44.907Z", session_id: "session_0lur6a8ab_1752820119301", event_type: "greeting", user_message: "hi", product_id: null, product_name: null, order_id: null, source_url: "https://zenmato.myshopify.com/", page_context: "EcomHQ Zenmato Demo – ZENMATO", chatbot_triggered: true, … }
+page-5c6be8d28c47eb5e.js:1:19924
+[Chatbot] Successfully fetched conversations via API: 
+Array []
+page-5c6be8d28c47eb5e.js:1:22802
