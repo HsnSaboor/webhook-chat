@@ -393,6 +393,10 @@ export default function ChatWidget() {
     if (isOpen) {
       if (sessionId) {
         trackEvent("chat_opened", { initialMessagesCount: messages.length })
+        // Fetch conversations when chat opens if we don't have any
+        if (conversations.length === 0) {
+          fetchConversations()
+        }
       }
       if (messages.length === 0) {
         // Only add welcome message if chat is empty
@@ -408,6 +412,7 @@ export default function ChatWidget() {
       }
     } else if (!isOpen) {
       setMessages([]) // Clear messages on close
+      setCurrentConversationId(null) // Reset conversation when closing
     }
   }, [isOpen, sessionId, trackEvent])
 
@@ -1048,8 +1053,20 @@ export default function ChatWidget() {
 
   // Start new conversation
   const startNewConversation = () => {
-    setMessages([])
+    setMessages([
+      {
+        id: "welcome",
+        content: "Hello! How can I assist you today? Feel free to ask me anything about our products or services.",
+        role: "webhook",
+        timestamp: new Date(),
+        type: "text",
+      },
+    ])
     setCurrentConversationId(null)
+    // Refresh conversations list when going back to home
+    if (sessionId) {
+      fetchConversations()
+    }
   }
 
   return (
@@ -1160,6 +1177,18 @@ export default function ChatWidget() {
               </div>
 
               <div className="flex items-center space-x-3 mt-2 relative z-10">
+                {/* Back to home button - only show when in an active conversation */}
+                {currentConversationId && messages.length > 1 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={startNewConversation}
+                    className="text-white hover:bg-white/25 h-12 w-12 p-0 rounded-full transition-all duration-500 hover:scale-110 backdrop-blur-md border-2 border-white/30 hover:shadow-neon"
+                    title="Back to home"
+                  >
+                    <ChevronDown className="h-6 w-6 rotate-90" />
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
