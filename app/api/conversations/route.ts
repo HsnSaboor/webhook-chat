@@ -20,16 +20,12 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Get the n8n webhook URL from environment
-    const webhookUrl = process.env.N8N_CONVERSATIONS_LIST_WEBHOOK;
+    // Get the n8n webhook URL from environment, fallback to ngrok URL
+    const webhookUrl = process.env.N8N_CONVERSATIONS_LIST_WEBHOOK || 
+                      process.env.NEXT_PUBLIC_N8N_CONVERSATIONS_LIST_WEBHOOK ||
+                      "https://similarly-secure-mayfly.ngrok-free.app/webhook/get-allconversations";
     
-    if (!webhookUrl) {
-      console.error("[Conversations API] N8N_CONVERSATIONS_LIST_WEBHOOK environment variable not set");
-      return NextResponse.json(
-        { error: "Configuration error: webhook URL not configured" },
-        { status: 500, headers: corsHeaders }
-      );
-    }
+    console.log("[Conversations API] Using webhook URL:", webhookUrl);
     
     const response = await fetch(`${webhookUrl}?session_id=${encodeURIComponent(sessionId)}`, {
       method: "GET",
@@ -37,20 +33,31 @@ export async function GET(request: NextRequest) {
         "Content-Type": "application/json",
         "User-Agent": "Shopify-Chat-Proxy/1.0",
         "ngrok-skip-browser-warning": "true",
+        "Access-Control-Allow-Origin": "*",
       },
     });
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`[Conversations API] n8n webhook error (${response.status}):`, errorText);
+      
+      // Return empty array instead of error for better UX
+      if (response.status === 404 || response.status === 500) {
+        console.log("[Conversations API] Returning empty conversations due to service unavailability");
+        return NextResponse.json([], { 
+          status: 200,
+          headers: corsHeaders
+        });
+      }
+      
       return NextResponse.json(
         { error: `Failed to fetch conversations: ${response.status}` },
-        { status: response.status }
+        { status: response.status, headers: corsHeaders }
       );
     }
 
     const conversations = await response.json();
-    console.log("[Conversations API] Successfully fetched conversations");
+    console.log("[Conversations API] Successfully fetched conversations:", conversations?.length || 0, "items");
 
     return NextResponse.json(conversations, { 
       status: 200,
@@ -59,10 +66,13 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error("[Conversations API] Error fetching conversations:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch conversations" },
-      { status: 502, headers: corsHeaders }
-    );
+    
+    // Return empty array for network errors to prevent breaking the UI
+    console.log("[Conversations API] Returning empty conversations due to network error");
+    return NextResponse.json([], { 
+      status: 200,
+      headers: corsHeaders
+    });
   }
 }
 

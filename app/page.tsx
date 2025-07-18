@@ -687,13 +687,15 @@ export default function ChatWidget() {
         conversation_id: conversationId,
         timestamp: new Date().toISOString(),
         event_type: "conversation_created",
-        webhookUrl: process.env.NEXT_PUBLIC_N8N_SAVE_CONVERSATION_WEBHOOK || "https://similarly-secure-mayfly.ngrok-free.app/webhook/save-conversation",
+        webhookUrl: "https://similarly-secure-mayfly.ngrok-free.app/webhook/save-conversation",
         source_url: sourceUrl || "https://zenmato.myshopify.com/",
         page_context: pageContext || "Chat Widget",
         chatbot_triggered: true,
         conversion_tracked: false,
         cart_currency: cartCurrency,
-        localization: localization
+        localization: localization,
+        user_message: "Conversation started",
+        type: "conversation"
       }
 
       console.log("[Chatbot] Saving conversation with payload:", payload)
@@ -707,8 +709,8 @@ export default function ChatWidget() {
       })
 
       if (!response.ok) {
-        const errorText = await response.text()
-        console.error("Failed to save conversation:", errorText)
+        const errorData = await response.json().catch(() => ({ error: "Unknown error" }))
+        console.error("Failed to save conversation:", errorData)
       } else {
         console.log("[Chatbot] Conversation saved successfully")
       }
@@ -995,7 +997,23 @@ export default function ChatWidget() {
 
     setLoadingConversations(true)
 
-    // Check if we're in an iframe and can communicate with parent
+    try {
+      // First try using our local API route
+      const response = await fetch(`/api/conversations?session_id=${encodeURIComponent(sessionId)}`)
+      if (response.ok) {
+        const data = await response.json()
+        setConversations(data.slice(0, 3))
+        console.log("[Chatbot] Successfully fetched conversations via API:", data)
+        setLoadingConversations(false)
+        return
+      } else {
+        console.warn("[Chatbot] API route failed, trying parent window...")
+      }
+    } catch (error) {
+      console.warn("[Chatbot] API route error, trying parent window:", error)
+    }
+
+    // Fallback to parent window communication if API fails
     if (window.parent && window.parent !== window) {
       console.log("[Chatbot] Requesting conversations from parent window for session:", sessionId)
       window.parent.postMessage({
@@ -1008,20 +1026,7 @@ export default function ChatWidget() {
         setLoadingConversations(false)
       }, 10000) // 10 second timeout
     } else {
-      // Fallback to direct API call if not in iframe
-      try {
-        const response = await fetch(`/api/conversations?session_id=${encodeURIComponent(sessionId)}`)
-        if (response.ok) {
-          const data = await response.json()
-          setConversations(data.slice(0, 3))
-        } else {
-          console.error("Failed to fetch conversations:", response.status, response.statusText)
-        }
-      } catch (error) {
-        console.error("Error fetching conversations:", error)
-      } finally {
-        setLoadingConversations(false)
-      }
+      setLoadingConversations(false)
     }
   }
 

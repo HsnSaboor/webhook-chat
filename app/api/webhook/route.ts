@@ -15,39 +15,73 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    console.log("Webhook request body:", JSON.stringify(body, null, 2));
+    console.log("[Webhook Proxy] Received payload:", body);
 
     // Validate required fields
-    if (!body.id) {
-      console.error("Missing required field: id");
-      return NextResponse.json(
-        { error: "Payload must include id." },
-        { status: 400, headers: corsHeaders }
-      );
-    }
-
     if (!body.session_id) {
-      console.error("Missing required field: session_id");
       return NextResponse.json(
-        { error: "Payload must include session_id." },
+        { error: "Session ID is required" },
         { status: 400, headers: corsHeaders }
       );
     }
 
-    // Extract the webhook URL from the body
-    const webhookUrl = body.webhookUrl;
-    if (!webhookUrl) {
-      console.error("Missing webhookUrl in request body");
+    // For conversation creation events, ensure we have the required fields
+    if (body.event_type === "conversation_created") {
+      if (!body.conversation_id) {
+        return NextResponse.json(
+          { error: "Conversation ID is required for conversation_created event" },
+          { status: 400, headers: corsHeaders }
+        );
+      }
+
+      // Use the webhookUrl from the payload, or fall back to default
+      const webhookUrl = body.webhookUrl || "https://similarly-secure-mayfly.ngrok-free.app/webhook/save-conversation";
+
+      // Forward the request to the n8n webhook
+      const response = await fetch(webhookUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "User-Agent": "Shopify-Chat-Proxy/1.0",
+          "ngrok-skip-browser-warning": "true",
+        },
+        body: JSON.stringify(body),
+      });
+
+      console.log(`[Webhook Proxy] Save conversation response status: ${response.status}`);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[Webhook Proxy] Save conversation error (${response.status}):`, errorText);
+
+        return NextResponse.json(
+          { 
+            error: "Failed to save conversation",
+            details: errorText 
+          },
+          { status: 502, headers: corsHeaders }
+        );
+      }
+
+      const data = await response.json();
+      console.log("[Webhook Proxy] Save conversation success:", data);
+
+      return NextResponse.json({ success: true, data }, { 
+        status: 200,
+        headers: corsHeaders
+      });
+    }
+
+    // For regular chat messages, validate webhook URL
+    if (!body.webhookUrl) {
       return NextResponse.json(
-        { error: "webhookUrl is required" },
+        { error: "Webhook URL is required" },
         { status: 400, headers: corsHeaders }
       );
     }
 
-    console.log("Forwarding request to webhook:", webhookUrl);
-
-    // Forward the request to the external webhook
-    const response = await fetch(webhookUrl, {
+    // Forward the request to the n8n webhook
+    const response = await fetch(body.webhookUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -57,44 +91,36 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify(body),
     });
 
-    console.log("Webhook response status:", response.status);
+    console.log(`[Webhook Proxy] n8n response status: ${response.status}`);
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`Webhook error (${response.status}):`, errorText);
-
-      // Check if it's a CORS or ngrok issue
-      if (response.status === 404) {
-        return NextResponse.json(
-          { error: "The ngrok tunnel appears to be offline. Please restart your ngrok tunnel." },
-          { status: 502, headers: corsHeaders }
-        );
-      }
+      console.error(`[Webhook Proxy] n8n webhook error (${response.status}):`, errorText);
 
       return NextResponse.json(
-        { error: `The AI service failed with status: ${response.status}`, details: errorText },
+        { 
+          error: response.status === 404 
+            ? "The AI service failed with status: 404" 
+            : "Could not connect to the AI service. Please try again later.",
+          details: errorText 
+        },
         { status: 502, headers: corsHeaders }
       );
     }
 
     const data = await response.json();
-    console.log("Webhook response data:", JSON.stringify(data, null, 2));
-    return NextResponse.json(data, { headers: corsHeaders });
+    console.log("[Webhook Proxy] n8n response data:", data);
+
+    return NextResponse.json(data, { 
+      status: 200,
+      headers: corsHeaders
+    });
 
   } catch (error) {
-    console.error("Webhook proxy error:", error);
-
-    // Check if it's a network error
-    if (error instanceof TypeError && error.message.includes("fetch")) {
-      return NextResponse.json(
-        { error: "Cannot connect to the AI service. Please check if your ngrok tunnel is running." },
-        { status: 502, headers: corsHeaders }
-      );
-    }
-
+    console.error("[Webhook Proxy] Error:", error);
     return NextResponse.json(
-      { error: "Could not connect to the AI service. Please try again later." },
-      { status: 502, headers: corsHeaders }
+      { error: "Internal server error" },
+      { status: 500, headers: corsHeaders }
     );
   }
 }
