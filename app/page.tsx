@@ -885,7 +885,6 @@ export default function ChatWidget() {
     }
   }
 
-```text
   const handleTouchStart = (e: React.TouchEvent) => {
     if (isMobile) {
       e.preventDefault()
