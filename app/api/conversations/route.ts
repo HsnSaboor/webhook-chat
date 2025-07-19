@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
     
     console.log("[Conversations API] Fetching conversations for session:", sessionId);
     console.log("[Conversations API] Using webhook URL:", webhookUrl);
+    console.log("[Conversations API] Request payload:", JSON.stringify({ session_id: sessionId }));
     console.log("[Conversations API] Environment variables check:", {
       N8N_CONVERSATIONS_LIST_WEBHOOK: process.env.N8N_CONVERSATIONS_LIST_WEBHOOK ? "SET" : "NOT SET",
       NEXT_PUBLIC_N8N_CONVERSATIONS_LIST_WEBHOOK: process.env.NEXT_PUBLIC_N8N_CONVERSATIONS_LIST_WEBHOOK ? "SET" : "NOT SET"
@@ -66,8 +67,18 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const conversations = await response.json();
-    console.log("[Conversations API] Raw response:", conversations);
+    const responseText = await response.text();
+    console.log("[Conversations API] Raw response text:", responseText);
+    
+    let conversations;
+    try {
+      conversations = responseText.trim() ? JSON.parse(responseText) : [];
+    } catch (parseError) {
+      console.error("[Conversations API] Failed to parse response:", parseError);
+      conversations = [];
+    }
+    
+    console.log("[Conversations API] Parsed response:", conversations);
     console.log("[Conversations API] Successfully fetched conversations:", Array.isArray(conversations) ? conversations.length : 'Not an array', "items");
 
     // Ensure we return an array
