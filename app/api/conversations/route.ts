@@ -96,7 +96,10 @@ export async function GET(request: NextRequest) {
       console.log("[Conversations API] Returning empty array due to webhook error");
       return NextResponse.json([], { 
         status: 200,
-        headers: corsHeaders
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json"
+        }
       });
     }
 
@@ -110,7 +113,10 @@ export async function GET(request: NextRequest) {
       console.warn(`[Conversations API] This could mean the webhook is not configured to respond or n8n workflow has an issue`);
       return NextResponse.json([], { 
         status: 200,
-        headers: corsHeaders
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json"
+        }
       });
     }
 
@@ -128,7 +134,10 @@ export async function GET(request: NextRequest) {
       // Return empty array if response is not valid JSON
       return NextResponse.json([], { 
         status: 200,
-        headers: corsHeaders
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json"
+        }
       });
     }
 
@@ -194,7 +203,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json([], { 
       status: 200,
-      headers: corsHeaders
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json"
+      }
     });
   }
 }

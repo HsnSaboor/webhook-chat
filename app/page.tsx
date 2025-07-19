@@ -998,18 +998,21 @@ export default function ChatWidget() {
   };
 
   useEffect(() => {
-    if (sessionId && !currentConversationId && isOpen && messages.length === 1 && messages[0].id === "welcome") {
+    if (sessionId && !currentConversationId && isOpen && messages.length === 1 && messages[0]?.id === "welcome") {
       const newConversationId = crypto.randomUUID();
       setCurrentConversationId(newConversationId);
       console.log(
         "[Chatbot] Generated new conversation ID:",
         newConversationId,
       );
-
       console.log("[Chatbot] Saving conversation on initialization");
-      saveConversation(newConversationId, sessionId);
+
+      // Add a small delay to prevent race conditions
+      setTimeout(() => {
+        saveConversation(newConversationId, sessionId);
+      }, 100);
     }
-  }, [sessionId, currentConversationId, isOpen, messages.length, setCurrentConversationId]);
+  }, [sessionId, currentConversationId, isOpen, messages, setCurrentConversationId, saveConversation]);
 
   return (
     <>

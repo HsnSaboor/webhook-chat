@@ -11,9 +11,10 @@ export async function GET(
 
   // CORS headers for Shopify store
   const corsHeaders = {
-    "Access-Control-Allow-Origin": "https://zenmato.myshopify.com",
+    "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization, User-Agent",
+    "Access-Control-Allow-Credentials": "false",
   };
 
   console.log(`[Conversation History API] ============== GET CONVERSATION HISTORY REQUEST ==============`);
