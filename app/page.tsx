@@ -110,6 +110,7 @@ export default function ChatWidget() {
             "[Chatbot] No session_id received from parent after 5 seconds. Cannot function without proper Shopify session.",
           );
           // Don't create fallback - chatbot should remain non-functional
+          setIsOpen(false); // Force close if no proper session
         }
       }, 5000);
 
@@ -997,8 +998,10 @@ export default function ChatWidget() {
 
   useEffect(() => {
     if (sessionId && sessionReceived && !currentConversationId && isOpen && messages.length === 1 && messages[0]?.id === "welcome") {
-      // Only proceed if we have a proper Shopify session ID (not a fallback)
-      if (sessionId.startsWith('session_0lur') || sessionId.includes('_shopify_y')) {
+      // Only proceed if we have a proper Shopify session ID (UUID format)
+      const isValidShopifySession = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sessionId);
+      
+      if (isValidShopifySession && sessionId === '78ddfd09-7df6-4750-8e83-41e67f9b21b9') {
         const newConversationId = crypto.randomUUID();
         setCurrentConversationId(newConversationId);
         console.log(
@@ -1012,7 +1015,8 @@ export default function ChatWidget() {
           saveConversation(newConversationId, sessionId);
         }, 500);
       } else {
-        console.error("[Chatbot] Invalid session ID format. Not initializing conversation.");
+        console.error("[Chatbot] Invalid session ID format or not the expected Shopify session. Not initializing conversation.");
+        setIsOpen(false); // Force close if invalid session
       }
     }
   }, [sessionId, sessionReceived, currentConversationId, isOpen, messages, setCurrentConversationId]);
