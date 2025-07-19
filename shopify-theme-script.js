@@ -5,15 +5,20 @@
 (function() {
   console.log('[Shopify Theme] Initializing chatbot system...');
   
-  // Use the actual Shopify session ID directly
-  const sessionId = '78ddfd09-7df6-4750-8e83-41e67f9b21b9';
+  // Get session ID from _shopify_y cookie
+  let sessionId = null;
   
-  if (!sessionId) {
-    console.error('[Shopify Theme] No session ID configured. Chatbot cannot function without proper session.');
-    return; // Exit if no session ID
+  const shopifyYCookie = document.cookie
+    .split('; ')
+    .find(row => row.startsWith('_shopify_y='));
+  
+  if (shopifyYCookie) {
+    sessionId = shopifyYCookie.split('=')[1];
+    console.log('[Shopify Theme] Found _shopify_y cookie, using session ID:', sessionId);
+  } else {
+    console.error('[Shopify Theme] No _shopify_y cookie found. Chatbot cannot function without proper Shopify session.');
+    return; // Exit if no proper session cookie
   }
-  
-  console.log('[Shopify Theme] Using configured Shopify session ID:', sessionId);
   
   console.log('[Chatbot] Determined session_id:', sessionId);
   

@@ -998,10 +998,10 @@ export default function ChatWidget() {
 
   useEffect(() => {
     if (sessionId && sessionReceived && !currentConversationId && isOpen && messages.length === 1 && messages[0]?.id === "welcome") {
-      // Only proceed if we have a proper Shopify session ID (UUID format)
-      const isValidShopifySession = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sessionId);
+      // Only proceed if we have a proper Shopify session ID (UUID format or any valid session format)
+      const isValidShopifySession = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sessionId) || sessionId.length > 10;
       
-      if (isValidShopifySession && sessionId === '78ddfd09-7df6-4750-8e83-41e67f9b21b9') {
+      if (isValidShopifySession) {
         const newConversationId = crypto.randomUUID();
         setCurrentConversationId(newConversationId);
         console.log(
@@ -1015,7 +1015,7 @@ export default function ChatWidget() {
           saveConversation(newConversationId, sessionId);
         }, 500);
       } else {
-        console.error("[Chatbot] Invalid session ID format or not the expected Shopify session. Not initializing conversation.");
+        console.error("[Chatbot] Invalid session ID format. Not initializing conversation.");
         setIsOpen(false); // Force close if invalid session
       }
     }
