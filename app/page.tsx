@@ -693,7 +693,9 @@ export default function ChatWidget() {
         cart_currency: cartCurrency,
         localization: localization,
         user_message: "Conversation started",
-        type: "conversation"
+        type: "conversation",
+        // Add conversation name for better identification
+        name: `Chat ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`
       }
 
       console.log("[Chatbot] Saving conversation with payload:", payload)
@@ -711,6 +713,11 @@ export default function ChatWidget() {
         console.error("Failed to save conversation:", errorData)
       } else {
         console.log("[Chatbot] Conversation saved successfully")
+        // Refresh conversations list after successful save with a delay
+        setTimeout(() => {
+          console.log("[Chatbot] Refreshing conversations after save")
+          fetchConversations()
+        }, 2000) // 2 second delay to allow n8n to process
       }
     } catch (error) {
       console.error("Error saving conversation:", error)
@@ -998,7 +1005,11 @@ export default function ChatWidget() {
 
     try {
       // First try using our local API route
-      const response = await fetch(`/api/conversations?session_id=${encodeURIComponent(sessionId)}`)
+      const response = await fetch(`/api/conversations?session_id=${encodeURIComponent(sessionId)}&t=${Date.now()}`, {
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      })
       console.log("[Chatbot] API response status:", response.status)
 
       if (response.ok) {
@@ -1007,6 +1018,15 @@ export default function ChatWidget() {
 
         // Handle both array and object responses
         const conversationsArray = Array.isArray(data) ? data : (data.conversations || [])
+        console.log("[Chatbot] Processed conversations array:", conversationsArray)
+        
+        if (conversationsArray.length === 0) {
+          console.warn("[Chatbot] No conversations found. This might indicate:")
+          console.warn("1. The conversation wasn't saved properly to the database")
+          console.warn("2. The n8n get-conversations workflow isn't finding the data")
+          console.warn("3. There's a field mapping issue between save and retrieve")
+        }
+        
         setConversations(conversationsArray.slice(0, 3))
         console.log("[Chatbot] Successfully fetched conversations via API:", conversationsArray.length, "conversations")
         setLoadingConversations(false)
@@ -1129,10 +1149,14 @@ export default function ChatWidget() {
       },
     ])
     setCurrentConversationId(null)
+    setLoadingConversations(false) // Reset loading state
     // Always refresh conversations list when going back to home
     if (sessionId) {
-      console.log("[Chatbot] Refreshing conversations list")
-      fetchConversations()
+      console.log("[Chatbot] Refreshing conversations list after starting new conversation")
+      // Add a small delay to ensure state is updated
+      setTimeout(() => {
+        fetchConversations()
+      }, 100)
     }
   }
 

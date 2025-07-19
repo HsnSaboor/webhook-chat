@@ -27,6 +27,10 @@ export async function GET(request: NextRequest) {
     
     console.log("[Conversations API] Fetching conversations for session:", sessionId);
     console.log("[Conversations API] Using webhook URL:", webhookUrl);
+    console.log("[Conversations API] Environment variables check:", {
+      N8N_CONVERSATIONS_LIST_WEBHOOK: process.env.N8N_CONVERSATIONS_LIST_WEBHOOK ? "SET" : "NOT SET",
+      NEXT_PUBLIC_N8N_CONVERSATIONS_LIST_WEBHOOK: process.env.NEXT_PUBLIC_N8N_CONVERSATIONS_LIST_WEBHOOK ? "SET" : "NOT SET"
+    });
     
     // Make the request to n8n webhook
     const response = await fetch(webhookUrl, {
