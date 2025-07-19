@@ -105,16 +105,18 @@ export default function ChatWidget() {
   useEffect(() => {
     if (!sessionId && !sessionReceived) {
       const timeout = setTimeout(() => {
-        console.log(
-          "[Chatbot] No session_id received from parent after 5 seconds, generating fallback",
-        );
-        const fallbackSessionId = crypto.randomUUID();
-        setSessionId(fallbackSessionId);
-        setSessionReceived(true);
-        console.log(
-          "[Chatbot] Generated fallback session_id:",
-          fallbackSessionId,
-        );
+        if (!sessionId && !sessionReceived) { // Double check to prevent race conditions
+          console.log(
+            "[Chatbot] No session_id received from parent after 5 seconds, generating fallback",
+          );
+          const fallbackSessionId = crypto.randomUUID();
+          setSessionId(fallbackSessionId);
+          setSessionReceived(true);
+          console.log(
+            "[Chatbot] Generated fallback session_id:",
+            fallbackSessionId,
+          );
+        }
       }, 5000);
 
       return () => clearTimeout(timeout);
@@ -255,7 +257,7 @@ export default function ChatWidget() {
         trackEvent("chat_opened", { initialMessagesCount: messages.length });
         fetchConversations();
       }
-      if (messages.length === 0 && !currentConversationId) {
+      if (messages.length === 0) {
         setMessages([
           {
             id: "welcome",
@@ -271,7 +273,7 @@ export default function ChatWidget() {
       setMessages([]);
       setCurrentConversationId(null);
     }
-  }, [isOpen, sessionId, trackEvent, messages.length, currentConversationId, setMessages, setCurrentConversationId]);
+  }, [isOpen, sessionId, trackEvent, setMessages, setCurrentConversationId]);
 
   const handleScroll = useCallback(() => {
     if (messagesContainerRef.current) {
@@ -996,7 +998,7 @@ export default function ChatWidget() {
   };
 
   useEffect(() => {
-    if (sessionId && !currentConversationId) {
+    if (sessionId && !currentConversationId && isOpen && messages.length === 1 && messages[0].id === "welcome") {
       const newConversationId = crypto.randomUUID();
       setCurrentConversationId(newConversationId);
       console.log(
@@ -1007,7 +1009,7 @@ export default function ChatWidget() {
       console.log("[Chatbot] Saving conversation on initialization");
       saveConversation(newConversationId, sessionId);
     }
-  }, [sessionId, currentConversationId, setCurrentConversationId, saveConversation]);
+  }, [sessionId, currentConversationId, isOpen, messages.length, setCurrentConversationId]);
 
   return (
     <>
