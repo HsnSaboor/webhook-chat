@@ -2,21 +2,26 @@
 import { type NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
+  // CORS headers to allow requests from Shopify store
   const corsHeaders = {
-    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Origin": "https://zenmato.myshopify.com",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
   };
+
+  console.log(`[Conversations API] ============== GET ALL CONVERSATIONS REQUEST ==============`);
+  console.log(`[Conversations API] Request received at: ${new Date().toISOString()}`);
+  console.log(`[Conversations API] Request URL: ${request.url}`);
+  console.log(`[Conversations API] Request method: ${request.method}`);
+  console.log(`[Conversations API] Request headers:`, Object.fromEntries(request.headers.entries()));
 
   try {
     // Extract session_id from URL search params
     const { searchParams } = new URL(request.url);
     const sessionId = searchParams.get('session_id');
 
-    console.log(`[Conversations API] ============== GET ALL CONVERSATIONS REQUEST ==============`);
-    console.log(`[Conversations API] Received request with session_id: ${sessionId}`);
-    console.log(`[Conversations API] Request URL: ${request.url}`);
-    console.log(`[Conversations API] Request method: ${request.method}`);
+    console.log(`[Conversations API] Extracted session_id from params: ${sessionId}`);
+    console.log(`[Conversations API] All search params:`, Object.fromEntries(searchParams.entries()));
 
     if (!sessionId) {
       console.error("[Conversations API] Missing session_id parameter");
@@ -31,12 +36,14 @@ export async function GET(request: NextRequest) {
       "https://similarly-secure-mayfly.ngrok-free.app/webhook/get-all-conversations";
 
     console.log(`[Conversations API] Target n8n webhook URL: ${webhookUrl}`);
+    console.log(`[Conversations API] Environment variable N8N_CONVERSATIONS_LIST_WEBHOOK:`, process.env.N8N_CONVERSATIONS_LIST_WEBHOOK);
 
-    // Prepare payload for n8n webhook
+    // Prepare payload for n8n webhook (n8n expects POST with data in body)
     const payload = { 
       session_id: sessionId,
       timestamp: new Date().toISOString(),
-      request_type: "get_all_conversations"
+      request_type: "get_all_conversations",
+      action: "fetch_conversations"
     };
 
     console.log(`[Conversations API] Payload to send to n8n:`, JSON.stringify(payload, null, 2));
@@ -46,6 +53,12 @@ export async function GET(request: NextRequest) {
     const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
     console.log(`[Conversations API] Making POST request to n8n webhook...`);
+    console.log(`[Conversations API] Request headers being sent:`, {
+      "Content-Type": "application/json",
+      "ngrok-skip-browser-warning": "true",
+      "User-Agent": "Shopify-Chat-Proxy/1.0",
+    });
+    
     const startTime = Date.now();
 
     const response = await fetch(webhookUrl, {
@@ -58,6 +71,8 @@ export async function GET(request: NextRequest) {
       body: JSON.stringify(payload),
       signal: controller.signal
     });
+
+    console.log(`[Conversations API] Webhook fetch completed`);
 
     clearTimeout(timeoutId);
     const requestDuration = Date.now() - startTime;
@@ -114,7 +129,9 @@ export async function GET(request: NextRequest) {
       console.warn(`[Conversations API] Expected array or object with conversations property`);
     }
 
+    console.log(`[Conversations API] Final conversations array length: ${conversationsArray.length}`);
     console.log(`[Conversations API] Final conversations array:`, JSON.stringify(conversationsArray, null, 2));
+    console.log(`[Conversations API] Returning response with CORS headers:`, corsHeaders);
     console.log(`[Conversations API] ============== REQUEST COMPLETED SUCCESSFULLY ==============`);
 
     return NextResponse.json(conversationsArray, { 
@@ -159,13 +176,20 @@ export async function GET(request: NextRequest) {
 
 // Handle preflight OPTIONS requests
 export async function OPTIONS() {
-  console.log("[Conversations API] Handling OPTIONS preflight request");
+  console.log("[Conversations API] ============== OPTIONS PREFLIGHT REQUEST ==============");
+  console.log("[Conversations API] Handling CORS preflight request");
+  
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": "https://zenmato.myshopify.com",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  };
+  
+  console.log("[Conversations API] Sending CORS headers:", corsHeaders);
+  console.log("[Conversations API] ============== OPTIONS COMPLETED ==============");
+  
   return new Response(null, {
     status: 200,
-    headers: {
-      "Access-Control-Allow-Origin": "https://zenmato.myshopify.com",
-      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    },
+    headers: corsHeaders,
   });
 }

@@ -34,7 +34,8 @@
       const options = {
         method: method,
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'User-Agent': 'Shopify-Theme/1.0',
         }
       };
       
@@ -47,18 +48,42 @@
         url += '?' + params.toString();
       }
 
-      console.log(`[Shopify Theme] Making ${method} request to:`, url);
+      console.log(`[Shopify Theme] ============== MAKING ${method} REQUEST ==============`);
+      console.log(`[Shopify Theme] Request URL:`, url);
+      console.log(`[Shopify Theme] Request method:`, method);
+      console.log(`[Shopify Theme] Request headers:`, options.headers);
+      if (data) {
+        console.log(`[Shopify Theme] Request data:`, data);
+      }
       
+      const startTime = Date.now();
       const response = await fetch(url, options);
+      const duration = Date.now() - startTime;
+      
+      console.log(`[Shopify Theme] Response received after ${duration}ms`);
+      console.log(`[Shopify Theme] Response status:`, response.status);
+      console.log(`[Shopify Theme] Response ok:`, response.ok);
+      console.log(`[Shopify Theme] Response headers:`, Object.fromEntries(response.headers.entries()));
       
       if (!response.ok) {
         const errorText = await response.text();
+        console.error(`[Shopify Theme] Error response body:`, errorText);
         throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
       
-      return await response.json();
+      const responseData = await response.json();
+      console.log(`[Shopify Theme] Response data:`, responseData);
+      console.log(`[Shopify Theme] ============== REQUEST COMPLETED ==============`);
+      
+      return responseData;
     } catch (error) {
+      console.error(`[Shopify Theme] ============== REQUEST FAILED ==============`);
       console.error(`[Shopify Theme] API request failed:`, error);
+      console.error(`[Shopify Theme] Error details:`, {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
       throw error;
     }
   }
