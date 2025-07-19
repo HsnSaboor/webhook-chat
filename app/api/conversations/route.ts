@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
 
     // Make request to n8n webhook with timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
     console.log(`[Conversations API] Making POST request to n8n webhook...`);
     console.log(`[Conversations API] Request headers being sent:`, {
@@ -67,6 +67,7 @@ export async function GET(request: NextRequest) {
         "Content-Type": "application/json",
         "ngrok-skip-browser-warning": "true",
         "User-Agent": "Shopify-Chat-Proxy/1.0",
+        "Accept": "application/json",
       },
       body: JSON.stringify(payload),
       signal: controller.signal
@@ -85,6 +86,12 @@ export async function GET(request: NextRequest) {
       const errorText = await response.text();
       console.error(`[Conversations API] n8n webhook error (${response.status}):`, errorText);
       console.error(`[Conversations API] Full error response body:`, errorText);
+      console.error(`[Conversations API] Response URL: ${response.url}`);
+      console.error(`[Conversations API] Response type: ${response.type}`);
+
+      // Log the actual request that was sent
+      console.error(`[Conversations API] Request that failed - URL: ${webhookUrl}`);
+      console.error(`[Conversations API] Request that failed - Payload: ${JSON.stringify(payload)}`);
 
       // Return empty array for better UX instead of throwing error
       console.log("[Conversations API] Returning empty array due to webhook error");
@@ -95,15 +102,29 @@ export async function GET(request: NextRequest) {
     }
 
     const responseText = await response.text();
-    console.log(`[Conversations API] Raw response body:`, responseText);
+    console.log(`[Conversations API] Raw response body (length: ${responseText.length}):`, responseText);
+    console.log(`[Conversations API] Response Content-Type:`, response.headers.get('content-type'));
+
+    // Check if response is empty
+    if (!responseText || responseText.trim() === '') {
+      console.warn(`[Conversations API] Empty response from n8n webhook`);
+      console.warn(`[Conversations API] This could mean the webhook is not configured to respond or n8n workflow has an issue`);
+      return NextResponse.json([], { 
+        status: 200,
+        headers: corsHeaders
+      });
+    }
 
     let data;
     try {
       data = JSON.parse(responseText);
       console.log(`[Conversations API] Parsed JSON response:`, JSON.stringify(data, null, 2));
+      console.log(`[Conversations API] Response data type:`, typeof data);
+      console.log(`[Conversations API] Response is array:`, Array.isArray(data));
     } catch (parseError) {
       console.error(`[Conversations API] Failed to parse JSON response:`, parseError);
       console.error(`[Conversations API] Response was not valid JSON:`, responseText);
+      console.error(`[Conversations API] First 500 chars of response:`, responseText.substring(0, 500));
       
       // Return empty array if response is not valid JSON
       return NextResponse.json([], { 
@@ -151,17 +172,22 @@ export async function GET(request: NextRequest) {
       console.error("[Conversations API] Error stack:", error.stack);
       
       if (error.name === 'AbortError') {
-        errorMessage = 'Request timeout - webhook did not respond within 15 seconds';
+        errorMessage = 'Request timeout - webhook did not respond within 30 seconds';
         console.error("[Conversations API] Request timed out");
       } else if (error.message.includes('fetch')) {
         errorMessage = `Webhook connection failed: ${error.message}`;
         console.error("[Conversations API] Fetch operation failed");
+      } else if (error.message.includes('NetworkError') || error.message.includes('ECONNREFUSED')) {
+        errorMessage = `Network error - cannot reach n8n webhook: ${error.message}`;
+        console.error("[Conversations API] Network connectivity issue");
       } else {
         errorMessage = error.message;
       }
     }
     
     console.error(`[Conversations API] Final error message: ${errorMessage}`);
+    console.error(`[Conversations API] Webhook URL that failed: ${webhookUrl}`);
+    console.error(`[Conversations API] Payload that was attempted: ${JSON.stringify(payload)}`);
     
     // Return empty array instead of error for better UX
     console.log("[Conversations API] Returning empty array due to error");
