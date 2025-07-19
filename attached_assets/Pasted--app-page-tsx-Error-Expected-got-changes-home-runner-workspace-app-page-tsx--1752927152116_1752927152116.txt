@@ -1,0 +1,56 @@
+⨯ ./app/page.tsx
+Error:   × Expected ',', got 'changes'
+     ╭─[/home/runner/workspace/app/page.tsx:941:1]
+ 938 │     );
+ 939 │     setAddedProductVariantId(card.variantId); // Set the variant ID to show "Added!"
+ 940 │ 
+ 941 │     setTimeout(() =>Code changes to address the issues in the chatbot component, including message handling, session management, and error handling.
+     ·                          ───────
+ 942 │ <replit_final_file>
+ 943 │ "use client";
+     ╰────
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/page.tsx
+ ⨯ ./app/page.tsx
+Error:   × Expected ',', got 'changes'
+     ╭─[/home/runner/workspace/app/page.tsx:941:1]
+ 938 │     );
+ 939 │     setAddedProductVariantId(card.variantId); // Set the variant ID to show "Added!"
+ 940 │ 
+ 941 │     setTimeout(() =>Code changes to address the issues in the chatbot component, including message handling, session management, and error handling.
+     ·                          ───────
+ 942 │ <replit_final_file>
+ 943 │ "use client";
+     ╰────
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/page.tsx
+ ⨯ ./app/page.tsx
+Error:   × Expected ',', got 'changes'
+     ╭─[/home/runner/workspace/app/page.tsx:941:1]
+ 938 │     );
+ 939 │     setAddedProductVariantId(card.variantId); // Set the variant ID to show "Added!"
+ 940 │ 
+ 941 │     setTimeout(() =>Code changes to address the issues in the chatbot component, including message handling, session management, and error handling.
+     ·                          ───────
+ 942 │ <replit_final_file>
+ 943 │ "use client";
+     ╰────
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./app/page.tsx
+ GET / 500 in 32096ms
+ GET / 500 in 32091ms
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename '/home/runner/workspace/.next/cache/webpack/client-development-fallback/0.pack.gz_' -> '/home/runner/workspace/.next/cache/webpack/client-development-fallback/0.pack.gz'
+ ⚠ Cross origin request detected from e65fb684-b703-47eb-a806-6ad74b56badf-00-294am5nh4yh2q.sisko.replit.dev to /_next/* resource. In a future major version of Next.js, you will need to explicitly configure "allowedDevOrigins" in next.config to allow this.
+Read more: https://nextjs.org/docs/app/api-reference/config/next-config-js/allowedDevOrigins
