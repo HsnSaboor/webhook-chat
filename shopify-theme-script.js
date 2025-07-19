@@ -5,37 +5,19 @@
 (function() {
   console.log('[Shopify Theme] Initializing chatbot system...');
   
-  // Try to get real Shopify session ID first
+  // Only use _shopify_y cookie for session ID, no fallbacks
   let sessionId = null;
   
-  // Try to get from Shopify's session cookie (_shopify_y)
   const shopifyYCookie = document.cookie
     .split('; ')
     .find(row => row.startsWith('_shopify_y='));
   
   if (shopifyYCookie) {
     sessionId = shopifyYCookie.split('=')[1];
-    console.log('[Shopify Theme] Using real Shopify session ID from _shopify_y:', sessionId);
+    console.log('[Shopify Theme] Using Shopify session ID from _shopify_y:', sessionId);
   } else {
-    // Try other Shopify session cookies as fallback
-    const shopifySessionCookie = document.cookie
-      .split('; ')
-      .find(row => row.startsWith('_shopify_s='));
-    
-    if (shopifySessionCookie) {
-      sessionId = shopifySessionCookie.split('=')[1];
-      console.log('[Shopify Theme] Using Shopify session ID from _shopify_s:', sessionId);
-    } else {
-      // Only use localStorage as last resort if no Shopify cookies are available
-      sessionId = localStorage.getItem('chatbot_session_id');
-      if (!sessionId) {
-        sessionId = 'session_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
-        localStorage.setItem('chatbot_session_id', sessionId);
-        console.log('[Shopify Theme] Generated fallback session ID:', sessionId);
-      } else {
-        console.log('[Shopify Theme] Using stored session ID:', sessionId);
-      }
-    }
+    console.error('[Shopify Theme] No _shopify_y cookie found. Chatbot cannot function without proper session.');
+    return; // Exit if no proper session cookie
   }
   
   console.log('[Chatbot] Determined session_id:', sessionId);

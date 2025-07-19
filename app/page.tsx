@@ -101,27 +101,21 @@ export default function ChatWidget() {
     process.env.NEXT_PUBLIC_N8N_CHAT_WEBHOOK ||
     "https://similarly-secure-mayfly.ngrok-free.app/webhook/chat";
 
-  // Fallback session ID generation if not received from parent
+  // No fallback session ID - must receive from parent (Shopify)
   useEffect(() => {
     if (!sessionId && !sessionReceived) {
       const timeout = setTimeout(() => {
-        if (!sessionId && !sessionReceived) { // Double check to prevent race conditions
-          console.log(
-            "[Chatbot] No session_id received from parent after 5 seconds, generating fallback",
+        if (!sessionId && !sessionReceived) {
+          console.error(
+            "[Chatbot] No session_id received from parent after 5 seconds. Cannot function without proper Shopify session.",
           );
-          const fallbackSessionId = crypto.randomUUID();
-          setSessionId(fallbackSessionId);
-          setSessionReceived(true);
-          console.log(
-            "[Chatbot] Generated fallback session_id:",
-            fallbackSessionId,
-          );
+          // Don't create fallback - chatbot should remain non-functional
         }
       }, 5000);
 
       return () => clearTimeout(timeout);
     }
-  }, [sessionId, sessionReceived, setSessionId, setSessionReceived]);
+  }, [sessionId, sessionReceived]);
 
   // Listen for messages from parent window (Shopify theme)
   useEffect(() => {
@@ -253,27 +247,31 @@ export default function ChatWidget() {
 
   useEffect(() => {
     if (isOpen) {
-      if (sessionId) {
+      if (sessionId && sessionReceived) {
         trackEvent("chat_opened", { initialMessagesCount: messages.length });
         fetchConversations();
-      }
-      if (messages.length === 0) {
-        setMessages([
-          {
-            id: "welcome",
-            content:
-              "Hello! How can I assist you today? Feel free to ask me anything about our products or services.",
-            role: "webhook",
-            timestamp: new Date(),
-            type: "text",
-          },
-        ]);
+        
+        if (messages.length === 0) {
+          setMessages([
+            {
+              id: "welcome",
+              content:
+                "Hello! How can I assist you today? Feel free to ask me anything about our products or services.",
+              role: "webhook",
+              timestamp: new Date(),
+              type: "text",
+            },
+          ]);
+        }
+      } else {
+        console.error("[Chatbot] Cannot open chat without proper Shopify session");
+        setIsOpen(false); // Close chat if no proper session
       }
     } else if (!isOpen) {
       setMessages([]);
       setCurrentConversationId(null);
     }
-  }, [isOpen, sessionId, trackEvent, setMessages, setCurrentConversationId]);
+  }, [isOpen, sessionId, sessionReceived, trackEvent, setMessages, setCurrentConversationId]);
 
   const handleScroll = useCallback(() => {
     if (messagesContainerRef.current) {
@@ -998,21 +996,26 @@ export default function ChatWidget() {
   };
 
   useEffect(() => {
-    if (sessionId && !currentConversationId && isOpen && messages.length === 1 && messages[0]?.id === "welcome") {
-      const newConversationId = crypto.randomUUID();
-      setCurrentConversationId(newConversationId);
-      console.log(
-        "[Chatbot] Generated new conversation ID:",
-        newConversationId,
-      );
-      console.log("[Chatbot] Saving conversation on initialization");
+    if (sessionId && sessionReceived && !currentConversationId && isOpen && messages.length === 1 && messages[0]?.id === "welcome") {
+      // Only proceed if we have a proper Shopify session ID (not a fallback)
+      if (sessionId.startsWith('session_0lur') || sessionId.includes('_shopify_y')) {
+        const newConversationId = crypto.randomUUID();
+        setCurrentConversationId(newConversationId);
+        console.log(
+          "[Chatbot] Generated new conversation ID:",
+          newConversationId,
+        );
+        console.log("[Chatbot] Saving conversation on initialization");
 
-      // Add a small delay to prevent race conditions
-      setTimeout(() => {
-        saveConversation(newConversationId, sessionId);
-      }, 100);
+        // Add a small delay to prevent race conditions
+        setTimeout(() => {
+          saveConversation(newConversationId, sessionId);
+        }, 500);
+      } else {
+        console.error("[Chatbot] Invalid session ID format. Not initializing conversation.");
+      }
     }
-  }, [sessionId, currentConversationId, isOpen, messages, setCurrentConversationId, saveConversation]);
+  }, [sessionId, sessionReceived, currentConversationId, isOpen, messages, setCurrentConversationId]);
 
   return (
     <>

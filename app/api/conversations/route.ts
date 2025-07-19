@@ -3,9 +3,10 @@ import { type NextRequest, NextResponse } from "next/server";
 export async function GET(request: NextRequest) {
   // CORS headers to allow requests from Shopify store
   const corsHeaders = {
-    "Access-Control-Allow-Origin": "https://zenmato.myshopify.com",
+    "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization, User-Agent",
+    "Access-Control-Allow-Credentials": "false",
   };
 
   console.log(`[Conversations API] ============== GET ALL CONVERSATIONS REQUEST ==============`);
@@ -26,7 +27,13 @@ export async function GET(request: NextRequest) {
       console.error("[Conversations API] Missing session_id parameter");
       return NextResponse.json(
         { error: "session_id parameter is required" },
-        { status: 400, headers: corsHeaders }
+        { 
+          status: 400, 
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json"
+          }
+        }
       );
     }
 
@@ -165,7 +172,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(conversationsArray, { 
       status: 200,
-      headers: corsHeaders
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json"
+      }
     });
 
   } catch (error) {
@@ -217,9 +227,10 @@ export async function OPTIONS() {
   console.log("[Conversations API] Handling CORS preflight request");
 
   const corsHeaders = {
-    "Access-Control-Allow-Origin": "https://zenmato.myshopify.com",
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS", 
     "Access-Control-Allow-Headers": "Content-Type, Authorization, User-Agent",
+    "Access-Control-Allow-Credentials": "false",
   };
 
   console.log("[Conversations API] Sending CORS headers:", corsHeaders);
