@@ -1,0 +1,42 @@
+Content-Security-Policy warnings 2
+Cookie “_shopify_test” has been rejected for invalid domain. 4 zenmato.myshopify.com
+Content-Security-Policy: Ignoring ‘block-all-mixed-content’ because mixed content display upgrading makes block-all-mixed-content obsolete. modern
+In a sandboxed environment, addEventListener may not behave as expected. modern:7:71139
+Cookie “_shopify_s” has been rejected for invalid domain. zenmato.myshopify.com
+Cookie “_shopify_sa_p” has been rejected for invalid domain. zenmato.myshopify.com
+Cookie “_shopify_sa_t” has been rejected for invalid domain. zenmato.myshopify.com
+Cookie “_shopify_y” has been rejected for invalid domain. zenmato.myshopify.com
+[Shopify Theme] Initializing chatbot system... zenmato.myshopify.com:2660:11
+[Chatbot] Determined session_id: session_0lur6a8ab_1752820119301 zenmato.myshopify.com:2669:11
+[Shopify Theme] Chatbot system initialized. zenmato.myshopify.com:2963:13
+Cookie warnings 2
+recaptchacompat disabled api.js:4:186220
+No style found! bluesky-toolkit.js:33:29
+[Shopify Theme] Ignoring message from untrusted origin: https://newassets.hcaptcha.com 8 zenmato.myshopify.com:2797:15
+[Shopify Theme] Ignoring message from untrusted origin: https://newassets.hcaptcha.com zenmato.myshopify.com:2797:15
+[Shopify Theme] Ignoring message from untrusted origin: https://newassets.hcaptcha.com zenmato.myshopify.com:2797:15
+Partitioned cookie or storage access was provided to “https://v0-custom-chat-interface-kappa.vercel.app/” because it is loaded in the third-party context and dynamic state partitioning is enabled. webpack-9ce1feb1a7ba3ba5.js:2:60
+Partitioned cookie or storage access was provided to “https://newassets.hcaptcha.com/captcha/v1/184b927377511ae73b85882f6bccc8f053fc1ef0/static/hcaptcha.html#frame=challenge&id=0srvlp3y7n1&host=zenmato.myshopify.com&sentry=true&reportapi=https%3A%2F%2Faccounts.hcaptcha.com&recaptchacompat=off&custom=false&hl=en&tplinks=on&andint=off&pstissuer=https%3A%2F%2Fpst-issuer.hcaptcha.com&sitekey=f06e6c50-85a8-45c8-87d0-21a2b65856fe&size=invisible&theme=light&origin=https%3A%2F%2Fzenmato.myshopify.com” because it is loaded in the third-party context and dynamic state partitioning is enabled. hsw.js:2:683635
+Partitioned cookie or storage access was provided to “https://newassets.hcaptcha.com/captcha/v1/184b927377511ae73b85882f6bccc8f053fc1ef0/static/hcaptcha.html#frame=challenge&id=1nxnlyexb2cq&host=zenmato.myshopify.com&sentry=true&reportapi=https%3A%2F%2Faccounts.hcaptcha.com&recaptchacompat=off&custom=false&hl=en&tplinks=on&andint=off&pstissuer=https%3A%2F%2Fpst-issuer.hcaptcha.com&sitekey=f06e6c50-85a8-45c8-87d0-21a2b65856fe&size=invisible&theme=light&origin=https%3A%2F%2Fzenmato.myshopify.com” because it is loaded in the third-party context and dynamic state partitioning is enabled. hsw.js:2:683635
+Source map error: Error: URL constructor:  is not a valid URL.
+Stack in the worker:resolveSourceMapURL@resource://devtools/client/shared/source-map-loader/utils/fetchSourceMap.js:56:22
+getOriginalURLs@resource://devtools/client/shared/source-map-loader/source-map.js:73:24
+workerHandler/</<@resource://devtools/client/shared/worker-utils.js:115:52
+workerHandler/<@resource://devtools/client/shared/worker-utils.js:113:13
+
+Resource URL: wasm:https://newassets.hcaptcha.com/captcha/v1/184b927377511ae73b85882f6bccc8f053fc1ef0/static/hcaptcha.html#frame=challenge&id=0srvlp3y7n1&host=zenmato.myshopify.com&sentry=true&reportapi=https%253A%252F%252Faccounts.hcaptcha.com&recaptchacompat=off&custom=false&hl=en&tplinks=on&andint=off&pstissuer=https%253A%252F%252Fpst-issuer.hcaptcha.com&sitekey=f06e6c50-85a8-45c8-87d0-21a2b65856fe&size=invisible&theme=light&origin=https%253A%252F%252Fzenmato.myshopify.com%20line%2014%20%3E%20WebAssembly.Module
+Source Map URL: null
+[Shopify Theme] Sent init data to chatbot iframe: 
+Object { type: "init", session_id: "session_0lur6a8ab_1752820119301", source_url: "https://zenmato.myshopify.com/", page_context: "EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en" }
+zenmato.myshopify.com:2958:15
+[Chatbot] Received message from parent: 
+Object { type: "init", session_id: "session_0lur6a8ab_1752820119301", source_url: "https://zenmato.myshopify.com/", page_context: "EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en" }
+page-83ee850096c19380.js:1:11780
+[Chatbot] Received init data from parent: 
+Object { type: "init", session_id: "session_0lur6a8ab_1752820119301", source_url: "https://zenmato.myshopify.com/", page_context: "EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en" }
+page-83ee850096c19380.js:1:11886
+Source map error: Error: URL constructor:  is not a valid URL.
+Stack in the worker:resolveSourceMapURL@resource://devtools/client/shared/source-map-loader/utils/fetchSourceMap.js:56:22
+getOriginalURLs@resource://devtools/client/shared/source-map-loader/source-map.js:73:24
+workerHandler/</<@resource://devtools/client/shared/worker-utils.js:115:52
+workerHandler/<@r...
