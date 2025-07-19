@@ -877,7 +877,7 @@ export default function ChatWidget() {
       )
 
       if (typeof window !== "undefined" && window.location.hostname.includes("myshopify.com")) {
-        console.log("[Chatbot] Attempting direct cart add as fallback...")```python
+        console.log("[Chatbot] Attempting direct cart add as fallback...")
       }
     }
   }
