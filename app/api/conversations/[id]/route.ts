@@ -1,4 +1,3 @@
-
 import { type NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -26,7 +25,7 @@ export async function GET(
     console.error("[Conversation History API] Missing required parameters");
     console.error("[Conversation History API] Session ID present:", !!sessionId);
     console.error("[Conversation History API] Conversation ID present:", !!conversationId);
-    
+
     return NextResponse.json(
       { error: "session_id and conversation_id are required" },
       { status: 400, headers: corsHeaders }
@@ -37,9 +36,9 @@ export async function GET(
     // Get the n8n webhook URL from environment
     const webhookUrl = process.env.N8N_CONVERSATION_HISTORY_WEBHOOK ||
       "https://similarly-secure-mayfly.ngrok-free.app/webhook/get-single-conversations";
-    
+
     console.log(`[Conversation History API] Target webhook URL: ${webhookUrl}`);
-    
+
     if (!webhookUrl) {
       console.error("[Conversation History API] N8N_CONVERSATION_HISTORY_WEBHOOK environment variable not set");
       return NextResponse.json(
@@ -59,7 +58,7 @@ export async function GET(
 
     const startTime = Date.now();
     console.log(`[Conversation History API] Making POST request to n8n webhook...`);
-    
+
     const response = await fetch(webhookUrl, {
       method: "POST", // n8n webhooks expect POST
       headers: {
@@ -78,7 +77,7 @@ export async function GET(
       const errorText = await response.text();
       console.error(`[Conversation History API] n8n webhook error (${response.status}):`, errorText);
       console.error(`[Conversation History API] Full error response:`, errorText);
-      
+
       return NextResponse.json(
         { error: `Failed to fetch conversation history: ${response.status}` },
         { status: response.status, headers: corsHeaders }
@@ -111,7 +110,7 @@ export async function GET(
   } catch (error) {
     console.error("[Conversation History API] ============== ERROR OCCURRED ==============");
     console.error("[Conversation History API] Error fetching conversation history:", error);
-    
+
     if (error instanceof Error) {
       console.error("[Conversation History API] Error details:", {
         name: error.name,
@@ -119,9 +118,9 @@ export async function GET(
         stack: error.stack
       });
     }
-    
+
     console.error("[Conversation History API] ============== ERROR HANDLING COMPLETED ==============");
-    
+
     return NextResponse.json(
       { error: "Failed to fetch conversation history" },
       { status: 502, headers: corsHeaders }

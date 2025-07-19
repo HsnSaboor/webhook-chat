@@ -109,7 +109,6 @@ export default function ChatWidget() {
           console.error(
             "[Chatbot] No session_id received from parent after 5 seconds. Cannot function without proper Shopify session.",
           );
-          // Don't create fallback - chatbot should remain non-functional
           setIsOpen(false); // Force close if no proper session
         }
       }, 5000);
@@ -985,6 +984,7 @@ export default function ChatWidget() {
       },
     ]);
     setCurrentConversationId(null);
+    setConversationInitialized(false); // Reset initialization flag
     setLoadingConversations(false);
     if (sessionId) {
       console.log(
@@ -996,12 +996,16 @@ export default function ChatWidget() {
     }
   };
 
+  // Track if we've already initialized a conversation for this session
+  const [conversationInitialized, setConversationInitialized] = useState(false);
+
   useEffect(() => {
-    if (sessionId && sessionReceived && !currentConversationId && isOpen && messages.length === 1 && messages[0]?.id === "welcome") {
+    if (sessionId && sessionReceived && !currentConversationId && !conversationInitialized && isOpen && messages.length === 1 && messages[0]?.id === "welcome") {
       // Only proceed if we have a proper Shopify session ID (UUID format or any valid session format)
       const isValidShopifySession = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sessionId) || sessionId.length > 10;
       
       if (isValidShopifySession) {
+        setConversationInitialized(true); // Prevent multiple initialization
         const newConversationId = crypto.randomUUID();
         setCurrentConversationId(newConversationId);
         console.log(
@@ -1019,7 +1023,7 @@ export default function ChatWidget() {
         setIsOpen(false); // Force close if invalid session
       }
     }
-  }, [sessionId, sessionReceived, currentConversationId, isOpen, messages, setCurrentConversationId]);
+  }, [sessionId, sessionReceived, currentConversationId, conversationInitialized, isOpen, messages, setCurrentConversationId]);
 
   return (
     <>
