@@ -28,7 +28,10 @@ export async function GET(request: NextRequest) {
 
     console.log(`[Conversations API] Making request to: ${webhookUrl} with session_id: ${sessionId}`);
 
-    // Make request to n8n webhook
+    // Make request to n8n webhook with timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
     const response = await fetch(webhookUrl, {
       method: "POST",
       headers: {
@@ -40,7 +43,10 @@ export async function GET(request: NextRequest) {
         session_id: sessionId,
         timestamp: new Date().toISOString()
       }),
+      signal: controller.signal
     });
+
+    clearTimeout(timeoutId);
 
     console.log(`[Conversations API] n8n response status: ${response.status}`);
 
@@ -67,10 +73,25 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error("[Conversations API] Network error:", error);
-    return NextResponse.json(
-      { error: `Network error: ${error instanceof Error ? error.message : 'Unknown error'}` },
-      { status: 500, headers: corsHeaders }
-    );
+    
+    // Handle different types of errors
+    let errorMessage = 'Unknown error';
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        errorMessage = 'Request timeout - webhook did not respond within 10 seconds';
+      } else if (error.message.includes('fetch')) {
+        errorMessage = `Webhook connection failed: ${error.message}`;
+      } else {
+        errorMessage = error.message;
+      }
+    }
+    
+    // Return empty array instead of error for better UX
+    console.log("[Conversations API] Returning empty array due to webhook failure");
+    return NextResponse.json([], { 
+      status: 200,
+      headers: corsHeaders
+    });
   }
 }
 
