@@ -1,0 +1,48 @@
+POST /api/test-webhooks 200 in 1946ms
+[Webhook Tester] Starting webhook tests...
+[Webhook Tester] Testing get-all-conversations at https://similarly-secure-mayfly.ngrok-free.app/webhook/get-all-conversations
+[Webhook Tester] get-all-conversations failed: SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at async POST (app/api/test-webhooks/route.ts:106:23)
+  104 |
+  105 |       if (contentType && contentType.includes("application/json")) {
+> 106 |         responseData = await response.json();
+      |                       ^
+  107 |       } else {
+  108 |         responseData = await response.text();
+  109 |       }
+[Webhook Tester] Testing get-single-conversations at https://similarly-secure-mayfly.ngrok-free.app/webhook/get-single-conversations
+[Webhook Tester] get-single-conversations failed: SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at async POST (app/api/test-webhooks/route.ts:106:23)
+  104 |
+  105 |       if (contentType && contentType.includes("application/json")) {
+> 106 |         responseData = await response.json();
+      |                       ^
+  107 |       } else {
+  108 |         responseData = await response.text();
+  109 |       }
+[Webhook Tester] Testing save-conversation at https://similarly-secure-mayfly.ngrok-free.app/webhook/save-conversation
+[Webhook Tester] save-conversation failed: SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at async POST (app/api/test-webhooks/route.ts:106:23)
+  104 |
+  105 |       if (contentType && contentType.includes("application/json")) {
+> 106 |         responseData = await response.json();
+      |                       ^
+  107 |       } else {
+  108 |         responseData = await response.text();
+  109 |       }
+[Webhook Tester] Testing chat at https://similarly-secure-mayfly.ngrok-free.app/webhook/chat
+[Webhook Tester] chat failed: SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at async POST (app/api/test-webhooks/route.ts:106:23)
+  104 |
+  105 |       if (contentType && contentType.includes("application/json")) {
+> 106 |         responseData = await response.json();
+      |                       ^
+  107 |       } else {
+  108 |         responseData = await response.text();
+  109 |       }
+[Webhook Tester] All tests completed
+ POST /api/test-webhooks 200 in 2169ms
