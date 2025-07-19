@@ -1,0 +1,138 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "path": "get-all-conversations",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1560,
+        1400
+      ],
+      "id": "9de6c68a-ccf4-4be9-92f8-89bd4d6ac9c0",
+      "name": "Get All Conversations",
+      "webhookId": "cf65298a-c8c5-4eac-8ed8-4d801ab92e14"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id AS conversation_id, name, created_at AS started_at, ended_at \nFROM conversations \nWHERE session_id = $1 \nORDER BY created_at DESC;",
+        "options": {
+          "queryReplacement": "={{ $json.body.session_id }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1320,
+        1400
+      ],
+      "id": "927f0a3a-b469-4465-8d2a-c93152fa6bff",
+      "name": "Get All Conversations from DB",
+      "credentials": {
+        "postgres": {
+          "id": "Jc2co9tl3jbXLNeG",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -900,
+        1400
+      ],
+      "id": "e34e8302-d078-4ae0-a4ba-0e655e8bbeff",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Transform the data to match expected format\nconst conversations = items.map(item => ({\n  conversation_id: item.json.conversation_id,\n  name: item.json.name || `Conversation ${item.json.conversation_id.slice(0, 8)}`,\n  started_at: item.json.started_at,\n  ended_at: item.json.ended_at\n}));\n\nreturn conversations.map(conv => ({ json: conv }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1100,
+        1400
+      ],
+      "id": "ed78dcbd-d22a-4a60-95a6-1d0cfa065d0c",
+      "name": "Code3"
+    }
+  ],
+  "connections": {
+    "Get All Conversations": {
+      "main": [
+        [
+          {
+            "node": "Get All Conversations from DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Conversations from DB": {
+      "main": [
+        [
+          {
+            "node": "Code3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code3": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {
+    "Get All Conversations": [
+      {
+        "headers": {
+          "host": "similarly-secure-mayfly.ngrok-free.app",
+          "user-agent": "Shopify-Chat-Proxy/1.0",
+          "content-length": "48",
+          "accept": "*/*",
+          "accept-encoding": "br, gzip, deflate",
+          "accept-language": "*",
+          "content-type": "application/json",
+          "ngrok-skip-browser-warning": "true",
+          "sec-fetch-mode": "cors",
+          "x-forwarded-for": "34.93.135.185",
+          "x-forwarded-host": "similarly-secure-mayfly.ngrok-free.app",
+          "x-forwarded-proto": "https"
+        },
+        "params": {},
+        "query": {},
+        "body": {
+          "session_id": "session_0lur6a8ab_1752820119301"
+        },
+        "webhookUrl": "https://similarly-secure-mayfly.ngrok-free.app/webhook/get-all-conversations",
+        "executionMode": "production"
+      }
+    ]
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4004a46fb0ea6cf9e1ebfd94bddadb20b9a6fd96d56937adf96616bf737240f5"
+  }
+}
