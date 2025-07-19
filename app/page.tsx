@@ -192,7 +192,8 @@ const ParticleBackground = () => (
 )
 
 export default function ChatWidget() {
-  const [sessionId, setSessionId] = useState<string | null>(null)
+  const [sessionId, setSessionId] = useState<string>("")
+  const [sessionReceived, setSessionReceived] = useState(false)
   const [sourceUrl, setSourceUrl] = useState<string | null>(null)
   const [pageContext, setPageContext] = useState<string | null>(null)
   const [cartCurrency, setCartCurrency] = useState<string | null>(null)
@@ -200,17 +201,18 @@ export default function ChatWidget() {
 
   // Fallback session ID generation if not received from parent
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!sessionId) {
-        console.warn("[Chatbot] No session_id received from parent after 5 seconds, generating fallback")
+    if (!sessionId && !sessionReceived) {
+      const timeout = setTimeout(() => {
+        console.log("[Chatbot] No session_id received from parent after 5 seconds, generating fallback")
         const fallbackSessionId = crypto.randomUUID()
-        console.log("[Chatbot] Generated fallback session_id:", fallbackSessionId)
         setSessionId(fallbackSessionId)
-      }
-    }, 5000) // Extended to 5 seconds
+        setSessionReceived(true)
+        console.log("[Chatbot] Generated fallback session_id:", fallbackSessionId)
+      }, 5000)
 
-    return () => clearTimeout(timer)
-  }, [sessionId])
+      return () => clearTimeout(timeout)
+    }
+  }, [sessionId, sessionReceived])
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
@@ -279,25 +281,32 @@ export default function ChatWidget() {
     [sessionId],
   )
 
-  // Listen for postMessage from parent (Shopify theme)
+  // Listen for messages from parent window (Shopify theme)
   useEffect(() => {
-    const handlePostMessage = (event: MessageEvent) => {
-      // Security: Validate origin. Use your actual Shopify store domain.
-      if (event.origin !== "https://zenmato.myshopify.com") {
+    const handleMessage = (event: MessageEvent) => {
+      // Only accept messages from trusted origins
+      const trustedOrigins = [
+        'https://zenmato.myshopify.com',
+        'https://cdn.shopify.com',
+        window.location.origin
+      ]
+
+      // Log all messages for debugging
+      console.log("[Chatbot] Received message from origin:", event.origin, "Data:", event.data)
+
+      if (!trustedOrigins.includes(event.origin)) {
         console.warn("[Chatbot] Ignoring message from untrusted origin:", event.origin)
         return
       }
 
-      const data = event.data
-      console.log("[Chatbot] Received message from parent:", data)
+      if (event.data && event.data.type === 'init') {
+        console.log("[Chatbot] Received init data from parent:", event.data)
 
-      if (data?.type === "init" && data.session_id) {
-        console.log("[Chatbot] Received init data from parent:", data)
-        setSessionId(data.session_id)
-        setSourceUrl(data.source_url || null)
-        setPageContext(data.page_context || null)
-        setCartCurrency(data.cart_currency || null)
-        setLocalization(data.localization || null)
+        if (event.data.session_id) {
+          setSessionId(event.data.session_id)
+          setSessionReceived(true)
+          console.log("[Chatbot] Set session_id from parent:", event.data.session_id)
+        }
       }
 
       // Handle conversation responses from parent
@@ -351,9 +360,9 @@ export default function ChatWidget() {
       }
     }
 
-    window.addEventListener("message", handlePostMessage)
+    window.addEventListener("message", handleMessage)
     return () => {
-      window.removeEventListener("message", handlePostMessage)
+      window.removeEventListener("message", handleMessage)
     }
   }, [])
 
@@ -1523,6 +1532,7 @@ export default function ChatWidget() {
                 </>
               )}
               <div ref={messagesEndRef} />
+            ```tool_code
             </CardContent>
 
             {/* Scroll to bottom button */}
