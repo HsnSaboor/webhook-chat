@@ -102,10 +102,16 @@ export async function POST(request: NextRequest) {
       let responseData: any;
       const contentType = response.headers.get("content-type");
 
-      if (contentType && contentType.includes("application/json")) {
-        responseData = await response.json();
-      } else {
-        responseData = await response.text();
+      try {
+        if (contentType && contentType.includes("application/json")) {
+          const text = await response.text();
+          responseData = text.trim() ? JSON.parse(text) : {};
+        } else {
+          responseData = await response.text();
+        }
+      } catch (parseError) {
+        console.error(`[Webhook Tester] Failed to parse response for ${name}:`, parseError);
+        responseData = `Parse error: ${parseError instanceof Error ? parseError.message : String(parseError)}`;
       }
 
       results.push({
@@ -119,6 +125,8 @@ export async function POST(request: NextRequest) {
 
       console.log(
         `[Webhook Tester] ${name}: ${response.status} (${responseTime}ms)`,
+        `Content-Type: ${contentType}`,
+        `Response length: ${JSON.stringify(responseData).length}`
       );
     } catch (error) {
       const responseTime = Date.now() - startTime;
