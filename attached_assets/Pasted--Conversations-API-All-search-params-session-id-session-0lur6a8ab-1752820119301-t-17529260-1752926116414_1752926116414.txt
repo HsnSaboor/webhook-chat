@@ -1,0 +1,260 @@
+[Conversations API] All search params: { session_id: 'session_0lur6a8ab_1752820119301', t: '1752926005368' }
+[Conversations API] Target n8n webhook URL: https://similarly-secure-mayfly.ngrok-free.app/webhook/get-all-conversations
+[Conversations API] Environment variable N8N_CONVERSATIONS_LIST_WEBHOOK: undefined
+[Conversations API] Payload to send to n8n: {
+  "session_id": "session_0lur6a8ab_1752820119301",
+  "timestamp": "2025-07-19T11:53:26.411Z",
+  "request_type": "get_all_conversations",
+  "action": "fetch_conversations"
+}
+[Conversations API] Making POST request to n8n webhook...
+[Conversations API] Request headers being sent: {
+  'Content-Type': 'application/json',
+  'ngrok-skip-browser-warning': 'true',
+  'User-Agent': 'Shopify-Chat-Proxy/1.0'
+}
+[Conversations API] Webhook fetch completed
+[Conversations API] n8n webhook response received after 548ms
+[Conversations API] Response status: 200
+[Conversations API] Response headers: {
+  'content-encoding': 'br',
+  'content-type': 'application/json; charset=utf-8',
+  date: 'Sat, 19 Jul 2025 11:53:25 GMT',
+  etag: 'W/"a45-/JoMZ8Zz+hkuCF5DMYATvnLvulc"',
+  'ngrok-agent-ips': '2a09:bac1:5b40:30::23:477',
+  'transfer-encoding': 'chunked',
+  vary: 'Accept-Encoding'
+}
+[Conversations API] Raw response body (length: 2629): [{"conversation_id":"daa1f9ea-9ea3-49fb-a055-62365866f568","name":"Conversation daa1f9ea","started_at":"2025-07-19T11:45:48.288Z","ended_at":null},{"conversation_id":"652c8d3b-f0e6-4256-95f4-af86eda3d094","name":"Conversation 652c8d3b","started_at":"2025-07-19T11:24:15.540Z","ended_at":null},{"conversation_id":"f05fc152-c806-424d-bc11-c6e0aed14874","name":"Conversation f05fc152","started_at":"2025-07-19T11:22:27.314Z","ended_at":null},{"conversation_id":"7dcba8a1-c5c4-4eaf-8da0-b75262e9616a","name":"Conversation 7dcba8a1","started_at":"2025-07-19T11:22:13.971Z","ended_at":null},{"conversation_id":"5549ccc2-11f4-4e79-9478-fe5d62edfef5","name":"Conversation 5549ccc2","started_at":"2025-07-19T11:08:10.420Z","ended_at":null},{"conversation_id":"8c84a8d8-5383-41a8-9b05-fab65f39679f","name":"Conversation 8c84a8d8","started_at":"2025-07-19T10:53:01.848Z","ended_at":null},{"conversation_id":"137628a9-a5cb-4c04-80df-ee800e3565a6","name":"Conversation 137628a9","started_at":"2025-07-19T10:44:56.013Z","ended_at":null},{"conversation_id":"edf7fab6-2a07-41ce-879e-cde3cc507c40","name":"Conversation edf7fab6","started_at":"2025-07-19T10:37:34.227Z","ended_at":null},{"conversation_id":"7fe23bfe-1141-4578-bd73-fd096ab8c7ca","name":"Conversation 7fe23bfe","started_at":"2025-07-19T10:32:49.169Z","ended_at":null},{"conversation_id":"26ee0338-3d79-48a3-9535-b1f901938beb","name":"Conversation 26ee0338","started_at":"2025-07-19T10:06:13.850Z","ended_at":null},{"conversation_id":"0f8b27dc-6287-4690-b9e8-c436ae25a71f","name":"Conversation 0f8b27dc","started_at":"2025-07-19T10:02:53.198Z","ended_at":null},{"conversation_id":"042aae01-cdf0-40f6-af77-d2dae9808ce7","name":"Conversation 042aae01","started_at":"2025-07-19T10:02:07.312Z","ended_at":null},{"conversation_id":"c93c2b67-a594-4180-970c-a311ba6963f7","name":"Conversation c93c2b67","started_at":"2025-07-19T07:40:02.981Z","ended_at":null},{"conversation_id":"bd6247ee-159f-4a3f-a865-cb6fbfc072bc","name":"Conversation bd6247ee","started_at":"2025-07-18T09:48:53.444Z","ended_at":null},{"conversation_id":"75129b4b-d365-40a3-8781-bd5e9def7ded","name":"Conversation 75129b4b","started_at":"2025-07-18T09:36:01.100Z","ended_at":null},{"conversation_id":"1679640e-743b-46c1-9b55-5acef3a64bc8","name":"Conversation 1679640e","started_at":"2025-07-18T09:32:25.893Z","ended_at":null},{"conversation_id":"4530e4c7-aa98-4fe7-8375-ab521b0e935f","name":"Conversation 4530e4c7","started_at":"2025-07-18T09:24:43.037Z","ended_at":null},{"conversation_id":"a218e1a7-dfc8-412b-b90b-2302d718d6d6","name":"Conversation a218e1a7","started_at":"2025-07-18T06:36:26.301Z","ended_at":null}]
+[Conversations API] Response Content-Type: application/json; charset=utf-8
+[Conversations API] Parsed JSON response: [
+  {
+    "conversation_id": "daa1f9ea-9ea3-49fb-a055-62365866f568",
+    "name": "Conversation daa1f9ea",
+    "started_at": "2025-07-19T11:45:48.288Z",
+    "ended_at": null
+  },
+  {
+    "conversation_id": "652c8d3b-f0e6-4256-95f4-af86eda3d094",
+    "name": "Conversation 652c8d3b",
+    "started_at": "2025-07-19T11:24:15.540Z",
+    "ended_at": null
+  },
+  {
+    "conversation_id": "f05fc152-c806-424d-bc11-c6e0aed14874",
+    "name": "Conversation f05fc152",
+    "started_at": "2025-07-19T11:22:27.314Z",
+    "ended_at": null
+  },
+  {
+    "conversation_id": "7dcba8a1-c5c4-4eaf-8da0-b75262e9616a",
+    "name": "Conversation 7dcba8a1",
+    "started_at": "2025-07-19T11:22:13.971Z",
+    "ended_at": null
+  },
+  {
+    "conversation_id": "5549ccc2-11f4-4e79-9478-fe5d62edfef5",
+    "name": "Conversation 5549ccc2",
+    "started_at": "2025-07-19T11:08:10.420Z",
+    "ended_at": null
+  },
+  {
+    "conversation_id": "8c84a8d8-5383-41a8-9b05-fab65f39679f",
+    "name": "Conversation 8c84a8d8",
+    "started_at": "2025-07-19T10:53:01.848Z",
+    "ended_at": null
+  },
+  {
+    "conversation_id": "137628a9-a5cb-4c04-80df-ee800e3565a6",
+    "name": "Conversation 137628a9",
+    "started_at": "2025-07-19T10:44:56.013Z",
+    "ended_at": null
+  },
+  {
+    "conversation_id": "edf7fab6-2a07-41ce-879e-cde3cc507c40",
+    "name": "Conversation edf7fab6",
+    "started_at": "2025-07-19T10:37:34.227Z",
+    "ended_at": null
+  },
+  {
+    "conversation_id": "7fe23bfe-1141-4578-bd73-fd096ab8c7ca",
+    "name": "Conversation 7fe23bfe",
+    "started_at": "2025-07-19T10:32:49.169Z",
+    "ended_at": null
+  },
+  {
+    "conversation_id": "26ee0338-3d79-48a3-9535-b1f901938beb",
+    "name": "Conversation 26ee0338",
+    "started_at": "2025-07-19T10:06:13.850Z",
+    "ended_at": null
+  },
+  {
+    "conversation_id": "0f8b27dc-6287-4690-b9e8-c436ae25a71f",
+    "name": "Conversation 0f8b27dc",
+    "started_at": "2025-07-19T10:02:53.198Z",
+    "ended_at": null
+  },
+  {
+    "conversation_id": "042aae01-cdf0-40f6-af77-d2dae9808ce7",
+    "name": "Conversation 042aae01",
+    "started_at": "2025-07-19T10:02:07.312Z",
+    "ended_at": null
+  },
+  {
+    "conversation_id": "c93c2b67-a594-4180-970c-a311ba6963f7",
+    "name": "Conversation c93c2b67",
+    "started_at": "2025-07-19T07:40:02.981Z",
+    "ended_at": null
+  },
+  {
+    "conversation_id": "bd6247ee-159f-4a3f-a865-cb6fbfc072bc",
+    "name": "Conversation bd6247ee",
+    "started_at": "2025-07-18T09:48:53.444Z",
+    "ended_at": null
+  },
+  {
+    "conversation_id": "75129b4b-d365-40a3-8781-bd5e9def7ded",
+    "name": "Conversation 75129b4b",
+    "started_at": "2025-07-18T09:36:01.100Z",
+    "ended_at": null
+  },
+  {
+    "conversation_id": "1679640e-743b-46c1-9b55-5acef3a64bc8",
+    "name": "Conversation 1679640e",
+    "started_at": "2025-07-18T09:32:25.893Z",
+    "ended_at": null
+  },
+  {
+    "conversation_id": "4530e4c7-aa98-4fe7-8375-ab521b0e935f",
+    "name": "Conversation 4530e4c7",
+    "started_at": "2025-07-18T09:24:43.037Z",
+    "ended_at": null
+  },
+  {
+    "conversation_id": "a218e1a7-dfc8-412b-b90b-2302d718d6d6",
+    "name": "Conversation a218e1a7",
+    "started_at": "2025-07-18T06:36:26.301Z",
+    "ended_at": null
+  }
+]
+[Conversations API] Response data type: object
+[Conversations API] Response is array: true
+[Conversations API] Response is already an array with 18 items
+[Conversations API] Final conversations array length: 18
+[Conversations API] Final conversations array: [
+  {
+    "conversation_id": "daa1f9ea-9ea3-49fb-a055-62365866f568",
+    "name": "Conversation daa1f9ea",
+    "started_at": "2025-07-19T11:45:48.288Z",
+    "ended_at": null
+  },
+  {
+    "conversation_id": "652c8d3b-f0e6-4256-95f4-af86eda3d094",
+    "name": "Conversation 652c8d3b",
+    "started_at": "2025-07-19T11:24:15.540Z",
+    "ended_at": null
+  },
+  {
+    "conversation_id": "f05fc152-c806-424d-bc11-c6e0aed14874",
+    "name": "Conversation f05fc152",
+    "started_at": "2025-07-19T11:22:27.314Z",
+    "ended_at": null
+  },
+  {
+    "conversation_id": "7dcba8a1-c5c4-4eaf-8da0-b75262e9616a",
+    "name": "Conversation 7dcba8a1",
+    "started_at": "2025-07-19T11:22:13.971Z",
+    "ended_at": null
+  },
+  {
+    "conversation_id": "5549ccc2-11f4-4e79-9478-fe5d62edfef5",
+    "name": "Conversation 5549ccc2",
+    "started_at": "2025-07-19T11:08:10.420Z",
+    "ended_at": null
+  },
+  {
+    "conversation_id": "8c84a8d8-5383-41a8-9b05-fab65f39679f",
+    "name": "Conversation 8c84a8d8",
+    "started_at": "2025-07-19T10:53:01.848Z",
+    "ended_at": null
+  },
+  {
+    "conversation_id": "137628a9-a5cb-4c04-80df-ee800e3565a6",
+    "name": "Conversation 137628a9",
+    "started_at": "2025-07-19T10:44:56.013Z",
+    "ended_at": null
+  },
+  {
+    "conversation_id": "edf7fab6-2a07-41ce-879e-cde3cc507c40",
+    "name": "Conversation edf7fab6",
+    "started_at": "2025-07-19T10:37:34.227Z",
+    "ended_at": null
+  },
+  {
+    "conversation_id": "7fe23bfe-1141-4578-bd73-fd096ab8c7ca",
+    "name": "Conversation 7fe23bfe",
+    "started_at": "2025-07-19T10:32:49.169Z",
+    "ended_at": null
+  },
+  {
+    "conversation_id": "26ee0338-3d79-48a3-9535-b1f901938beb",
+    "name": "Conversation 26ee0338",
+    "started_at": "2025-07-19T10:06:13.850Z",
+    "ended_at": null
+  },
+  {
+    "conversation_id": "0f8b27dc-6287-4690-b9e8-c436ae25a71f",
+    "name": "Conversation 0f8b27dc",
+    "started_at": "2025-07-19T10:02:53.198Z",
+    "ended_at": null
+  },
+  {
+    "conversation_id": "042aae01-cdf0-40f6-af77-d2dae9808ce7",
+    "name": "Conversation 042aae01",
+    "started_at": "2025-07-19T10:02:07.312Z",
+    "ended_at": null
+  },
+  {
+    "conversation_id": "c93c2b67-a594-4180-970c-a311ba6963f7",
+    "name": "Conversation c93c2b67",
+    "started_at": "2025-07-19T07:40:02.981Z",
+    "ended_at": null
+  },
+  {
+    "conversation_id": "bd6247ee-159f-4a3f-a865-cb6fbfc072bc",
+    "name": "Conversation bd6247ee",
+    "started_at": "2025-07-18T09:48:53.444Z",
+    "ended_at": null
+  },
+  {
+    "conversation_id": "75129b4b-d365-40a3-8781-bd5e9def7ded",
+    "name": "Conversation 75129b4b",
+    "started_at": "2025-07-18T09:36:01.100Z",
+    "ended_at": null
+  },
+  {
+    "conversation_id": "1679640e-743b-46c1-9b55-5acef3a64bc8",
+    "name": "Conversation 1679640e",
+    "started_at": "2025-07-18T09:32:25.893Z",
+    "ended_at": null
+  },
+  {
+    "conversation_id": "4530e4c7-aa98-4fe7-8375-ab521b0e935f",
+    "name": "Conversation 4530e4c7",
+    "started_at": "2025-07-18T09:24:43.037Z",
+    "ended_at": null
+  },
+  {
+    "conversation_id": "a218e1a7-dfc8-412b-b90b-2302d718d6d6",
+    "name": "Conversation a218e1a7",
+    "started_at": "2025-07-18T06:36:26.301Z",
+    "ended_at": null
+  }
+]
+[Conversations API] Returning response with CORS headers: {
+  'Access-Control-Allow-Origin': 'https://zenmato.myshopify.com',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+}
+[Conversations API] ============== REQUEST COMPLETED SUCCESSFULLY ==============
+ GET /api/conversations?session_id=session_0lur6a8ab_1752820119301&t=1752926005368 200 in 568ms
