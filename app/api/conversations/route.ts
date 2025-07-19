@@ -33,6 +33,8 @@ export async function GET(request: NextRequest) {
       NEXT_PUBLIC_N8N_CONVERSATIONS_LIST_WEBHOOK: process.env.NEXT_PUBLIC_N8N_CONVERSATIONS_LIST_WEBHOOK ? "SET" : "NOT SET"
     });
     
+    console.log("[Conversations API] Making actual HTTP request to n8n webhook...");
+    
     // Make the request to n8n webhook
     const response = await fetch(webhookUrl, {
       method: "POST",
@@ -46,36 +48,33 @@ export async function GET(request: NextRequest) {
       }),
     });
 
-    console.log("[Conversations API] Response status:", response.status);
+    console.log("[Conversations API] HTTP request completed. Response status:", response.status);
+    console.log("[Conversations API] Response headers:", Object.fromEntries(response.headers.entries()));
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`[Conversations API] n8n webhook error (${response.status}):`, errorText);
       
-      // Return empty array instead of error for better UX
-      if (response.status === 404 || response.status === 500) {
-        console.log("[Conversations API] Returning empty conversations due to service unavailability");
-        return NextResponse.json([], { 
-          status: 200,
-          headers: corsHeaders
-        });
-      }
-      
       return NextResponse.json(
-        { error: `Failed to fetch conversations: ${response.status}` },
+        { error: `Failed to fetch conversations: ${response.status} - ${errorText}` },
         { status: response.status, headers: corsHeaders }
       );
     }
 
     const responseText = await response.text();
     console.log("[Conversations API] Raw response text:", responseText);
+    console.log("[Conversations API] Raw response length:", responseText.length);
     
     let conversations;
     try {
       conversations = responseText.trim() ? JSON.parse(responseText) : [];
     } catch (parseError) {
       console.error("[Conversations API] Failed to parse response:", parseError);
-      conversations = [];
+      console.error("[Conversations API] Response text that failed to parse:", responseText);
+      return NextResponse.json(
+        { error: "Invalid JSON response from webhook" },
+        { status: 502, headers: corsHeaders }
+      );
     }
     
     console.log("[Conversations API] Parsed response:", conversations);
@@ -90,14 +89,17 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error("[Conversations API] Error fetching conversations:", error);
-    
-    // Return empty array for network errors to prevent breaking the UI
-    console.log("[Conversations API] Returning empty conversations due to network error");
-    return NextResponse.json([], { 
-      status: 200,
-      headers: corsHeaders
+    console.error("[Conversations API] Network/fetch error:", error);
+    console.error("[Conversations API] Error details:", {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
     });
+    
+    return NextResponse.json(
+      { error: `Network error: ${error.message}` },
+      { status: 502, headers: corsHeaders }
+    );
   }
 }
 
