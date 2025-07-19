@@ -1,0 +1,86 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "get-single-conversations",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1560,
+        1640
+      ],
+      "id": "d02c5a90-a9b9-4f5c-9db0-4f2ca269faea",
+      "name": "Get Single Conversation",
+      "webhookId": "cf65298a-c8c5-4eac-8ed8-4d801ab92e14"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  event_type,\n  user_message,\n  ai_message,\n  cards,\n  timestamp\nFROM chatbot_events\nWHERE conversation_id = {{ $json.conversation_id }}\nORDER BY timestamp ASC;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1320,
+        1640
+      ],
+      "id": "4efee705-f187-4326-ae7f-fcf3343033ec",
+      "name": "Get All Messages",
+      "credentials": {
+        "postgres": {
+          "id": "Jc2co9tl3jbXLNeG",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -1100,
+        1640
+      ],
+      "id": "062961aa-e9f6-4d9f-bdbc-73009ac0bcc9",
+      "name": "Respond to Webhook2"
+    }
+  ],
+  "connections": {
+    "Get Single Conversation": {
+      "main": [
+        [
+          {
+            "node": "Get All Messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Messages": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4004a46fb0ea6cf9e1ebfd94bddadb20b9a6fd96d56937adf96616bf737240f5"
+  }
+}
