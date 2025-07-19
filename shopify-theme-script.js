@@ -89,13 +89,14 @@
   }
 
   // Function to fetch conversations via Vercel API
-  async function fetchConversations() {
+  async function fetchConversations(requestSessionId = null) {
+    const targetSessionId = requestSessionId || sessionId;
     try {
-      console.log('[Shopify Theme] Fetching conversations for session:', sessionId);
+      console.log('[Shopify Theme] Fetching conversations for session:', targetSessionId);
       
       const conversations = await makeAPIRequest(
         API_ENDPOINTS.conversations,
-        { session_id: sessionId },
+        { session_id: targetSessionId },
         'GET'
       );
       
@@ -109,12 +110,13 @@
   }
 
   // Function to fetch conversation history via Vercel API
-  async function fetchConversationHistory(conversationId) {
+  async function fetchConversationHistory(conversationId, requestSessionId = null) {
+    const targetSessionId = requestSessionId || sessionId;
     try {
       console.log('[Shopify Theme] Fetching history for conversation:', conversationId);
       
       const history = await makeAPIRequest(
-        `${API_ENDPOINTS.conversationHistory}/${conversationId}?session_id=${encodeURIComponent(sessionId)}`,
+        `${API_ENDPOINTS.conversationHistory}/${conversationId}?session_id=${encodeURIComponent(targetSessionId)}`,
         null,
         'GET'
       );
@@ -129,13 +131,14 @@
   }
 
   // Function to save a new conversation via Vercel API
-  async function saveConversation(conversationId) {
+  async function saveConversation(conversationId, requestSessionId = null) {
+    const targetSessionId = requestSessionId || sessionId;
     try {
       console.log('[Shopify Theme] Saving conversation:', conversationId);
       
       const payload = {
         id: crypto.randomUUID(),
-        session_id: sessionId,
+        session_id: targetSessionId,
         conversation_id: conversationId,
         timestamp: new Date().toISOString(),
         event_type: 'conversation_created',
@@ -178,7 +181,8 @@
       switch (message.type) {
         case 'get-conversations':
           try {
-            const conversations = await fetchConversations();
+            const requestSessionId = message.payload?.session_id;
+            const conversations = await fetchConversations(requestSessionId);
             event.source.postMessage({
               type: 'conversations-response',
               conversations: conversations
@@ -192,7 +196,7 @@
           break;
 
         case 'get-conversation-history':
-          const { conversationId } = message.payload || {};
+          const { conversationId, session_id: requestSessionId } = message.payload || {};
           if (!conversationId) {
             event.source.postMessage({
               type: 'conversation-history-error',
@@ -202,7 +206,7 @@
           }
 
           try {
-            const history = await fetchConversationHistory(conversationId);
+            const history = await fetchConversationHistory(conversationId, requestSessionId);
             event.source.postMessage({
               type: 'conversation-history-response',
               history: history,
@@ -217,14 +221,14 @@
           break;
 
         case 'save-conversation':
-          const { conversationId: saveConvId } = message.payload || {};
+          const { conversationId: saveConvId, session_id: saveSessionId } = message.payload || {};
           if (!saveConvId) {
             console.warn('[Shopify Theme] Save conversation request missing conversation ID');
             return;
           }
 
           try {
-            await saveConversation(saveConvId);
+            await saveConversation(saveConvId, saveSessionId);
             event.source.postMessage({
               type: 'conversation-saved',
               conversationId: saveConvId
