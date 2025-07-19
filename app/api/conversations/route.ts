@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     // Get the n8n webhook URL from environment, fallback to ngrok URL
     const webhookUrl = process.env.N8N_CONVERSATIONS_LIST_WEBHOOK || 
                       process.env.NEXT_PUBLIC_N8N_CONVERSATIONS_LIST_WEBHOOK ||
-                      "https://similarly-secure-mayfly.ngrok-free.app/webhook/get-allconversations";
+                      "https://similarly-secure-mayfly.ngrok-free.app/webhook/get-all-conversations";
     
     console.log("[Conversations API] Fetching conversations for session:", sessionId);
     console.log("[Conversations API] Using webhook URL:", webhookUrl);

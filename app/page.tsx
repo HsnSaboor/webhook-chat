@@ -877,7 +877,7 @@ export default function ChatWidget() {
       )
 
       if (typeof window !== "undefined" && window.location.hostname.includes("myshopify.com")) {
-        console.log("[Chatbot] Attempting direct cart add as fallback...")
+        console.log("[Chatbot] Attempting direct cart add as fallback...")```python
       }
     }
   }
@@ -1019,14 +1019,14 @@ export default function ChatWidget() {
         // Handle both array and object responses
         const conversationsArray = Array.isArray(data) ? data : (data.conversations || [])
         console.log("[Chatbot] Processed conversations array:", conversationsArray)
-        
+
         if (conversationsArray.length === 0) {
           console.warn("[Chatbot] No conversations found. This might indicate:")
           console.warn("1. The conversation wasn't saved properly to the database")
           console.warn("2. The n8n get-conversations workflow isn't finding the data")
           console.warn("3. There's a field mapping issue between save and retrieve")
         }
-        
+
         setConversations(conversationsArray.slice(0, 3))
         console.log("[Chatbot] Successfully fetched conversations via API:", conversationsArray.length, "conversations")
         setLoadingConversations(false)
@@ -1159,6 +1159,19 @@ export default function ChatWidget() {
       }, 100)
     }
   }
+
+ // Initialize conversation when component mounts or sessionId changes
+  useEffect(() => {
+    if (sessionId && !currentConversationId) {
+      const newConversationId = crypto.randomUUID()
+      setCurrentConversationId(newConversationId)
+      console.log("[Chatbot] Generated new conversation ID:", newConversationId)
+
+      // Save the conversation immediately when it's created
+      console.log("[Chatbot] Saving conversation on initialization")
+      saveConversation(newConversationId, sessionId);
+    }
+  }, [sessionId, currentConversationId, saveConversation])
 
   return (
     <>
