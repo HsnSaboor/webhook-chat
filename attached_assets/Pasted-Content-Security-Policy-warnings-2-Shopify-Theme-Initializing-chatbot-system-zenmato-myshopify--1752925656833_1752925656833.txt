@@ -1,0 +1,91 @@
+Content-Security-Policy warnings 2
+[Shopify Theme] Initializing chatbot system... zenmato.myshopify.com:2663:11
+[Chatbot] Determined session_id: session_0lur6a8ab_1752820119301 zenmato.myshopify.com:2672:11
+Cookie “_shopify_test” has been rejected for invalid domain. zenmato.myshopify.com
+Cookie “_shopify_test” has been rejected for invalid domain. zenmato.myshopify.com
+Cookie “_shopify_test” has been rejected for invalid domain. zenmato.myshopify.com
+Cookie “_shopify_test” has been rejected for invalid domain. zenmato.myshopify.com
+Cookie “_shopify_s” has been rejected for invalid domain. zenmato.myshopify.com
+Cookie “_shopify_sa_p” has been rejected for invalid domain. zenmato.myshopify.com
+Cookie “_shopify_sa_t” has been rejected for invalid domain. zenmato.myshopify.com
+Cookie “_shopify_y” has been rejected for invalid domain. zenmato.myshopify.com
+[Shopify Theme] Chatbot system initialized. zenmato.myshopify.com:2993:13
+Content-Security-Policy: Ignoring ‘block-all-mixed-content’ because mixed content display upgrading makes block-all-mixed-content obsolete. modern
+Multiple import maps are not allowed. srcdoc:1:155
+In a sandboxed environment, addEventListener may not behave as expected. modern:7:71139
+[Shopify Theme] Ignoring message from untrusted origin: null 2 zenmato.myshopify.com:2827:15
+[Shopify Theme] Ignoring message from untrusted origin: https://zenmato.myshopify.com zenmato.myshopify.com:2827:15
+Cookie warnings 2
+[Shopify Theme] Ignoring message from untrusted origin: null 4 zenmato.myshopify.com:2827:15
+recaptchacompat disabled api.js:4:186220
+No style found! bluesky-toolkit.js:33:29
+[Shopify Theme] Sent init data to chatbot iframe: 
+Object { type: "init", session_id: "session_0lur6a8ab_1752820119301", source_url: "https://zenmato.myshopify.com/", page_context: "EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en" }
+zenmato.myshopify.com:2988:15
+Partitioned cookie or storage access was provided to “https://v0-custom-chat-interface-kappa.vercel.app/” because it is loaded in the third-party context and dynamic state partitioning is enabled. webpack-9ce1feb1a7ba3ba5.js:2:60
+[Shopify Theme] Ignoring message from untrusted origin: https://newassets.hcaptcha.com 2 zenmato.myshopify.com:2827:15
+[Chatbot] Received message from origin: https://zenmato.myshopify.com Data: 
+Object { type: "init", session_id: "session_0lur6a8ab_1752820119301", source_url: "https://zenmato.myshopify.com/", page_context: "EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en" }
+page-84a60a4762550173.js:1:11914
+[Chatbot] Received init data from parent: 
+Object { type: "init", session_id: "session_0lur6a8ab_1752820119301", source_url: "https://zenmato.myshopify.com/", page_context: "EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en" }
+page-84a60a4762550173.js:1:12132
+[Chatbot] Set session_id from parent: session_0lur6a8ab_1752820119301 page-84a60a4762550173.js:1:12243
+Uncaught ReferenceError: data is not defined
+    NextJS 8
+page-84a60a4762550173.js:1:12309
+[Chatbot] Fetching conversations for session: session_0lur6a8ab_1752820119301 page-84a60a4762550173.js:1:23199
+[Chatbot] Generated new conversation ID: daa1f9ea-9ea3-49fb-a055-62365866f568 page-84a60a4762550173.js:1:26441
+[Chatbot] Saving conversation on initialization page-84a60a4762550173.js:1:26499
+[Chatbot] Saving conversation with payload: 
+Object { id: "d25b0fa8-3b51-4983-8f06-a6c3f0a3d629", session_id: "session_0lur6a8ab_1752820119301", conversation_id: "daa1f9ea-9ea3-49fb-a055-62365866f568", timestamp: "2025-07-19T11:45:48.288Z", event_type: "conversation_created", webhookUrl: "https://similarly-secure-mayfly.ngrok-free.app/webhook/save-conversation", source_url: "https://zenmato.myshopify.com/", page_context: "Chat Widget", chatbot_triggered: true, conversion_tracked: false, … }
+page-84a60a4762550173.js:1:18853
+[Shopify Theme] Ignoring message from untrusted origin: https://newassets.hcaptcha.com 2 zenmato.myshopify.com:2827:15
+[Shopify Theme] Ignoring message from untrusted origin: https://newassets.hcaptcha.com 4 zenmato.myshopify.com:2827:15
+[Shopify Theme] Ignoring message from untrusted origin: https://newassets.hcaptcha.com zenmato.myshopify.com:2827:15
+Partitioned cookie or storage access was provided to “https://newassets.hcaptcha.com/captcha/v1/184b927377511ae73b85882f6bccc8f053fc1ef0/static/hcaptcha.html#frame=challenge&id=0xzg39harzi&host=zenmato.myshopify.com&sentry=true&reportapi=https%3A%2F%2Faccounts.hcaptcha.com&recaptchacompat=off&custom=false&hl=en&tplinks=on&andint=off&pstissuer=https%3A%2F%2Fpst-issuer.hcaptcha.com&sitekey=f06e6c50-85a8-45c8-87d0-21a2b65856fe&size=invisible&theme=light&origin=https%3A%2F%2Fzenmato.myshopify.com” because it is loaded in the third-party context and dynamic state partitioning is enabled. hsw.js:2:683635
+[Shopify Theme] Ignoring message from untrusted origin: https://newassets.hcaptcha.com zenmato.myshopify.com:2827:15
+Source map error: Error: URL constructor:  is not a valid URL.
+Stack in the worker:resolveSourceMapURL@resource://devtools/client/shared/source-map-loader/utils/fetchSourceMap.js:56:22
+getOriginalURLs@resource://devtools/client/shared/source-map-loader/source-map.js:73:24
+workerHandler/</<@resource://devtools/client/shared/worker-utils.js:115:52
+workerHandler/<@resource://devtools/client/shared/worker-utils.js:113:13
+
+Resource URL: wasm:https://newassets.hcaptcha.com/c/341692b80dc1c4c5b4dbae5881d18ae362e673988723a3ca590f050f5fe1cbc3/hsw.js%20line%202%20%3E%20WebAssembly.instantiate
+Source Map URL: null
+[Chatbot] API response status: 200 page-84a60a4762550173.js:1:23415
+[Chatbot] Raw conversations data: 
+Array []
+page-84a60a4762550173.js:1:23497
+[Chatbot] Processed conversations array: 
+Array []
+page-84a60a4762550173.js:1:23593
+[Chatbot] No conversations found. This might indicate: page-84a60a4762550173.js:1:23666
+1. The conversation wasn't saved properly to the database page-84a60a4762550173.js:1:23737
+2. The n8n get-conversations workflow isn't finding the data page-84a60a4762550173.js:1:23811
+3. There's a field mapping issue between save and retrieve page-84a60a4762550173.js:1:23888
+[Chatbot] Successfully fetched conversations via API: 0 conversations page-84a60a4762550173.js:1:23981
+Partitioned cookie or storage access was provided to “https://newassets.hcaptcha.com/captcha/v1/184b927377511ae73b85882f6bccc8f053fc1ef0/static/hcaptcha.html#frame=challenge&id=1r2qf4tkc1sj&host=zenmato.myshopify.com&sentry=true&reportapi=https%3A%2F%2Faccounts.hcaptcha.com&recaptchacompat=off&custom=false&hl=en&tplinks=on&andint=off&pstissuer=https%3A%2F%2Fpst-issuer.hcaptcha.com&sitekey=f06e6c50-85a8-45c8-87d0-21a2b65856fe&size=invisible&theme=light&origin=https%3A%2F%2Fzenmato.myshopify.com” because it is loaded in the third-party context and dynamic state partitioning is enabled. hsw.js:2:683635
+Source map error: Error: URL constructor:  is not a valid URL.
+Stack in the worker:resolveSourceMapURL@resource://devtools/client/shared/source-map-loader/utils/fetchSourceMap.js:56:22
+getOriginalURLs@resource://devtools/client/shared/source-map-loader/source-map.js:73:24
+workerHandler/</<@resource://devtools/client/shared/worker-utils.js:115:52
+workerHandler/<@resource://devtools/client/shared/worker-utils.js:113:13
+
+Resource URL: wasm:https://newassets.hcaptcha.com/captcha/v1/184b927377511ae73b85882f6bccc8f053fc1ef0/static/hcaptcha.html#frame=challenge&id=1r2qf4tkc1sj&host=zenmato.myshopify.com&sentry=true&reportapi=https%253A%252F%252Faccounts.hcaptcha.com&recaptchacompat=off&custom=false&hl=en&tplinks=on&andint=off&pstissuer=https%253A%252F%252Fpst-issuer.hcaptcha.com&sitekey=f06e6c50-85a8-45c8-87d0-21a2b65856fe&size=invisible&theme=light&origin=https%253A%252F%252Fzenmato.myshopify.com%20line%2014%20%3E%20WebAssembly.Module
+Source Map URL: null
+[Chatbot] Conversation saved successfully page-84a60a4762550173.js:1:19039
+[Chatbot] Refreshing conversations after save page-84a60a4762550173.js:1:19112
+[Chatbot] Fetching conversations for session: session_0lur6a8ab_1752820119301 page-84a60a4762550173.js:1:23199
+[Chatbot] API response status: 200 page-84a60a4762550173.js:1:23415
+[Chatbot] Raw conversations data: 
+Array []
+page-84a60a4762550173.js:1:23497
+[Chatbot] Processed conversations array: 
+Array []
+page-84a60a4762550173.js:1:23593
+[Chatbot] No conversations found. This might indicate: page-84a60a4762550173.js:1:23666
+1. The conversation wasn't saved properly to the database page-84a60a4762550173.js:1:23737
+2. The n8n get-conversations workflow isn't finding the data page-84a60a4762550173.js:1:23811
+3. There's a field mapping issue between save and retrieve page-84a60a4762550173.js:1:23888
+[Chatbot] Successfully fetched conversations via API: 0 conversations page-84a60a4762550173.js:1:23981
