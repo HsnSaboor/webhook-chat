@@ -1,4 +1,3 @@
-
 import { type NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -24,7 +23,7 @@ export async function GET(request: NextRequest) {
     const webhookUrl = process.env.N8N_CONVERSATIONS_LIST_WEBHOOK || 
                       process.env.NEXT_PUBLIC_N8N_CONVERSATIONS_LIST_WEBHOOK ||
                       "https://similarly-secure-mayfly.ngrok-free.app/webhook/get-all-conversations";
-    
+
     console.log("[Conversations API] Fetching conversations for session:", sessionId);
     console.log("[Conversations API] Using webhook URL:", webhookUrl);
     console.log("[Conversations API] Request payload:", JSON.stringify({ session_id: sessionId }));
@@ -32,9 +31,11 @@ export async function GET(request: NextRequest) {
       N8N_CONVERSATIONS_LIST_WEBHOOK: process.env.N8N_CONVERSATIONS_LIST_WEBHOOK ? "SET" : "NOT SET",
       NEXT_PUBLIC_N8N_CONVERSATIONS_LIST_WEBHOOK: process.env.NEXT_PUBLIC_N8N_CONVERSATIONS_LIST_WEBHOOK ? "SET" : "NOT SET"
     });
-    
+
     console.log("[Conversations API] Making actual HTTP request to n8n webhook...");
-    
+    console.log("[Conversations API] Full webhook URL:", webhookUrl);
+    console.log("[Conversations API] Request payload:", JSON.stringify({ session_id }, null, 2));
+
     // Make the request to n8n webhook
     const response = await fetch(webhookUrl, {
       method: "POST",
@@ -54,7 +55,7 @@ export async function GET(request: NextRequest) {
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`[Conversations API] n8n webhook error (${response.status}):`, errorText);
-      
+
       return NextResponse.json(
         { error: `Failed to fetch conversations: ${response.status} - ${errorText}` },
         { status: response.status, headers: corsHeaders }
@@ -64,7 +65,7 @@ export async function GET(request: NextRequest) {
     const responseText = await response.text();
     console.log("[Conversations API] Raw response text:", responseText);
     console.log("[Conversations API] Raw response length:", responseText.length);
-    
+
     let conversations;
     try {
       conversations = responseText.trim() ? JSON.parse(responseText) : [];
@@ -76,7 +77,7 @@ export async function GET(request: NextRequest) {
         { status: 502, headers: corsHeaders }
       );
     }
-    
+
     console.log("[Conversations API] Parsed response:", conversations);
     console.log("[Conversations API] Successfully fetched conversations:", Array.isArray(conversations) ? conversations.length : 'Not an array', "items");
 
@@ -95,7 +96,7 @@ export async function GET(request: NextRequest) {
       message: error.message,
       stack: error.stack
     });
-    
+
     return NextResponse.json(
       { error: `Network error: ${error.message}` },
       { status: 502, headers: corsHeaders }
