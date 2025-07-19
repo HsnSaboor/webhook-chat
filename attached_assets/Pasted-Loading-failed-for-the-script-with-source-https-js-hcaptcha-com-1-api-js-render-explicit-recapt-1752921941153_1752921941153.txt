@@ -1,0 +1,146 @@
+Loading failed for the <script> with source “https://js.hcaptcha.com/1/api.js?render=explicit&recaptchacompat=off&onload=__shopify_hcap_load_ot9sk837”. zenmato.myshopify.com:1:1
+Uncaught (in promise) Error: The captcha provider script https://js.hcaptcha.com/1/api.js?render=explicit&recaptchacompat=off&onload=__shopify_hcap_load_ot9sk837 didn't load correctly.
+    onerror https://cdn.shopify.com/shopifycloud/storefront-forms-hcaptcha/ce_storefront_forms_captcha_hcaptcha.v1.5.2.iife.js:1
+    i https://cdn.shopify.com/shopifycloud/storefront-forms-hcaptcha/ce_storefront_forms_captcha_hcaptcha.v1.5.2.iife.js:1
+    i https://cdn.shopify.com/shopifycloud/storefront-forms-hcaptcha/ce_storefront_forms_captcha_hcaptcha.v1.5.2.iife.js:1
+    i https://cdn.shopify.com/shopifycloud/storefront-forms-hcaptcha/ce_storefront_forms_captcha_hcaptcha.v1.5.2.iife.js:1
+    n https://cdn.shopify.com/shopifycloud/storefront-forms-hcaptcha/ce_storefront_forms_captcha_hcaptcha.v1.5.2.iife.js:1
+    i https://cdn.shopify.com/shopifycloud/storefront-forms-hcaptcha/ce_storefront_forms_captcha_hcaptcha.v1.5.2.iife.js:1
+    v https://cdn.shopify.com/shopifycloud/storefront-forms-hcaptcha/ce_storefront_forms_captcha_hcaptcha.v1.5.2.iife.js:1
+    v https://cdn.shopify.com/shopifycloud/storefront-forms-hcaptcha/ce_storefront_forms_captcha_hcaptcha.v1.5.2.iife.js:1
+    <anonymous> https://cdn.shopify.com/shopifycloud/storefront-forms-hcaptcha/ce_storefront_forms_captcha_hcaptcha.v1.5.2.iife.js:1
+    <anonymous> https://cdn.shopify.com/shopifycloud/storefront-forms-hcaptcha/ce_storefront_forms_captcha_hcaptcha.v1.5.2.iife.js:1
+    <anonymous> https://cdn.shopify.com/shopifycloud/storefront-forms-hcaptcha/ce_storefront_forms_captcha_hcaptcha.v1.5.2.iife.js:1
+ce_storefront_forms_captcha_hcaptcha.v1.5.2.iife.js:1:901
+Content-Security-Policy warnings 2
+[Shopify Theme] Initializing chatbot system... zenmato.myshopify.com:2663:11
+[Chatbot] Determined session_id: session_0lur6a8ab_1752820119301 zenmato.myshopify.com:2672:11
+Cookie “_shopify_test” has been rejected for invalid domain. zenmato.myshopify.com
+Cookie “_shopify_test” has been rejected for invalid domain. zenmato.myshopify.com
+Cookie “_shopify_test” has been rejected for invalid domain. zenmato.myshopify.com
+Cookie “_shopify_test” has been rejected for invalid domain. zenmato.myshopify.com
+Uncaught TypeError: can't access property "closest", discountBlock is null
+    handleGenerateDiscountBlock https://cdn.shopify.com/extensions/e5160c7c-70b8-442a-aabf-bc586a4cca11/ns-discount-in-cart-49/assets/bluesky-toolkit.js:282
+    <anonymous> https://cdn.shopify.com/extensions/e5160c7c-70b8-442a-aabf-bc586a4cca11/ns-discount-in-cart-49/assets/bluesky-toolkit.js:294
+bluesky-toolkit.js:282:5
+Cookie “_shopify_s” has been rejected for invalid domain. zenmato.myshopify.com
+Cookie “_shopify_sa_p” has been rejected for invalid domain. zenmato.myshopify.com
+Cookie “_shopify_sa_t” has been rejected for invalid domain. zenmato.myshopify.com
+Cookie “_shopify_y” has been rejected for invalid domain. zenmato.myshopify.com
+Content-Security-Policy: Ignoring ‘block-all-mixed-content’ because mixed content display upgrading makes block-all-mixed-content obsolete. modern
+[Shopify Theme] Chatbot system initialized. zenmato.myshopify.com:2968:13
+Multiple import maps are not allowed. srcdoc:1:155
+Layout was forced before the page was fully loaded. If stylesheets are not yet loaded this may cause a flash of unstyled content. modern
+In a sandboxed environment, addEventListener may not behave as expected. modern:7:71139
+[Shopify Theme] Ignoring message from untrusted origin: null 2 zenmato.myshopify.com:2802:15
+[Shopify Theme] Ignoring message from untrusted origin: https://zenmato.myshopify.com zenmato.myshopify.com:2802:15
+recaptchacompat disabled api.js:4:186220
+[Shopify Theme] Ignoring message from untrusted origin: null zenmato.myshopify.com:2802:15
+[Shopify Theme] Ignoring message from untrusted origin: null 3 zenmato.myshopify.com:2802:15
+Partitioned cookie or storage access was provided to “https://v0-custom-chat-interface-kappa.vercel.app/” because it is loaded in the third-party context and dynamic state partitioning is enabled. webpack-9ce1feb1a7ba3ba5.js:2:60
+[Shopify Theme] Sent init data to chatbot iframe: 
+Object { type: "init", session_id: "session_0lur6a8ab_1752820119301", source_url: "https://zenmato.myshopify.com/", page_context: "EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en" }
+zenmato.myshopify.com:2963:15
+[Chatbot] Received message from parent: 
+Object { type: "init", session_id: "session_0lur6a8ab_1752820119301", source_url: "https://zenmato.myshopify.com/", page_context: "EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en" }
+page-c1da4305d2436174.js:1:11917
+[Chatbot] Received init data from parent: 
+Object { type: "init", session_id: "session_0lur6a8ab_1752820119301", source_url: "https://zenmato.myshopify.com/", page_context: "EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en" }
+page-c1da4305d2436174.js:1:12023
+[Chatbot] Fetching conversations for session: session_0lur6a8ab_1752820119301 page-c1da4305d2436174.js:1:22980
+[Chatbot] Generated new conversation ID: 137628a9-a5cb-4c04-80df-ee800e3565a6 page-c1da4305d2436174.js:1:26222
+[Chatbot] Saving conversation on initialization page-c1da4305d2436174.js:1:26280
+[Chatbot] Saving conversation with payload: 
+Object { id: "babd7aaf-a340-4e97-85c6-c71d07a82db0", session_id: "session_0lur6a8ab_1752820119301", conversation_id: "137628a9-a5cb-4c04-80df-ee800e3565a6", timestamp: "2025-07-19T10:44:56.013Z", event_type: "conversation_created", webhookUrl: "https://similarly-secure-mayfly.ngrok-free.app/webhook/save-conversation", source_url: "https://zenmato.myshopify.com/", page_context: "EcomHQ Zenmato Demo – ZENMATO", chatbot_triggered: true, conversion_tracked: false, … }
+page-c1da4305d2436174.js:1:18634
+[Shopify Theme] Ignoring message from untrusted origin: https://newassets.hcaptcha.com 6 zenmato.myshopify.com:2802:15
+[Shopify Theme] Ignoring message from untrusted origin: https://newassets.hcaptcha.com zenmato.myshopify.com:2802:15
+[Shopify Theme] Ignoring message from untrusted origin: https://newassets.hcaptcha.com zenmato.myshopify.com:2802:15
+XHRGET
+https://v0-custom-chat-interface-kappa.vercel.app/api/conversations?session_id=session_0lur6a8ab_1752820119301&t=1752921896009
+[HTTP/2 502  397ms]
+
+[Chatbot] API response status: 502 page-c1da4305d2436174.js:1:23196
+[Chatbot] API route failed with status: 502 Error: {"error":"Network error: session_id is not defined"} page-c1da4305d2436174.js:1:23892
+[Chatbot] Requesting conversations from parent window for session: session_0lur6a8ab_1752820119301 page-c1da4305d2436174.js:1:24062
+[Shopify Theme] Received message from iframe: get-conversations undefined zenmato.myshopify.com:2807:13
+[Shopify Theme] Fetching conversations for session: session_0lur6a8ab_1752820119301 zenmato.myshopify.com:2726:15
+[Shopify Theme] Making GET request to: https://v0-custom-chat-interface-kappa.vercel.app/api/conversations?session_id=session_0lur6a8ab_1752820119301 zenmato.myshopify.com:2707:15
+XHRGET
+https://v0-custom-chat-interface-kappa.vercel.app/api/conversations?session_id=session_0lur6a8ab_1752820119301
+[HTTP/2 502  480ms]
+
+[Shopify Theme] Ignoring message from untrusted origin: https://newassets.hcaptcha.com 2 zenmato.myshopify.com:2802:15
+Partitioned cookie or storage access was provided to “https://newassets.hcaptcha.com/captcha/v1/184b927377511ae73b85882f6bccc8f053fc1ef0/static/hcaptcha.html#frame=challenge&id=1nfr9wyp16p&host=zenmato.myshopify.com&sentry=true&reportapi=https%3A%2F%2Faccounts.hcaptcha.com&recaptchacompat=off&custom=false&hl=en&tplinks=on&andint=off&pstissuer=https%3A%2F%2Fpst-issuer.hcaptcha.com&sitekey=f06e6c50-85a8-45c8-87d0-21a2b65856fe&size=invisible&theme=light&origin=https%3A%2F%2Fzenmato.myshopify.com” because it is loaded in the third-party context and dynamic state partitioning is enabled. hsw.js:2:683635
+[Chatbot] Conversation saved successfully page-c1da4305d2436174.js:1:18820
+[Shopify Theme] API request failed: Error: HTTP 502: {"error":"Network error: session_id is not defined"}
+    makeAPIRequest https://zenmato.myshopify.com/:2713
+    fetchConversations https://zenmato.myshopify.com/:2728
+    <anonymous> https://zenmato.myshopify.com/:2813
+    EventListener.handleEvent* https://zenmato.myshopify.com/:2799
+    <anonymous> https://zenmato.myshopify.com/:2977
+zenmato.myshopify.com:2718:15
+[Shopify Theme] Failed to fetch conversations: Error: HTTP 502: {"error":"Network error: session_id is not defined"}
+    makeAPIRequest https://zenmato.myshopify.com/:2713
+    fetchConversations https://zenmato.myshopify.com/:2728
+    <anonymous> https://zenmato.myshopify.com/:2813
+    EventListener.handleEvent* https://zenmato.myshopify.com/:2799
+    <anonymous> https://zenmato.myshopify.com/:2977
+zenmato.myshopify.com:2738:15
+[Chatbot] Received message from parent: 
+Object { type: "conversations-error", error: 'HTTP 502: {"error":"Network error: session_id is not defined"}' }
+page-c1da4305d2436174.js:1:11917
+[Chatbot] Conversation fetch error: HTTP 502: {"error":"Network error: session_id is not defined"} 954-afcbf4d36871b7ad.js:1:17078
+Partitioned cookie or storage access was provided to “https://newassets.hcaptcha.com/captcha/v1/184b927377511ae73b85882f6bccc8f053fc1ef0/static/hcaptcha.html#frame=challenge&id=00frjfbrqg4sj&host=zenmato.myshopify.com&sentry=true&reportapi=https%3A%2F%2Faccounts.hcaptcha.com&recaptchacompat=off&custom=false&hl=en&tplinks=on&andint=off&pstissuer=https%3A%2F%2Fpst-issuer.hcaptcha.com&sitekey=f06e6c50-85a8-45c8-87d0-21a2b65856fe&size=invisible&theme=light&origin=https%3A%2F%2Fzenmato.myshopify.com” because it is loaded in the third-party context and dynamic state partitioning is enabled. hsw.js:2:683635
+Source map error: Error: URL constructor:  is not a valid URL.
+Stack in the worker:resolveSourceMapURL@resource://devtools/client/shared/source-map-loader/utils/fetchSourceMap.js:56:22
+getOriginalURLs@resource://devtools/client/shared/source-map-loader/source-map.js:73:24
+workerHandler/</<@resource://devtools/client/shared/worker-utils.js:115:52
+workerHandler/<@resource://devtools/client/shared/worker-utils.js:113:13
+
+Resource URL: wasm:https://newassets.hcaptcha.com/captcha/v1/184b927377511ae73b85882f6bccc8f053fc1ef0/static/hcaptcha.html#frame=challenge&id=1nfr9wyp16p&host=zenmato.myshopify.com&sentry=true&reportapi=https%253A%252F%252Faccounts.hcaptcha.com&recaptchacompat=off&custom=false&hl=en&tplinks=on&andint=off&pstissuer=https%253A%252F%252Fpst-issuer.hcaptcha.com&sitekey=f06e6c50-85a8-45c8-87d0-21a2b65856fe&size=invisible&theme=light&origin=https%253A%252F%252Fzenmato.myshopify.com%20line%2014%20%3E%20WebAssembly.Module
+Source Map URL: null
+Source map error: Error: URL constructor:  is not a valid URL.
+Stack in the worker:resolveSourceMapURL@resource://devtools/client/shared/source-map-loader/utils/fetchSourceMap.js:56:22
+getOriginalURLs@resource://devtools/client/shared/source-map-loader/source-map.js:73:24
+workerHandler/</<@resource://devtools/client/shared/worker-utils.js:115:52
+workerHandler/<@resource://devtools/client/shared/worker-utils.js:113:13
+
+Resource URL: wasm:https://newassets.hcaptcha.com/c/341692b80dc1c4c5b4dbae5881d18ae362e673988723a3ca590f050f5fe1cbc3/hsw.js%20line%202%20%3E%20WebAssembly.instantiate
+Source Map URL: null
+[Chatbot] Refreshing conversations after save page-c1da4305d2436174.js:1:18893
+[Chatbot] Fetching conversations for session: session_0lur6a8ab_1752820119301 page-c1da4305d2436174.js:1:22980
+XHRGET
+https://v0-custom-chat-interface-kappa.vercel.app/api/conversations?session_id=session_0lur6a8ab_1752820119301&t=1752921899840
+[HTTP/2 502  370ms]
+
+[Chatbot] API response status: 502 page-c1da4305d2436174.js:1:23196
+[Chatbot] API route failed with status: 502 Error: {"error":"Network error: session_id is not defined"} page-c1da4305d2436174.js:1:23892
+[Chatbot] Requesting conversations from parent window for session: session_0lur6a8ab_1752820119301 page-c1da4305d2436174.js:1:24062
+[Shopify Theme] Received message from iframe: get-conversations undefined zenmato.myshopify.com:2807:13
+[Shopify Theme] Fetching conversations for session: session_0lur6a8ab_1752820119301 zenmato.myshopify.com:2726:15
+[Shopify Theme] Making GET request to: https://v0-custom-chat-interface-kappa.vercel.app/api/conversations?session_id=session_0lur6a8ab_1752820119301 zenmato.myshopify.com:2707:15
+XHRGET
+https://v0-custom-chat-interface-kappa.vercel.app/api/conversations?session_id=session_0lur6a8ab_1752820119301
+[HTTP/2 502  375ms]
+
+[Shopify Theme] API request failed: Error: HTTP 502: {"error":"Network error: session_id is not defined"}
+    makeAPIRequest https://zenmato.myshopify.com/:2713
+    fetchConversations https://zenmato.myshopify.com/:2728
+    <anonymous> https://zenmato.myshopify.com/:2813
+    EventListener.handleEvent* https://zenmato.myshopify.com/:2799
+    <anonymous> https://zenmato.myshopify.com/:2977
+zenmato.myshopify.com:2718:15
+[Shopify Theme] Failed to fetch conversations: Error: HTTP 502: {"error":"Network error: session_id is not defined"}
+    makeAPIRequest https://zenmato.myshopify.com/:2713
+    fetchConversations https://zenmato.myshopify.com/:2728
+    <anonymous> https://zenmato.myshopify.com/:2813
+    EventListener.handleEvent* https://zenmato.myshopify.com/:2799
+    <anonymous> https://zenmato.myshopify.com/:2977
+zenmato.myshopify.com:2738:15
+[Chatbot] Received message from parent: 
+Object { type: "conversations-error", error: 'HTTP 502: {"error":"Network error: session_id is not defined"}' }
+page-c1da4305d2436174.js:1:11917
+[Chatbot] Conversation fetch error: HTTP 502: {"error":"Network error: session_id is not defined"} 954-afcbf4d36871b7ad.js:1:17078
+The resource at “https://zenmato.myshopify.com/cdn/fonts/dm_sans/dmsans_n4.ec80bd4dd7e1a334c969c265873491ae56018d72.woff2?h1=ZHJvcHNoaXBlbGVjdGlvbjIwMjQuYWNjb3VudC5teXNob3BpZnkuY29t&h2=emVubWF0by5teXNob3BpZnkuY29t&hmac=a9634ea6c9eb8cfa3f6eba02e453843df9424d7e579fba67426d5404833284a4” preloaded with link preload was not used within a few seconds. Make sure all attributes of the preload tag are set correctly. zenmato.myshopify.com
+The resource at “https://zenmato.myshopify.com/cdn/fonts/avenir_next/avenirnext_n6.dce2bdac497386d21072e6d18a9651d6fab43f93.woff2?h1=ZHJvcHNoaXBlbGVjdGlvbjIwMjQuYWNjb3VudC5teXNob3BpZnkuY29t&h2=emVubWF0by5teXNob3BpZnkuY29t&hmac=f00467bcde457b62a36fa4f16ede86fa6abb52bba97a91916e9a7036b9f24ceb” preloaded with link preload was not used within a few seconds. Make sure all attributes of the preload tag are set correctly. zenmato.myshopify.com
