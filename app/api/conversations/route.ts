@@ -1,4 +1,3 @@
-
 import { type NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -6,7 +5,7 @@ export async function GET(request: NextRequest) {
   const corsHeaders = {
     "Access-Control-Allow-Origin": "https://zenmato.myshopify.com",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, User-Agent",
   };
 
   console.log(`[Conversations API] ============== GET ALL CONVERSATIONS REQUEST ==============`);
@@ -58,7 +57,7 @@ export async function GET(request: NextRequest) {
       "ngrok-skip-browser-warning": "true",
       "User-Agent": "Shopify-Chat-Proxy/1.0",
     });
-    
+
     const startTime = Date.now();
 
     const response = await fetch(webhookUrl, {
@@ -125,7 +124,7 @@ export async function GET(request: NextRequest) {
       console.error(`[Conversations API] Failed to parse JSON response:`, parseError);
       console.error(`[Conversations API] Response was not valid JSON:`, responseText);
       console.error(`[Conversations API] First 500 chars of response:`, responseText.substring(0, 500));
-      
+
       // Return empty array if response is not valid JSON
       return NextResponse.json([], { 
         status: 200,
@@ -135,7 +134,7 @@ export async function GET(request: NextRequest) {
 
     // Handle different possible response formats from n8n
     let conversationsArray = [];
-    
+
     if (Array.isArray(data)) {
       conversationsArray = data;
       console.log(`[Conversations API] Response is already an array with ${conversationsArray.length} items`);
@@ -163,14 +162,14 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("[Conversations API] ============== ERROR OCCURRED ==============");
     console.error("[Conversations API] Error details:", error);
-    
+
     // Handle different types of errors
     let errorMessage = 'Unknown error';
     if (error instanceof Error) {
       console.error("[Conversations API] Error name:", error.name);
       console.error("[Conversations API] Error message:", error.message);
       console.error("[Conversations API] Error stack:", error.stack);
-      
+
       if (error.name === 'AbortError') {
         errorMessage = 'Request timeout - webhook did not respond within 30 seconds';
         console.error("[Conversations API] Request timed out");
@@ -184,15 +183,15 @@ export async function GET(request: NextRequest) {
         errorMessage = error.message;
       }
     }
-    
+
     console.error(`[Conversations API] Final error message: ${errorMessage}`);
     console.error(`[Conversations API] Webhook URL that failed: ${webhookUrl}`);
     console.error(`[Conversations API] Payload that was attempted: ${JSON.stringify(payload)}`);
-    
+
     // Return empty array instead of error for better UX
     console.log("[Conversations API] Returning empty array due to error");
     console.log("[Conversations API] ============== ERROR HANDLING COMPLETED ==============");
-    
+
     return NextResponse.json([], { 
       status: 200,
       headers: corsHeaders
@@ -204,16 +203,16 @@ export async function GET(request: NextRequest) {
 export async function OPTIONS() {
   console.log("[Conversations API] ============== OPTIONS PREFLIGHT REQUEST ==============");
   console.log("[Conversations API] Handling CORS preflight request");
-  
+
   const corsHeaders = {
     "Access-Control-Allow-Origin": "https://zenmato.myshopify.com",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, User-Agent",
   };
-  
+
   console.log("[Conversations API] Sending CORS headers:", corsHeaders);
   console.log("[Conversations API] ============== OPTIONS COMPLETED ==============");
-  
+
   return new Response(null, {
     status: 200,
     headers: corsHeaders,

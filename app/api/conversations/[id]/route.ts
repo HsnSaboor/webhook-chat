@@ -13,7 +13,7 @@ export async function GET(
   const corsHeaders = {
     "Access-Control-Allow-Origin": "https://zenmato.myshopify.com",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, User-Agent",
   };
 
   console.log(`[Conversation History API] ============== GET CONVERSATION HISTORY REQUEST ==============`);

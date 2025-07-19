@@ -35,7 +35,6 @@
         method: method,
         headers: {
           'Content-Type': 'application/json',
-          'User-Agent': 'Shopify-Theme/1.0',
         }
       };
       
