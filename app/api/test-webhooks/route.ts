@@ -8,9 +8,10 @@ const WEBHOOKS = {
     process.env.N8N_CONVERSATION_HISTORY_WEBHOOK ||
     "https://similarly-secure-mayfly.ngrok-free.app/webhook/get-single-conversations",
   "save-conversation":
+    process.env.N8N_SAVE_CONVERSATION_WEBHOOK ||
     "https://similarly-secure-mayfly.ngrok-free.app/webhook/save-conversation",
   chat:
-    process.env.NEXT_PUBLIC_N8N_CHAT_WEBHOOK ||
+    process.env.N8N_CHAT_WEBHOOK ||
     "https://similarly-secure-mayfly.ngrok-free.app/webhook/chat",
 };
 
@@ -24,7 +25,7 @@ interface WebhookTestResult {
   responseTime: number;
 }
 
-export async function GET(request: NextRequest) {
+export async function POST(request: NextRequest) {
   const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
@@ -45,7 +46,7 @@ export async function GET(request: NextRequest) {
       let testPayload: any = {};
 
       switch (name) {
-        case "get-allconversations":
+        case "get-all-conversations":
           testPayload = {
             session_id: "test-session-id",
           };

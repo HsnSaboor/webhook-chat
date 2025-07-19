@@ -33,7 +33,12 @@ export default function WebhookTester() {
   const runTests = async () => {
     setLoading(true);
     try {
-      const response = await fetch("/api/test-webhooks");
+      const response = await fetch("/api/test-webhooks", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
       const data = await response.json();
       setResults(data);
     } catch (error) {
