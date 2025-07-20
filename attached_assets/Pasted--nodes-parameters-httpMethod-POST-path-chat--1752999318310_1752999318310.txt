@@ -1,0 +1,107 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "chat",
+        "responseMode": "responseNode",
+        "options": {
+          "binaryPropertyName": "data"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1560,
+        0
+      ],
+      "id": "cdcf9744-9533-4c8a-b4ed-8b366e037427",
+      "name": "Webhook",
+      "webhookId": "16aaf712-aa9b-45a5-834a-39b979becada"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "pinData": {
+    "Webhook": [
+      {
+        "headers": {
+          "host": "similarly-secure-mayfly.ngrok-free.app",
+          "user-agent": "Shopify-Chat-Proxy/1.0",
+          "content-length": "474",
+          "accept": "*/*",
+          "accept-encoding": "br, gzip, deflate",
+          "accept-language": "*",
+          "content-type": "application/json",
+          "ngrok-skip-browser-warning": "true",
+          "sec-fetch-mode": "cors",
+          "x-forwarded-for": "54.92.155.195",
+          "x-forwarded-host": "similarly-secure-mayfly.ngrok-free.app",
+          "x-forwarded-proto": "https",
+          "x-vercel-id": "hkg1::q5kfd-1752817813885-bf91124fcac7"
+        },
+        "params": {},
+        "query": {},
+        "body": {
+          "id": "e23f5ef9-2639-42d3-bdd8-1819a06739ff",
+          "session_id": "78ddfd09-7df6-4750-8e83-41e67f9b21b9",
+          "timestamp": "2025-07-18T05:50:13.231Z",
+          "event_type": "user_message",
+          "user_message": "hi",
+          "webhookUrl": "https://similarly-secure-mayfly.ngrok-free.app/webhook/chat",
+          "source_url": "https://zenmato.myshopify.com/",
+          "page_context": "EcomHQ Zenmato Demo – ZENMATO",
+          "chatbot_triggered": true,
+          "conversion_tracked": false,
+          "type": "text",
+          "text": "hi",
+          "cart_currency": "USD",
+          "localization": "PK"
+        },
+        "webhookUrl": "https://similarly-secure-mayfly.ngrok-free.app/webhook/chat",
+        "executionMode": "production"
+      }
+    ]
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4004a46fb0ea6cf9e1ebfd94bddadb20b9a6fd96d56937adf96616bf737240f5"
+  }
+}
+
+{
+  "nodes": [
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1120,
+        -40
+      ],
+      "id": "ed3a4ff2-ea5a-4786-953a-a8a3b1cbfee5",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "connections": {
+    "Respond to Webhook": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4004a46fb0ea6cf9e1ebfd94bddadb20b9a6fd96d56937adf96616bf737240f5"
+  }
+}

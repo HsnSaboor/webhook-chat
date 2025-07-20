@@ -1,0 +1,389 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "path": "get-all-conversations",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1560,
+        1400
+      ],
+      "id": "9de6c68a-ccf4-4be9-92f8-89bd4d6ac9c0",
+      "name": "Get All Conversations",
+      "webhookId": "cf65298a-c8c5-4eac-8ed8-4d801ab92e14"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "get-single-conversations",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1560,
+        1640
+      ],
+      "id": "d02c5a90-a9b9-4f5c-9db0-4f2ca269faea",
+      "name": "Get Single Conversation",
+      "webhookId": "cf65298a-c8c5-4eac-8ed8-4d801ab92e14"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  id,\n  event_type,\n  user_message,\n  ai_message,\n  cards,\n  timestamp\nFROM chatbot_events\nWHERE conversation_id = {{ $json.conversation_id }}\nORDER BY timestamp ASC;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1320,
+        1640
+      ],
+      "id": "4efee705-f187-4326-ae7f-fcf3343033ec",
+      "name": "Get All Messages",
+      "credentials": {
+        "postgres": {
+          "id": "Jc2co9tl3jbXLNeG",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id AS conversation_id, name, created_at AS started_at, ended_at \nFROM conversations \nWHERE session_id = $1 \nORDER BY created_at DESC;",
+        "options": {
+          "queryReplacement": "={{ $json.body.session_id }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1320,
+        1400
+      ],
+      "id": "927f0a3a-b469-4465-8d2a-c93152fa6bff",
+      "name": "Get All Conversations from DB",
+      "credentials": {
+        "postgres": {
+          "id": "Jc2co9tl3jbXLNeG",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "value": "public",
+          "mode": "name"
+        },
+        "table": {
+          "__rl": true,
+          "value": "conversations",
+          "mode": "name"
+        },
+        "dataMode": "defineBelow",
+        "valuesToSend": {
+          "values": [
+            {
+              "column": "id",
+              "value": "={{ $json.body.conversation_id }}"
+            },
+            {
+              "column": "session_id",
+              "value": "={{ $json.body.session_id }}"
+            },
+            {
+              "column": "created_at",
+              "value": "={{ $json.body.timestamp }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a5a5d498-dd6f-4cb8-8738-191bb298c576",
+      "name": "Insert Conversation",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [
+        -1360,
+        1880
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "Jc2co9tl3jbXLNeG",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "save-conversation",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "4d8f6003-80e6-40d1-91a4-34d7d7e7eb93",
+      "name": "Save Conversation",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -1560,
+        1880
+      ],
+      "webhookId": "a92d0da7-4112-4c81-9a10-c26d5cc9a5bd"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"conversation_id\": $json.id } }}",
+        "options": {}
+      },
+      "id": "9ca92a46-abdc-465b-9191-a7c75e725f8f",
+      "name": "Respond To Chatbot",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -1160,
+        1880
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -900,
+        1400
+      ],
+      "id": "e34e8302-d078-4ae0-a4ba-0e655e8bbeff",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -900,
+        1640
+      ],
+      "id": "062961aa-e9f6-4d9f-bdbc-73009ac0bcc9",
+      "name": "Respond to Webhook2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Transform the data to match expected format\nconst conversations = items.map(item => ({\n  conversation_id: item.json.conversation_id,\n  name: item.json.name || `Conversation ${item.json.conversation_id.slice(0, 8)}`,\n  started_at: item.json.started_at,\n  ended_at: item.json.ended_at\n}));\n\nreturn conversations.map(conv => ({ json: conv }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1100,
+        1400
+      ],
+      "id": "ed78dcbd-d22a-4a60-95a6-1d0cfa065d0c",
+      "name": "Code3"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Transform database records to Message format\nconst messages = [];\n\nitems.forEach(item => {\n  const data = item.json;\n  \n  // Add user message if it exists\n  if (data.user_message && data.user_message.trim()) {\n    messages.push({\n      id: `${data.id}-user`,\n      content: data.user_message,\n      role: \"user\",\n      timestamp: data.timestamp,\n      type: \"text\"\n    });\n  }\n  \n  // Add AI message if it exists\n  if (data.ai_message && data.ai_message.trim()) {\n    const aiMessage = {\n      id: `${data.id}-ai`,\n      content: data.ai_message,\n      role: \"webhook\",\n      timestamp: data.timestamp,\n      type: \"text\"\n    };\n    \n    // Add cards if they exist\n    if (data.cards) {\n      try {\n        aiMessage.cards = typeof data.cards === 'string' ? JSON.parse(data.cards) : data.cards;\n      } catch (e) {\n        console.log('Failed to parse cards:', e);\n      }\n    }\n    \n    messages.push(aiMessage);\n  }\n});\n\nreturn messages.map(msg => ({ json: msg }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1100,
+        1640
+      ],
+      "id": "db7124cd-36c2-4833-a441-42b0f939e023",
+      "name": "Code4"
+    }
+  ],
+  "connections": {
+    "Get All Conversations": {
+      "main": [
+        [
+          {
+            "node": "Get All Conversations from DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Single Conversation": {
+      "main": [
+        [
+          {
+            "node": "Get All Messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Messages": {
+      "main": [
+        [
+          {
+            "node": "Code4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Conversations from DB": {
+      "main": [
+        [
+          {
+            "node": "Code3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Conversation": {
+      "main": [
+        [
+          {
+            "node": "Respond To Chatbot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Conversation": {
+      "main": [
+        [
+          {
+            "node": "Insert Conversation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code3": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code4": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {
+    "Get All Conversations": [
+      {
+        "headers": {
+          "host": "similarly-secure-mayfly.ngrok-free.app",
+          "user-agent": "Shopify-Chat-Proxy/1.0",
+          "content-length": "48",
+          "accept": "*/*",
+          "accept-encoding": "br, gzip, deflate",
+          "accept-language": "*",
+          "content-type": "application/json",
+          "ngrok-skip-browser-warning": "true",
+          "sec-fetch-mode": "cors",
+          "x-forwarded-for": "34.93.135.185",
+          "x-forwarded-host": "similarly-secure-mayfly.ngrok-free.app",
+          "x-forwarded-proto": "https"
+        },
+        "params": {},
+        "query": {},
+        "body": {
+          "session_id": "session_0lur6a8ab_1752820119301"
+        },
+        "webhookUrl": "https://similarly-secure-mayfly.ngrok-free.app/webhook/get-all-conversations",
+        "executionMode": "production"
+      }
+    ],
+    "Insert Conversation": [
+      {
+        "id": "4530e4c7-aa98-4fe7-8375-ab521b0e935f",
+        "session_id": "session_0lur6a8ab_1752820119301",
+        "created_at": "2025-07-18T09:24:43.037Z",
+        "updated_at": "2025-07-18T09:30:02.516Z",
+        "ended_at": null,
+        "name": null
+      }
+    ],
+    "Save Conversation": [
+      {
+        "headers": {
+          "host": "similarly-secure-mayfly.ngrok-free.app",
+          "user-agent": "Shopify-Chat-Proxy/1.0",
+          "content-length": "561",
+          "accept": "*/*",
+          "accept-encoding": "br, gzip, deflate",
+          "accept-language": "*",
+          "content-type": "application/json",
+          "ngrok-skip-browser-warning": "true",
+          "sec-fetch-mode": "cors",
+          "x-forwarded-for": "3.234.223.26",
+          "x-forwarded-host": "similarly-secure-mayfly.ngrok-free.app",
+          "x-forwarded-proto": "https",
+          "x-vercel-id": "dxb1::5dqpl-1752830683444-c5f2ea197b5d"
+        },
+        "params": {},
+        "query": {},
+        "body": {
+          "id": "5eea89f5-c428-488c-ab2c-cdbbab195cda",
+          "session_id": "session_0lur6a8ab_1752820119301",
+          "conversation_id": "4530e4c7-aa98-4fe7-8375-ab521b0e935f",
+          "timestamp": "2025-07-18T09:24:43.037Z",
+          "event_type": "conversation_created",
+          "webhookUrl": "https://similarly-secure-mayfly.ngrok-free.app/webhook/save-conversation",
+          "source_url": "https://zenmato.myshopify.com/",
+          "page_context": "EcomHQ Zenmato Demo – ZENMATO",
+          "chatbot_triggered": true,
+          "conversion_tracked": false,
+          "cart_currency": "USD",
+          "localization": "en",
+          "user_message": "Conversation started",
+          "type": "conversation"
+        },
+        "webhookUrl": "https://similarly-secure-mayfly.ngrok-free.app/webhook/save-conversation",
+        "executionMode": "production"
+      }
+    ]
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4004a46fb0ea6cf9e1ebfd94bddadb20b9a6fd96d56937adf96616bf737240f5"
+  }
+}
