@@ -26,11 +26,11 @@
     const cartCurrency = (window.Shopify && window.Shopify.currency && window.Shopify.currency.active) || 'USD';
     const localization = (window.Shopify && window.Shopify.locale) || 'en';
 
-    const N8N_BASE_URL = 'https://your-n8n-instance-url'; // Change this to your n8n instance URL
+    const N8N_BASE_URL = 'https://similarly-secure-mayfly.ngrok-free.app'; // Your n8n instance URL
     const API_ENDPOINTS = {
       saveConversation: `${N8N_BASE_URL}/webhook/save-conversation`,
       conversations: `${N8N_BASE_URL}/webhook/get-all-conversations`,
-      conversationHistory: (id) => `${N8N_BASE_URL}/webhook/get-single-conversation/${id}`,
+      conversationHistory: (id) => `${N8N_BASE_URL}/webhook/get-single-conversations`,
       chat: `${N8N_BASE_URL}/webhook/chat`
     };
 
@@ -67,7 +67,23 @@
 
     async function fetchAllConversations() {
       try {
-        const response = await fetch(`${API_ENDPOINTS.conversations}?session_id=${encodeURIComponent(sessionId)}`);
+        const payload = {
+          session_id: sessionId,
+          timestamp: new Date().toISOString(),
+          request_type: "get_all_conversations",
+          action: "fetch_conversations"
+        };
+
+        const response = await fetch(API_ENDPOINTS.conversations, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'User-Agent': 'Shopify-Chat-Proxy/1.0',
+            'ngrok-skip-browser-warning': 'true',
+          },
+          body: JSON.stringify(payload)
+        });
+        
         const conversations = await response.json();
         console.log('[Shopify Theme] Successfully fetched all conversations:', conversations);
         return conversations;
@@ -79,7 +95,23 @@
 
     async function fetchSingleConversation(conversationId) {
       try {
-        const response = await fetch(API_ENDPOINTS.conversationHistory(conversationId) + `?session_id=${encodeURIComponent(sessionId)}`);
+        const payload = {
+          conversation_id: conversationId,
+          session_id: sessionId,
+          timestamp: new Date().toISOString(),
+          request_type: "get_conversation_history"
+        };
+
+        const response = await fetch(API_ENDPOINTS.conversationHistory(), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'User-Agent': 'Shopify-Chat-Proxy/1.0',
+            'ngrok-skip-browser-warning': 'true',
+          },
+          body: JSON.stringify(payload)
+        });
+        
         const conversation = await response.json();
         console.log('[Shopify Theme] Successfully fetched conversation:', conversation);
         return conversation;
@@ -121,7 +153,7 @@
     }
 
     window.addEventListener('message', async function(event) {
-      if (event.origin !== 'https://your-chatbot-app-url') { // Change this to your chatbot app URL
+      if (event.origin !== 'https://v0-custom-chat-interface-kappa.vercel.app') { // Your chatbot app URL
         console.warn('[Shopify Theme] Ignoring message from untrusted origin:', event.origin);
         return;
       }
@@ -219,7 +251,7 @@
     function initializeChatbot() {
       const iframe = document.createElement('iframe');
       iframe.id = 'chatbot';
-      iframe.src = 'https://your-chatbot-app-url'; // Change this to your chatbot app URL
+      iframe.src = 'https://v0-custom-chat-interface-kappa.vercel.app'; // Your chatbot app URL
       iframe.style.cssText = `
         position: fixed;
         bottom: 24px;
@@ -245,7 +277,7 @@
         };
 
         console.log('[Shopify Theme] Sent init data to chatbot iframe:', initData);
-        iframe.contentWindow.postMessage(initData, 'https://your-chatbot-app-url'); // Change this to your chatbot app URL
+        iframe.contentWindow.postMessage(initData, 'https://v0-custom-chat-interface-kappa.vercel.app'); // Your chatbot app URL
       };
 
       console.log('[Shopify Theme] Chatbot system initialized.');
