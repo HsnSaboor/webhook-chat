@@ -2,7 +2,7 @@
 "use client";
 
 import type React from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ArrowUp } from "lucide-react";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,18 +19,16 @@ import {
   X,
   AlertCircle,
   Sparkles,
-  Zap,
-  Star,
-  Heart,
   User,
-  Check,
+  Plus,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 
 // Import modularized components
 import { AnimatedWaveform } from "@/components/chat/AnimatedWaveform";
 import { StaticWaveform } from "@/components/chat/StaticWaveform";
 import { TypingIndicator } from "@/components/chat/TypingIndicator";
-import { ParticleBackground } from "@/components/chat/ParticleBackground";
 import { ProductCards } from "@/components/chat/ProductCards";
 import { useChat } from "@/components/chat/hooks/useChat";
 import { useAudio } from "@/components/chat/hooks/useAudio";
@@ -76,7 +74,7 @@ export default function ChatWidget() {
 
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
-  const [chatHeight, setChatHeight] = useState(500);
+  const [chatHeight, setChatHeight] = useState(600);
   const [isDragging, setIsDragging] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
@@ -85,6 +83,7 @@ export default function ChatWidget() {
   const [addedProductVariantId, setAddedProductVariantId] = useState<string | null>(null);
   const [conversations, setConversations] = useState<any[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+  const [isSoundEnabled, setIsSoundEnabled] = useState(true);
 
   const dragStartY = useRef(0);
   const dragStartHeight = useRef(0);
@@ -604,54 +603,54 @@ export default function ChatWidget() {
     }
   };
 
-    const handleMouseMove = (e: MouseEvent) => {
-        if (isDragging && isMobile) {
-            const deltaY = dragStartY.current - e.clientY;
-            const newHeight = Math.min(
-                Math.max(dragStartHeight.current + deltaY, 300),
-                window.innerHeight * 0.9,
-            );
-            setChatHeight(newHeight);
-        }
-    };
+  const handleMouseMove = (e: MouseEvent) => {
+    if (isDragging && isMobile) {
+      const deltaY = dragStartY.current - e.clientY;
+      const newHeight = Math.min(
+        Math.max(dragStartHeight.current + deltaY, 300),
+        window.innerHeight * 0.9,
+      );
+      setChatHeight(newHeight);
+    }
+  };
 
-    const handleTouchMove = (e: TouchEvent) => {
-        if (isDragging && isMobile) {
-            e.preventDefault();
-            const deltaY = dragStartY.current - e.touches[0].clientY;
-            const newHeight = Math.min(
-                Math.max(dragStartHeight.current + deltaY, 300),
-                window.innerHeight * 0.9,
-            );
-            setChatHeight(newHeight);
-        }
-    };
+  const handleTouchMove = (e: TouchEvent) => {
+    if (isDragging && isMobile) {
+      e.preventDefault();
+      const deltaY = dragStartY.current - e.touches[0].clientY;
+      const newHeight = Math.min(
+        Math.max(dragStartHeight.current + deltaY, 300),
+        window.innerHeight * 0.9,
+      );
+      setChatHeight(newHeight);
+    }
+  };
 
-    const handleMouseUp = () => {
-        setIsDragging(false);
-    };
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
 
-    const handleTouchEnd = () => {
-        setIsDragging(false);
-    };
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+  };
 
-    useEffect(() => {
-        if (isDragging) {
-            document.addEventListener("mousemove", handleMouseMove);
-            document.addEventListener("mouseup", handleMouseUp);
-            document.addEventListener("touchmove", handleTouchMove, {
-                passive: false,
-            });
-            document.addEventListener("touchend", handleTouchEnd);
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+      document.addEventListener("touchmove", handleTouchMove, {
+        passive: false,
+      });
+      document.addEventListener("touchend", handleTouchEnd);
 
-            return () => {
-                document.removeEventListener("mousemove", handleMouseMove);
-                document.removeEventListener("mouseup", handleMouseUp);
-                document.removeEventListener("touchmove", handleTouchMove);
-                document.removeEventListener("touchend", handleTouchEnd);
-            };
-        }
-    }, [isDragging, isMobile]);
+      return () => {
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
+        document.removeEventListener("touchmove", handleTouchMove);
+        document.removeEventListener("touchend", handleTouchEnd);
+      };
+    }
+  }, [isDragging, isMobile]);
 
   useEffect(() => {
     return () => {
@@ -692,119 +691,93 @@ export default function ChatWidget() {
 
   return (
     <>
-      {/* Chat Widget Button */}
+      {/* Chat Widget Button - Minimalist Design */}
       {!isOpen && (
         <div className="fixed bottom-6 right-6 z-50">
-          <div className="relative group">
-            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 animate-pulse-glow opacity-75"></div>
-            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 animate-gradient-xy opacity-50"></div>
-
-            <Button
-              onClick={() => setIsOpen(true)}
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
-              className="relative h-20 w-20 rounded-full bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 hover:from-purple-700 hover:via-blue-700 hover:to-indigo-700 shadow-2xl hover:shadow-neon transition-all duration-700 transform hover:scale-110 border-4 border-white/40 backdrop-blur-md animate-float group-hover:animate-bounce-in"
-            >
-              <MessageCircle
-                className={`h-9 w-9 text-white transition-all duration-500 ${isHovered ? "scale-125 rotate-12" : ""}`}
-              />
-
-              <div className="absolute -top-2 -right-2 h-6 w-6 bg-gradient-to-r from-red-500 to-pink-500 rounded-full border-3 border-white shadow-xl animate-bounce-in">
-                <div className="absolute inset-0 bg-red-500 rounded-full animate-ping opacity-75"></div>
-                <div className="absolute inset-0 bg-gradient-to-r from-red-400 to-pink-400 rounded-full animate-pulse"></div>
-                <Heart className="h-3 w-3 text-white absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
-              </div>
-            </Button>
-
-            <div className="absolute bottom-full right-0 mb-6 px-6 py-4 bg-gradient-to-r from-gray-900 via-purple-900 to-gray-900 backdrop-blur-2xl text-white text-sm rounded-3xl opacity-0 group-hover:opacity-100 transition-all duration-500 whitespace-nowrap shadow-2xl border border-white/20 transform group-hover:scale-105 group-hover:-translate-y-2">
-              <div className="flex items-center space-x-3">
-                <div className="w-3 h-3 bg-gradient-to-r from-green-400 to-emerald-400 rounded-full animate-pulse shadow-lg shadow-green-400/50"></div>
-                <MessageCircle className="h-5 w-5 animate-bounce" />
-                <span className="font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                  Chat with us - We're online!
-                </span>
-                <div className="flex space-x-1">
-                  <Sparkles className="h-4 w-4 text-yellow-400 animate-pulse" />
-                  <Zap className="h-4 w-4 text-blue-400 animate-bounce" />
-                </div>
-              </div>
-              <div className="absolute top-full right-10 w-0 h-0 border-l-6 border-r-6 border-t-6 border-transparent border-t-gray-900"></div>
+          <Button
+            onClick={() => setIsOpen(true)}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            className="relative h-14 w-14 rounded-full bg-black text-white hover:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border-0"
+          >
+            <MessageCircle className={`h-6 w-6 transition-all duration-300 ${isHovered ? "scale-110" : ""}`} />
+            
+            {/* Online indicator */}
+            <div className="absolute -top-1 -right-1 h-4 w-4 bg-green-500 rounded-full border-2 border-white">
+              <div className="absolute inset-0 bg-green-500 rounded-full animate-ping opacity-75"></div>
             </div>
-          </div>
+          </Button>
+
+          {/* Minimalist tooltip */}
+          {isHovered && (
+            <div className="absolute bottom-full right-0 mb-3 px-3 py-2 bg-black text-white text-sm rounded-lg opacity-0 animate-in fade-in duration-200 whitespace-nowrap">
+              Chat with us
+              <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-black"></div>
+            </div>
+          )}
         </div>
       )}
 
-      {/* Chat Widget */}
+      {/* Chat Widget - Sleek Minimalist Design */}
       {isOpen && (
         <div
-          className={`fixed z-50 transition-all duration-1000 ease-out ${
+          className={`fixed z-50 transition-all duration-300 ease-out ${
             isMobile ? "inset-x-4 bottom-4" : "bottom-6 right-6 w-96"
           }`}
           style={{
-            height: isMobile ? `${chatHeight}px` : "700px",
-            maxHeight: isMobile ? "85vh" : "700px",
+            height: isMobile ? `${chatHeight}px` : "600px",
+            maxHeight: isMobile ? "85vh" : "600px",
           }}
         >
-          <Card className="h-full flex flex-col shadow-2xl animate-in slide-in-from-bottom-8 fade-in duration-1000 border-0 overflow-hidden bg-gradient-to-b from-white/95 via-white/90 to-white/95 backdrop-blur-3xl rounded-3xl relative">
-            <ParticleBackground />
-
-            {/* Header */}
-            <CardHeader className="flex flex-row items-center justify-between p-6 bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-700 text-white rounded-t-3xl relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-600/90 via-blue-600/90 to-indigo-700/90 animate-gradient-xy"></div>
-              <div className="absolute inset-0 bg-gradient-to-br from-pink-500/20 via-purple-500/20 to-blue-500/20 animate-gradient-x"></div>
-
-              <div className="flex items-center space-x-5 mt-2 relative z-10">
-                <div className="relative">
-                  <div className="h-12 w-12 bg-white/25 rounded-full flex items-center justify-center backdrop-blur-md border-2 border-white/40 shadow-xl animate-pulse-glow">
-                    <MessageCircle className="h-6 w-6 animate-bounce" />
-                  </div>
-                  <div className="absolute -top-1 -right-1 h-5 w-5 bg-gradient-to-r from-green-400 to-emerald-400 rounded-full border-2 border-white shadow-lg animate-bounce-in">
-                    <div className="absolute inset-0 bg-green-400 rounded-full animate-ping opacity-40"></div>
-                  </div>
+          <Card className="h-full flex flex-col shadow-2xl bg-white border border-gray-200 rounded-2xl overflow-hidden">
+            
+            {/* Minimalist Header */}
+            <CardHeader className="flex flex-row items-center justify-between p-4 bg-white border-b border-gray-100">
+              <div className="flex items-center space-x-3">
+                <div className="h-10 w-10 bg-black rounded-full flex items-center justify-center">
+                  <MessageCircle className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-xl tracking-wide bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
-                    AI Support
-                  </h3>
-                  <p className="text-sm text-white/95 font-semibold flex items-center space-x-2">
-                    <span>Always here to help you!</span>
-                    <Sparkles className="h-4 w-4 animate-pulse" />
+                  <h3 className="font-semibold text-gray-900 text-lg">Support</h3>
+                  <p className="text-sm text-gray-500 flex items-center space-x-2">
+                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                    <span>Online</span>
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-3 mt-2 relative z-10">
+              <div className="flex items-center space-x-2">
                 {conversations.length > 0 && (
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={startNewConversation}
-                    className="text-white hover:bg-white/25 h-10 px-3 rounded-full transition-all duration-500 hover:scale-110 backdrop-blur-md border-2 border-white/30 hover:shadow-neon text-xs"
+                    className="text-gray-600 hover:text-black hover:bg-gray-100 h-8 px-3 rounded-lg text-xs"
                   >
-                    New Chat
+                    <Plus className="h-4 w-4 mr-1" />
+                    New
                   </Button>
                 )}
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setIsOpen(false)}
-                  className="text-white hover:bg-white/25 h-12 w-12 p-0 rounded-full transition-all duration-500 hover:scale-110 backdrop-blur-md border-2 border-white/30 hover:shadow-neon"
+                  className="text-gray-600 hover:text-black hover:bg-gray-100 h-8 w-8 p-0 rounded-lg"
                 >
-                  <X className="h-6 w-6" />
+                  <X className="h-4 w-4" />
                 </Button>
               </div>
             </CardHeader>
 
-            {/* Recent Conversations */}
+            {/* Recent Conversations - Clean List */}
             {conversations.length > 0 && (
-              <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-blue-50 border-b-2 border-blue-200/50 p-4 animate-in slide-in-from-top-2 duration-500 backdrop-blur-md">
-                <h4 className="text-sm font-semibold text-blue-800 mb-2">Recent Conversations</h4>
-                <div className="flex gap-2 overflow-x-auto">
+              <div className="bg-gray-50 border-b border-gray-100 p-3">
+                <div className="flex gap-2 overflow-x-auto scrollbar-hide">
                   {conversations.slice(0, 3).map((conv) => (
                     <button
                       key={conv.id}
                       onClick={() => loadConversationFromParent(conv.id)}
-                      className="flex-shrink-0 bg-white/80 hover:bg-white border border-blue-200 rounded-lg px-3 py-2 text-xs text-blue-700 hover:text-blue-900 transition-all duration-300 hover:scale-105 shadow-sm hover:shadow-md"
+                      className="flex-shrink-0 bg-white hover:bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-700 hover:text-black transition-all duration-200"
                     >
                       {conv.title || `Chat ${conv.id.slice(-4)}`}
                     </button>
@@ -813,74 +786,54 @@ export default function ChatWidget() {
               </div>
             )}
 
-            {/* Recording Indicator */}
+            {/* Recording Indicator - Minimal */}
             {isRecording && (
-              <div className="bg-gradient-to-r from-red-50 via-pink-50 to-red-50 border-b-2 border-red-200/50 p-5 animate-in slide-in-from-top-4 duration-700 backdrop-blur-md px-5 py-3">
+              <div className="bg-red-50 border-b border-red-100 p-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <div className="relative">
-                      <div className="w-6 h-6 bg-gradient-to-r from-red-500 to-pink-500 rounded-full animate-pulse shadow-xl shadow-red-500/50"></div>
-                      <div className="absolute inset-0 w-6 h-6 bg-red-500 rounded-full animate-ping opacity-40"></div>
-                    </div>
-                    <span className="text-red-700 font-bold bg-gradient-to-r from-red-600 to-red-800 bg-clip-text text-transparent text-sm">
-                      Recording...
-                    </span>
-                    <AnimatedWaveform
-                      isRecording={isRecording}
-                      audioLevel={audioLevel}
-                    />
+                    <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                    <span className="text-red-700 text-sm font-medium">Recording...</span>
+                    <AnimatedWaveform isRecording={isRecording} audioLevel={audioLevel} />
                   </div>
-                  <div className="text-red-600 font-mono font-bold backdrop-blur-md animate-pulse-glow text-base bg-transparent border-solid border-red-300 rounded-full shadow-2xl border-2 px-1.5 py-1">
+                  <div className="text-red-600 text-sm font-mono">
                     {formatDuration(recordingDuration)}
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Voice Error Display */}
+            {/* Voice Error - Clean Alert */}
             {voiceError && (
-              <div className="bg-gradient-to-r from-orange-50 via-yellow-50 to-orange-50 border-b-2 border-orange-200/50 p-5 animate-in slide-in-from-top-2 duration-500 backdrop-blur-md">
-                <div className="flex items-center space-x-4">
-                  <AlertCircle className="h-6 w-6 text-orange-600 animate-bounce" />
-                  <span className="text-orange-700 text-sm font-semibold bg-gradient-to-r from-orange-600 to-orange-800 bg-clip-text text-transparent">
-                    {voiceError}
-                  </span>
+              <div className="bg-orange-50 border-b border-orange-100 p-3">
+                <div className="flex items-center space-x-3">
+                  <AlertCircle className="h-4 w-4 text-orange-600" />
+                  <span className="text-orange-700 text-sm">{voiceError}</span>
                 </div>
               </div>
             )}
 
-            {/* Messages */}
+            {/* Messages - Clean Design */}
             <CardContent
               ref={messagesContainerRef}
-              className="flex-1 overflow-y-auto p-6 space-y-5 bg-gradient-to-b from-gray-50/40 via-white/60 to-gray-50/40 backdrop-blur-md relative"
+              className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50"
             >
-              {messages.length === 1 &&
-              messages[0].id === "welcome" &&
-              !isLoading ? (
-                <div className="flex items-center justify-center h-full text-gray-500 relative">
-                  <div className="text-center animate-in fade-in duration-1500">
-                    <div className="relative mb-10">
-                      <div className="h-24 w-24 mx-auto bg-gradient-to-r from-purple-100 via-blue-100 to-indigo-100 rounded-full flex items-center justify-center shadow-2xl animate-float">
-                        <MessageCircle className="h-12 w-12 text-purple-600 animate-bounce" />
-                      </div>
-                      <div className="absolute inset-0 h-24 w-24 mx-auto border-4 border-purple-200 rounded-full animate-ping opacity-40"></div>
-                      <div className="absolute inset-0 h-24 w-24 mx-auto bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-full animate-pulse"></div>
+              {messages.length === 1 && messages[0].id === "welcome" && !isLoading ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center">
+                    <div className="h-16 w-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                      <MessageCircle className="h-8 w-8 text-gray-600" />
                     </div>
-                    <h3 className="text-3xl font-bold mb-4 bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent animate-shimmer">
-                      Welcome to AI Support!
-                    </h3>
-                    <p className="text-gray-700 mb-8 font-semibold text-lg">
-                      How can we assist you today?
-                    </p>
-                    <div className="flex items-center justify-center space-x-8 text-sm text-gray-600">
-                      <div className="flex items-center space-x-3 bg-white/80 px-5 py-3 rounded-full backdrop-blur-md border-2 border-gray-200/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-                        <MessageCircle className="h-5 w-5 text-blue-500 animate-pulse" />
-                        <span className="font-semibold">Type a message</span>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Welcome!</h3>
+                    <p className="text-gray-600 mb-6">How can we help you today?</p>
+                    <div className="flex items-center justify-center space-x-4 text-sm text-gray-500">
+                      <div className="flex items-center space-x-2">
+                        <MessageCircle className="h-4 w-4" />
+                        <span>Type a message</span>
                       </div>
                       {voiceSupported && (
-                        <div className="flex items-center space-x-3 bg-white/80 px-5 py-3 rounded-full backdrop-blur-md border-2 border-gray-200/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-                          <Mic className="h-5 w-5 text-purple-500 animate-bounce" />
-                          <span className="font-semibold">Record voice</span>
+                        <div className="flex items-center space-x-2">
+                          <Mic className="h-4 w-4" />
+                          <span>Voice message</span>
                         </div>
                       )}
                     </div>
@@ -891,73 +844,60 @@ export default function ChatWidget() {
                   {messages.map((message, index) => (
                     <div
                       key={message.id}
-                      className={`flex ${message.role === "user" ? "justify-end" : "justify-start"} animate-in slide-in-from-bottom-4 fade-in duration-600`}
-                      style={{ animationDelay: `${index * 150}ms` }}
+                      className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
                     >
-                      {message.role === "user" && (
-                        <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0 mr-3 shadow-md">
-                          <User className="h-5 w-5 text-primary-foreground" />
-                        </div>
-                      )}
-                      <div
-                        className={`max-w-[85%] rounded-3xl p-5 shadow-xl transition-all duration-500 hover:shadow-2xl transform hover:scale-[1.02] message-bubble border-solid border-2 py-2.5 ${
-                          message.role === "user"
-                            ? "bg-gradient-to-r from-purple-500 via-blue-600 to-indigo-600 text-white shadow-purple-200 border-2 border-white/30"
-                            : "bg-gradient-to-r from-white/95 via-gray-50/95 to-white/95 text-gray-900 border-2 border-gray-200/50 shadow-gray-200 backdrop-blur-md"
-                        }`}
-                      >
-                        {message.type === "voice" && (
-                          <div className="mb-3">
-                            <div className="flex items-center space-x-3 mb-4">
-                              <Mic className="h-5 w-5 opacity-75 animate-pulse" />
-                              <span className="text-sm opacity-90 font-bold tracking-wider bg-gradient-to-r from-current to-current/80 bg-clip-text text-transparent">
-                                VOICE MESSAGE
-                              </span>
-                              <div className="flex space-x-1">
-                                <div className="w-2 h-2 bg-current rounded-full animate-bounce opacity-60"></div>
-                                <div
-                                  className="w-2 h-2 bg-current rounded-full animate-bounce opacity-60"
-                                  style={{ animationDelay: "0.1s" }}
-                                ></div>
-                                <div
-                                  className="w-2 h-2 bg-current rounded-full animate-bounce opacity-60"
-                                  style={{ animationDelay: "0.2s" }}
-                                ></div>
-                              </div>
-                            </div>
-                            <StaticWaveform audioUrl={message.audioUrl} />
+                      <div className="flex items-start space-x-2 max-w-[85%]">
+                        {message.role === "webhook" && (
+                          <div className="h-8 w-8 rounded-full bg-black flex items-center justify-center flex-shrink-0 mt-1">
+                            <Sparkles className="h-4 w-4 text-white" />
                           </div>
                         )}
-                        <p className="whitespace-pre-wrap text-base leading-relaxed font-semibold">
-                          {message.content}
-                        </p>
-                        <p
-                          className={`text-sm mt-4 font-semibold flex items-center space-x-2 ${
+                        <div
+                          className={`rounded-2xl p-3 ${
                             message.role === "user"
-                              ? "text-blue-100"
-                              : "text-gray-500"
+                              ? "bg-black text-white ml-8"
+                              : "bg-white text-gray-900 border border-gray-200"
                           }`}
                         >
-                          <span>{formatTime(message.timestamp)}</span>
-                          {message.role === "webhook" && (
-                            <Sparkles className="h-3 w-3 animate-pulse" />
+                          {message.type === "voice" && (
+                            <div className="mb-2">
+                              <div className="flex items-center space-x-2 mb-2">
+                                <Mic className="h-4 w-4 opacity-75" />
+                                <span className="text-xs opacity-75 font-medium">VOICE MESSAGE</span>
+                              </div>
+                              <StaticWaveform audioUrl={message.audioUrl} />
+                            </div>
                           )}
-                        </p>
+                          <p className="text-sm leading-relaxed">{message.content}</p>
+                          <p className={`text-xs mt-2 opacity-60`}>
+                            {formatTime(message.timestamp)}
+                          </p>
 
-                        {message.cards && message.cards.length > 0 && (
-                          <ProductCards
-                            cards={message.cards}
-                            addedProductVariantId={addedProductVariantId}
-                            onAddToCart={handleAddToCart}
-                          />
+                          {message.cards && message.cards.length > 0 && (
+                            <ProductCards
+                              cards={message.cards}
+                              addedProductVariantId={addedProductVariantId}
+                              onAddToCart={handleAddToCart}
+                            />
+                          )}
+                        </div>
+                        {message.role === "user" && (
+                          <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 mt-1">
+                            <User className="h-4 w-4 text-gray-600" />
+                          </div>
                         )}
                       </div>
                     </div>
                   ))}
                   {isLoading && (
-                    <div className="flex justify-start animate-in slide-in-from-bottom-4 fade-in duration-500">
-                      <div className="bg-gradient-to-r from-white/95 via-gray-50/95 to-white/95 text-gray-900 rounded-3xl shadow-xl border-2 border-gray-200/50 backdrop-blur-md">
-                        <TypingIndicator />
+                    <div className="flex justify-start">
+                      <div className="flex items-start space-x-2">
+                        <div className="h-8 w-8 rounded-full bg-black flex items-center justify-center flex-shrink-0">
+                          <Sparkles className="h-4 w-4 text-white" />
+                        </div>
+                        <div className="bg-white border border-gray-200 rounded-2xl">
+                          <TypingIndicator />
+                        </div>
                       </div>
                     </div>
                   )}
@@ -972,27 +912,23 @@ export default function ChatWidget() {
                 variant="secondary"
                 size="icon"
                 onClick={scrollToBottom}
-                className="absolute bottom-[80px] right-6 h-10 w-10 rounded-full shadow-lg animate-bounce-in z-20"
+                className="absolute bottom-20 right-4 h-8 w-8 rounded-full shadow-lg bg-white border border-gray-200 hover:bg-gray-50"
                 aria-label="Scroll to bottom"
               >
-                <ChevronDown className="h-5 w-5" />
+                <ArrowUp className="h-4 w-4 rotate-180" />
               </Button>
             )}
 
-            {/* Input */}
-            <CardFooter className="p-6 border-t-2 border-gray-200/50 bg-gradient-to-r from-white/90 via-gray-50/90 to-white/90 backdrop-blur-2xl">
-              <form onSubmit={sendMessage} className="flex w-full space-x-4">
+            {/* Input - Modern Minimalist */}
+            <CardFooter className="p-4 border-t border-gray-100 bg-white">
+              <form onSubmit={sendMessage} className="flex w-full space-x-3">
                 <div className="flex-1 relative">
                   <Input
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    placeholder={
-                      isRecording
-                        ? "Recording your voice..."
-                        : "Type your message..."
-                    }
+                    placeholder={isRecording ? "Recording your voice..." : "Type your message..."}
                     disabled={isLoading || isRecording}
-                    className="pr-4 h-14 rounded-3xl border-3 border-gray-300/50 focus:border-purple-500 transition-all duration-500 bg-white/95 backdrop-blur-md shadow-lg hover:shadow-xl font-semibold placeholder:text-gray-500 text-base focus-ring"
+                    className="h-12 rounded-xl border-gray-200 focus:border-black focus:ring-black transition-all duration-200 bg-gray-50 focus:bg-white"
                   />
                 </div>
 
@@ -1003,18 +939,16 @@ export default function ChatWidget() {
                     size="lg"
                     onClick={toggleRecording}
                     disabled={isLoading}
-                    className={`h-14 w-14 p-0 rounded-3xl transition-all duration-500 transform hover:scale-110 shadow-xl ${
+                    className={`h-12 w-12 p-0 rounded-xl transition-all duration-200 ${
                       isRecording
-                        ? "bg-gradient-to-r from-red-500 via-pink-500 to-red-600 hover:from-red-600 hover:via-pink-600 hover:to-red-700 shadow-red-200 animate-pulse border-0 hover:shadow-neon"
-                        : "border-3 border-gray-400/50 hover:border-purple-500 hover:bg-purple-50 bg-white/95 backdrop-blur-md shadow-gray-200 hover:shadow-glow-purple"
+                        ? "bg-red-500 hover:bg-red-600 border-0"
+                        : "border-gray-200 hover:border-black hover:bg-gray-50"
                     }`}
                   >
                     {isRecording ? (
-                      <div className="flex items-center justify-center">
-                        <Send className="h-6 w-6 text-white animate-bounce drop-shadow-lg" />
-                      </div>
+                      <Send className="h-5 w-5 text-white" />
                     ) : (
-                      <Mic className="h-6 w-6 text-gray-600 hover:text-purple-600 transition-colors duration-300" />
+                      <Mic className="h-5 w-5 text-gray-600" />
                     )}
                   </Button>
                 )}
@@ -1022,9 +956,9 @@ export default function ChatWidget() {
                 <Button
                   type="submit"
                   disabled={!input.trim() || isLoading || isRecording}
-                  className="h-14 px-8 rounded-3xl bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 hover:from-purple-700 hover:via-blue-700 hover:to-indigo-700 transition-all duration-500 transform hover:scale-110 shadow-xl shadow-purple-200 disabled:opacity-50 disabled:cursor-not-allowed border-0 font-bold hover:shadow-neon"
+                  className="h-12 px-6 rounded-xl bg-black hover:bg-gray-800 transition-all duration-200 disabled:opacity-50"
                 >
-                  <Send className="h-6 w-6" />
+                  <Send className="h-5 w-5" />
                 </Button>
               </form>
             </CardFooter>
