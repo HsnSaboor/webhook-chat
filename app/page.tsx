@@ -81,8 +81,6 @@ export default function ChatWidget() {
   const [isHovered, setIsHovered] = useState(false);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   const [addedProductVariantId, setAddedProductVariantId] = useState<string | null>(null);
-  const [conversations, setConversations] = useState<any[]>([]);
-  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [isSoundEnabled, setIsSoundEnabled] = useState(true);
   const [showHomepage, setShowHomepage] = useState(true);
 
@@ -90,6 +88,36 @@ export default function ChatWidget() {
   const dragStartHeight = useRef(0);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // Browser storage functions
+  const saveMessagesToStorage = (messages: Message[]) => {
+    if (sessionId) {
+      const storageKey = `chatbot_messages_${sessionId}`;
+      sessionStorage.setItem(storageKey, JSON.stringify(messages));
+    }
+  };
+
+  const loadMessagesFromStorage = (): Message[] => {
+    if (sessionId) {
+      const storageKey = `chatbot_messages_${sessionId}`;
+      const stored = sessionStorage.getItem(storageKey);
+      if (stored) {
+        try {
+          return JSON.parse(stored);
+        } catch (error) {
+          console.error('[Chatbot] Failed to parse stored messages:', error);
+        }
+      }
+    }
+    return [];
+  };
+
+  const clearStoredMessages = () => {
+    if (sessionId) {
+      const storageKey = `chatbot_messages_${sessionId}`;
+      sessionStorage.removeItem(storageKey);
+    }
+  };
 
   // No fallback session ID - must receive from parent (Shopify)
   useEffect(() => {
@@ -145,21 +173,7 @@ export default function ChatWidget() {
           setPageContext(messageData.page_context || null);
           setCartCurrency(messageData.cart_currency || null);
           setLocalization(messageData.localization || null);
-        } else if (messageData?.type === "conversations-response") {
-          console.log(
-            "[Chatbot] Received conversations from parent:",
-            messageData.conversations,
-          );
-          setConversations(messageData.conversations || []);
-        } else if (messageData?.type === "conversation-response") {
-          console.log(
-            "[Chatbot] Received conversation history from parent:",
-            messageData.conversation,
-          );
-          if (messageData.conversation?.messages) {
-            setMessages(messageData.conversation.messages);
-            setCurrentConversationId(messageData.conversation.id);
-          }
+        
         } else if (messageData?.type === "chat-response") {
           console.log(
             "[Chatbot] Received chat response from parent:",
@@ -244,6 +258,10 @@ export default function ChatWidget() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    // Save messages to storage whenever messages change
+    if (messages.length > 0) {
+      saveMessagesToStorage(messages);
+    }
   }, [messages]);
 
   useEffect(() => {
@@ -251,20 +269,23 @@ export default function ChatWidget() {
       if (sessionId && sessionReceived) {
         trackEvent("chat_opened", { initialMessagesCount: messages.length });
 
-        // Request conversations list from parent
-        requestConversationsFromParent();
-
-        // Always show homepage first when opening chat
-        setShowHomepage(true);
+        // Load messages from storage
+        const storedMessages = loadMessagesFromStorage();
+        if (storedMessages.length > 0) {
+          setMessages(storedMessages);
+          setShowHomepage(false); // Go directly to chat if we have stored messages
+        } else {
+          setShowHomepage(true); // Show homepage if no stored messages
+        }
       } else {
         console.error("[Chatbot] Cannot open chat without proper Shopify session");
         setIsOpen(false); // Close chat if no proper session
       }
     } else if (!isOpen) {
-      setMessages([]);
+      // Don't clear messages when closing - keep them in storage
       setShowHomepage(true);
     }
-  }, [isOpen, sessionId, sessionReceived, trackEvent, setMessages]);
+  }, [isOpen, sessionId, sessionReceived, trackEvent]);
 
   const handleScroll = useCallback(() => {
     if (messagesContainerRef.current) {
@@ -288,28 +309,7 @@ export default function ChatWidget() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const requestConversationsFromParent = () => {
-    if (window.parent && window.parent !== window) {
-      window.parent.postMessage(
-        {
-          type: "get-all-conversations",
-        },
-        "https://zenmato.myshopify.com",
-      );
-    }
-  };
-
-  const loadConversationFromParent = (conversationId: string) => {
-    if (window.parent && window.parent !== window) {
-      window.parent.postMessage(
-        {
-          type: "get-single-conversation",
-          payload: { conversationId },
-        },
-        "https://zenmato.myshopify.com",
-      );
-    }
-  };
+  
 
   const sendChatMessageToParent = (messageData: any) => {
     if (window.parent && window.parent !== window) {
@@ -667,6 +667,7 @@ export default function ChatWidget() {
 
   const startNewConversation = () => {
     console.log("[Chatbot] Starting new conversation");
+    clearStoredMessages(); // Clear stored messages for new conversation
     setMessages([
       {
         id: "welcome",
@@ -677,7 +678,6 @@ export default function ChatWidget() {
         type: "text",
       },
     ]);
-    setCurrentConversationId(null);
     setShowHomepage(false);
   };
 
@@ -697,10 +697,7 @@ export default function ChatWidget() {
     }
   };
 
-  const loadConversationAndStartChat = (conversationId: string) => {
-    loadConversationFromParent(conversationId);
-    setShowHomepage(false);
-  };
+  
 
   return (
     <>
@@ -770,7 +767,7 @@ export default function ChatWidget() {
               </div>
 
               <div className="flex items-center space-x-2">
-                {!showHomepage && conversations.length > 0 && (
+                {!showHomepage && (
                   <Button
                     variant="ghost"
                     size="sm"
@@ -808,40 +805,7 @@ export default function ChatWidget() {
                     </p>
                   </div>
 
-                  {/* Recent Conversations */}
-                  {conversations.length > 0 && (
-                    <div className="mb-8">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Chats</h3>
-                      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-                        {conversations.slice(0, 3).map((conv, index) => (
-                          <div key={conv.id}>
-                            <button
-                              onClick={() => loadConversationAndStartChat(conv.id)}
-                              className="w-full text-left p-4 hover:bg-gray-50 transition-all duration-200 flex items-center justify-between group"
-                            >
-                              <div className="flex items-center space-x-3">
-                                <div className="h-10 w-10 bg-gray-100 rounded-full flex items-center justify-center">
-                                  <MessageCircle className="h-5 w-5 text-gray-600" />
-                                </div>
-                                <div>
-                                  <p className="font-medium text-gray-900 text-sm">
-                                    {conv.title || `Chat ${conv.id.slice(-4)}`}
-                                  </p>
-                                  <p className="text-xs text-gray-500">
-                                    {new Date(conv.started_at || conv.timestamp).toLocaleDateString()}
-                                  </p>
-                                </div>
-                              </div>
-                              <ChevronDown className="h-4 w-4 text-gray-400 -rotate-90 group-hover:text-gray-600 transition-colors" />
-                            </button>
-                            {index < Math.min(conversations.length, 3) - 1 && (
-                              <div className="h-px bg-gray-200"></div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  
 
                   {/* Start New Chat Button */}
                   <div>

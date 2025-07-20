@@ -1,4 +1,3 @@
-
 <script>
   (function() {
     console.log('[Shopify Theme] Initializing chatbot system...');
@@ -92,7 +91,7 @@
     async function sendChatMessage(messageData) {
       try {
         console.log('[Shopify Theme] Sending chat message to N8N:', messageData);
-        
+
         const response = await fetch(API_ENDPOINTS.chat, {
           method: 'POST',
           headers: {
@@ -134,23 +133,7 @@
           case 'save-conversation':
             await saveConversation(message.payload.conversationId);
             break;
-          
-          case 'get-all-conversations':
-            const conversations = await fetchAllConversations();
-            event.source.postMessage({
-              type: 'conversations-response',
-              conversations: conversations
-            }, event.origin);
-            break;
-          
-          case 'get-single-conversation':
-            const conversation = await fetchSingleConversation(message.payload.conversationId);
-            event.source.postMessage({
-              type: 'conversation-response',
-              conversation: conversation
-            }, event.origin);
-            break;
-          
+
           case 'send-chat-message':
             try {
               const chatResponse = await sendChatMessage(message.payload);
@@ -165,12 +148,12 @@
               }, event.origin);
             }
             break;
-          
+
           case 'add-to-cart':
             // Handle add to cart functionality
             try {
               const { variantId, quantity = 1, redirect = false } = message.payload;
-              
+
               // Use Shopify's AJAX API to add to cart
               const cartResponse = await fetch('/cart/add.js', {
                 method: 'POST',
@@ -185,7 +168,7 @@
 
               if (cartResponse.ok) {
                 console.log('[Shopify Theme] Successfully added to cart:', variantId);
-                
+
                 event.source.postMessage({
                   type: 'add-to-cart-success',
                   variantId: variantId
@@ -206,7 +189,7 @@
               }, event.origin);
             }
             break;
-          
+
           default:
             console.log('[Shopify Theme] Unknown message type:', message.type);
         }
