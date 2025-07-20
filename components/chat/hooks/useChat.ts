@@ -1,6 +1,6 @@
 
 import { useState, useCallback } from "react";
-import { Message, Conversation } from "../types";
+import { Message } from "../types";
 
 export const useChat = () => {
   const [sessionId, setSessionId] = useState<string>("");
@@ -11,10 +11,6 @@ export const useChat = () => {
   const [localization, setLocalization] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
-  const [loadingConversations, setLoadingConversations] = useState(false);
-  const [loadingHistory, setLoadingHistory] = useState(false);
 
   const trackEvent = useCallback(
     async (eventType: string, data: Record<string, any> = {}) => {
@@ -59,14 +55,6 @@ export const useChat = () => {
     setMessages,
     isLoading,
     setIsLoading,
-    conversations,
-    setConversations,
-    currentConversationId,
-    setCurrentConversationId,
-    loadingConversations,
-    setLoadingConversations,
-    loadingHistory,
-    setLoadingHistory,
     trackEvent,
   };
 };

@@ -1,3 +1,4 @@
+
 <script>
   (function() {
     console.log('[Shopify Theme] Initializing chatbot system...');
@@ -29,7 +30,8 @@
     const API_ENDPOINTS = {
       saveConversation: `${N8N_BASE_URL}/webhook/save-conversation`,
       conversations: `${N8N_BASE_URL}/webhook/get-all-conversations`,
-      conversationHistory: (id) => `${N8N_BASE_URL}/webhook/get-single-conversation/${id}`
+      conversationHistory: (id) => `${N8N_BASE_URL}/webhook/get-single-conversation/${id}`,
+      chat: `${N8N_BASE_URL}/webhook/chat`
     };
 
     async function saveConversation(conversationId) {
@@ -87,6 +89,37 @@
       }
     }
 
+    async function sendChatMessage(messageData) {
+      try {
+        console.log('[Shopify Theme] Sending chat message to N8N:', messageData);
+        
+        const response = await fetch(API_ENDPOINTS.chat, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'User-Agent': 'Shopify-Chat-Proxy/1.0',
+            'ngrok-skip-browser-warning': 'true',
+          },
+          body: JSON.stringify(messageData)
+        });
+
+        console.log(`[Shopify Theme] N8N chat response status: ${response.status}`);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`[Shopify Theme] N8N chat error (${response.status}):`, errorText);
+          throw new Error(`N8N chat failed with status: ${response.status}`);
+        }
+
+        const responseData = await response.json();
+        console.log('[Shopify Theme] N8N chat response data:', responseData);
+        return responseData;
+      } catch (error) {
+        console.error('[Shopify Theme] Failed to send chat message:', error);
+        throw error;
+      }
+    }
+
     window.addEventListener('message', async function(event) {
       if (event.origin !== 'https://your-chatbot-app-url') { // Change this to your chatbot app URL
         console.warn('[Shopify Theme] Ignoring message from untrusted origin:', event.origin);
@@ -101,6 +134,7 @@
           case 'save-conversation':
             await saveConversation(message.payload.conversationId);
             break;
+          
           case 'get-all-conversations':
             const conversations = await fetchAllConversations();
             event.source.postMessage({
@@ -108,6 +142,7 @@
               conversations: conversations
             }, event.origin);
             break;
+          
           case 'get-single-conversation':
             const conversation = await fetchSingleConversation(message.payload.conversationId);
             event.source.postMessage({
@@ -115,6 +150,63 @@
               conversation: conversation
             }, event.origin);
             break;
+          
+          case 'send-chat-message':
+            try {
+              const chatResponse = await sendChatMessage(message.payload);
+              event.source.postMessage({
+                type: 'chat-response',
+                response: chatResponse
+              }, event.origin);
+            } catch (error) {
+              event.source.postMessage({
+                type: 'chat-error',
+                error: error.message
+              }, event.origin);
+            }
+            break;
+          
+          case 'add-to-cart':
+            // Handle add to cart functionality
+            try {
+              const { variantId, quantity = 1, redirect = false } = message.payload;
+              
+              // Use Shopify's AJAX API to add to cart
+              const cartResponse = await fetch('/cart/add.js', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  id: variantId,
+                  quantity: quantity
+                })
+              });
+
+              if (cartResponse.ok) {
+                console.log('[Shopify Theme] Successfully added to cart:', variantId);
+                
+                event.source.postMessage({
+                  type: 'add-to-cart-success',
+                  variantId: variantId
+                }, event.origin);
+
+                // Optionally redirect to cart
+                if (redirect) {
+                  window.location.href = '/cart';
+                }
+              } else {
+                throw new Error('Failed to add to cart');
+              }
+            } catch (error) {
+              console.error('[Shopify Theme] Failed to add to cart:', error);
+              event.source.postMessage({
+                type: 'add-to-cart-error',
+                error: error.message
+              }, event.origin);
+            }
+            break;
+          
           default:
             console.log('[Shopify Theme] Unknown message type:', message.type);
         }
