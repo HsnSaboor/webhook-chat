@@ -2,7 +2,7 @@
 "use client";
 
 import type React from "react";
-import { ChevronDown, ArrowUp, ChevronRight } from "lucide-react";
+import { ChevronDown, ArrowUp } from "lucide-react";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,10 +23,6 @@ import {
   Plus,
   Volume2,
   VolumeX,
-  HelpCircle,
-  Clock,
-  Shield,
-  Zap,
 } from "lucide-react";
 
 // Import modularized components
@@ -37,46 +33,6 @@ import { ProductCards } from "@/components/chat/ProductCards";
 import { useChat } from "@/components/chat/hooks/useChat";
 import { useAudio } from "@/components/chat/hooks/useAudio";
 import type { Message, ProductCardData, HistoryItem } from "@/components/chat/types";
-
-// FAQ Data
-const faqs = [
-  {
-    id: 1,
-    question: "How does the AI chatbot work?",
-    answer: "Our AI chatbot uses advanced natural language processing to understand your questions and provide helpful responses. It can assist with product recommendations, order inquiries, and general support questions in real-time.",
-    icon: <Zap className="h-5 w-5" />
-  },
-  {
-    id: 2,
-    question: "Is my conversation data secure?",
-    answer: "Yes, we take privacy seriously. All conversations are encrypted and stored securely. We only use your data to improve our service and provide better support. Your personal information is never shared with third parties.",
-    icon: <Shield className="h-5 w-5" />
-  },
-  {
-    id: 3,
-    question: "Can I use voice messages?",
-    answer: "Absolutely! You can send voice messages by clicking the microphone button. Our AI can process voice inputs and respond accordingly. Make sure to allow microphone permissions in your browser.",
-    icon: <Mic className="h-5 w-5" />
-  },
-  {
-    id: 4,
-    question: "What are the chat hours?",
-    answer: "Our AI chatbot is available 24/7 to assist you. For complex issues that require human support, our team is available Monday through Friday, 9 AM to 6 PM EST.",
-    icon: <Clock className="h-5 w-5" />
-  },
-  {
-    id: 5,
-    question: "Can the chatbot help with product recommendations?",
-    answer: "Yes! Our AI can analyze your preferences and browsing history to suggest products that match your needs. Just describe what you're looking for, and we'll provide personalized recommendations.",
-    icon: <MessageCircle className="h-5 w-5" />
-  },
-  {
-    id: 6,
-    question: "How do I start a new conversation?",
-    answer: "Simply click the chat button in the bottom right corner to open the chatbot. If you want to start fresh, click the 'New' button in the chat header to begin a new conversation.",
-    icon: <Plus className="h-5 w-5" />
-  }
-];
 
 export default function ChatWidget() {
   const {
@@ -128,7 +84,6 @@ export default function ChatWidget() {
   const [conversations, setConversations] = useState<any[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [isSoundEnabled, setIsSoundEnabled] = useState(true);
-  const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
 
   const dragStartY = useRef(0);
   const dragStartHeight = useRef(0);
@@ -734,133 +689,8 @@ export default function ChatWidget() {
     requestConversationsFromParent();
   };
 
-  const toggleFaq = (faqId: number) => {
-    setExpandedFaq(expandedFaq === faqId ? null : faqId);
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Hero Section */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-6 py-16">
-          <div className="text-center">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-black rounded-full mb-8">
-              <MessageCircle className="h-10 w-10 text-white" />
-            </div>
-            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-              AI-Powered Support
-            </h1>
-            <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-              Get instant help with our intelligent chatbot. Available 24/7 to answer your questions 
-              and help you find what you need.
-            </p>
-            <Button 
-              onClick={() => setIsOpen(true)}
-              className="bg-black hover:bg-gray-800 text-white px-8 py-4 text-lg rounded-xl"
-            >
-              Start Chatting
-              <MessageCircle className="ml-2 h-5 w-5" />
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Features Section */}
-      <div className="max-w-6xl mx-auto px-6 py-16">
-        <div className="grid md:grid-cols-3 gap-8 mb-16">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-              <Zap className="h-8 w-8 text-blue-600" />
-            </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Instant Responses</h3>
-            <p className="text-gray-600">Get immediate answers to your questions with our AI-powered chatbot.</p>
-          </div>
-          <div className="text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-              <Shield className="h-8 w-8 text-green-600" />
-            </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Secure & Private</h3>
-            <p className="text-gray-600">Your conversations are encrypted and your privacy is protected.</p>
-          </div>
-          <div className="text-center">
-            <div className="w-16 h-16 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-              <Mic className="h-8 w-8 text-purple-600" />
-            </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Voice Support</h3>
-            <p className="text-gray-600">Use voice messages for hands-free communication with our AI.</p>
-          </div>
-        </div>
-
-        {/* FAQ Section */}
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-6">
-              <HelpCircle className="h-8 w-8 text-gray-600" />
-            </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Frequently Asked Questions
-            </h2>
-            <p className="text-lg text-gray-600">
-              Everything you need to know about our AI chatbot
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            {faqs.map((faq) => (
-              <Card key={faq.id} className="border border-gray-200 rounded-xl overflow-hidden transition-all duration-200 hover:shadow-md">
-                <button
-                  onClick={() => toggleFaq(faq.id)}
-                  className="w-full text-left p-6 focus:outline-none focus:ring-2 focus:ring-black focus:ring-inset"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                        {faq.icon}
-                      </div>
-                      <h3 className="text-lg font-semibold text-gray-900 pr-8">
-                        {faq.question}
-                      </h3>
-                    </div>
-                    <ChevronRight 
-                      className={`h-5 w-5 text-gray-400 transform transition-transform duration-200 ${
-                        expandedFaq === faq.id ? 'rotate-90' : ''
-                      }`} 
-                    />
-                  </div>
-                </button>
-                
-                {expandedFaq === faq.id && (
-                  <div className="px-6 pb-6">
-                    <div className="pl-14">
-                      <p className="text-gray-700 leading-relaxed">
-                        {faq.answer}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </Card>
-            ))}
-          </div>
-        </div>
-
-        {/* CTA Section */}
-        <div className="text-center mt-16 p-8 bg-black rounded-2xl">
-          <h3 className="text-2xl font-bold text-white mb-4">
-            Still have questions?
-          </h3>
-          <p className="text-gray-300 mb-6">
-            Our AI chatbot is here to help you 24/7. Start a conversation now!
-          </p>
-          <Button 
-            onClick={() => setIsOpen(true)}
-            className="bg-white hover:bg-gray-100 text-black px-6 py-3 rounded-xl"
-          >
-            Chat with us now
-            <MessageCircle className="ml-2 h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
+    <>
       {/* Chat Widget Button - Minimalist Design */}
       {!isOpen && (
         <div className="fixed bottom-6 right-6 z-50">
@@ -1135,6 +965,6 @@ export default function ChatWidget() {
           </Card>
         </div>
       )}
-    </div>
+    </>
   );
 }
