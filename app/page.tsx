@@ -31,10 +31,9 @@ import { StaticWaveform } from "@/components/chat/StaticWaveform";
 import { TypingIndicator } from "@/components/chat/TypingIndicator";
 import { ParticleBackground } from "@/components/chat/ParticleBackground";
 import { ProductCards } from "@/components/chat/ProductCards";
-import { ConversationsList } from "@/components/chat/ConversationsList";
 import { useChat } from "@/components/chat/hooks/useChat";
 import { useAudio } from "@/components/chat/hooks/useAudio";
-import { Message, ProductCardData, HistoryItem } from "@/components/chat/types";
+import type { Message, ProductCardData, HistoryItem } from "@/components/chat/types";
 
 export default function ChatWidget() {
   const {
@@ -54,12 +53,6 @@ export default function ChatWidget() {
     setMessages,
     isLoading,
     setIsLoading,
-    conversations,
-    setConversations,
-    currentConversationId,
-    setCurrentConversationId,
-    loadingConversations,
-    setLoadingConversations,
     loadingHistory,
     setLoadingHistory,
     trackEvent,
@@ -160,7 +153,6 @@ export default function ChatWidget() {
             "[Chatbot] Received conversations from parent:",
             messageData.conversations,
           );
-          setConversations(Array.isArray(messageData.conversations) ? messageData.conversations : []);
         } else if (messageData?.type === "conversations-error") {
           console.error(
             "[Chatbot] Error fetching conversations from parent:",
@@ -172,7 +164,6 @@ export default function ChatWidget() {
             messageData.history,
           );
           setMessages(messageData.history?.messages || []);
-          setCurrentConversationId(messageData.conversationId);
         } else if (messageData?.type === "conversation-history-error") {
           console.error(
             "[Chatbot] Error fetching conversation history from parent:",
@@ -207,7 +198,7 @@ export default function ChatWidget() {
     return () => {
       window.removeEventListener("message", handleMessage);
     };
-  }, [setSessionId, setSessionReceived, setSourceUrl, setPageContext, setCartCurrency, setLocalization, setConversations, setMessages, setCurrentConversationId]);
+  }, [setSessionId, setSessionReceived, setSourceUrl, setPageContext, setCartCurrency, setLocalization, setMessages]);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -249,8 +240,7 @@ export default function ChatWidget() {
     if (isOpen) {
       if (sessionId && sessionReceived) {
         trackEvent("chat_opened", { initialMessagesCount: messages.length });
-        fetchConversations();
-        
+
         if (messages.length === 0) {
           setMessages([
             {
@@ -269,9 +259,8 @@ export default function ChatWidget() {
       }
     } else if (!isOpen) {
       setMessages([]);
-      setCurrentConversationId(null);
     }
-  }, [isOpen, sessionId, sessionReceived, trackEvent, setMessages, setCurrentConversationId]);
+  }, [isOpen, sessionId, sessionReceived, trackEvent, setMessages]);
 
   const handleScroll = useCallback(() => {
     if (messagesContainerRef.current) {
@@ -473,57 +462,6 @@ export default function ChatWidget() {
     }
   };
 
-  const saveConversation = async (
-    conversationId: string,
-    sessionId: string,
-  ) => {
-    try {
-      const payload = {
-        id: crypto.randomUUID(),
-        session_id: sessionId,
-        conversation_id: conversationId,
-        timestamp: new Date().toISOString(),
-        event_type: "conversation_created",
-        webhookUrl:
-          "https://similarly-secure-mayfly.ngrok-free.app/webhook/save-conversation",
-        source_url: sourceUrl || "https://zenmato.myshopify.com/",
-        page_context: pageContext || "Chat Widget",
-        chatbot_triggered: true,
-        conversion_tracked: false,
-        cart_currency: cartCurrency,
-        localization: localization,
-        user_message: "Conversation started",
-        type: "conversation",
-        name: `Chat ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`,
-      };
-
-      console.log("[Chatbot] Saving conversation with payload:", payload);
-
-      const response = await fetch("/api/webhook", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const errorData = await response
-          .json()
-          .catch(() => ({ error: "Unknown error" }));
-        console.error("Failed to save conversation:", errorData);
-      } else {
-        console.log("[Chatbot] Conversation saved successfully");
-        setTimeout(() => {
-          console.log("[Chatbot] Refreshing conversations after save");
-          fetchConversations();
-        }, 2000);
-      }
-    } catch (error) {
-      console.error("Error saving conversation:", error);
-    }
-  };
-
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
@@ -556,16 +494,6 @@ export default function ChatWidget() {
         "[Chatbot] Current sessionId state before sending:",
         sessionId,
       );
-
-      let newConversationId = currentConversationId;
-      if (!currentConversationId) {
-        newConversationId = crypto.randomUUID();
-        setCurrentConversationId(newConversationId);
-
-        if (sessionId) {
-          await saveConversation(newConversationId, sessionId);
-        }
-      }
 
       const webhookPayload = {
         id: crypto.randomUUID(),
@@ -786,67 +714,7 @@ export default function ChatWidget() {
       return;
     }
 
-    setLoadingConversations(true);
     console.log("[Chatbot] Fetching conversations for session:", sessionId);
-
-    try {
-      const response = await fetch(
-        `/api/conversations?session_id=${encodeURIComponent(sessionId)}&t=${Date.now()}`,
-        {
-          headers: {
-            "Cache-Control": "no-cache",
-          },
-        },
-      );
-      console.log("[Chatbot] API response status:", response.status);
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log("[Chatbot] Raw conversations data:", data);
-
-        const conversationsArray = Array.isArray(data)
-          ? data
-          : data.conversations || [];
-        console.log(
-          "[Chatbot] Processed conversations array:",
-          conversationsArray,
-        );
-
-        if (conversationsArray.length === 0) {
-          console.warn(
-            "[Chatbot] No conversations found. This might indicate:",
-          );
-          console.warn(
-            "1. The conversation wasn't saved properly to the database",
-          );
-          console.warn(
-            "2. The n8n get-conversations workflow isn't finding the data",
-          );
-          console.warn(
-            "3. There's a field mapping issue between save and retrieve",
-          );
-        }
-
-        setConversations(conversationsArray.slice(0, 3));
-        console.log(
-          "[Chatbot] Successfully fetched conversations via API:",
-          conversationsArray.length,
-          "conversations",
-        );
-        setLoadingConversations(false);
-        return;
-      } else {
-        const errorText = await response.text();
-        console.warn(
-          "[Chatbot] API route failed with status:",
-          response.status,
-          "Error:",
-          errorText,
-        );
-      }
-    } catch (error) {
-      console.warn("[Chatbot] API route error:", error);
-    }
 
     if (window.parent && window.parent !== window) {
       console.log(
@@ -860,21 +728,10 @@ export default function ChatWidget() {
         },
         "https://zenmato.myshopify.com",
       );
-
-      setTimeout(() => {
-        if (loadingConversations) {
-          console.warn(
-            "[Chatbot] Timeout waiting for conversations from parent",
-          );
-          setLoadingConversations(false);
-        }
-      }, 10000);
     } else {
       console.log(
         "[Chatbot] Not in iframe context, setting empty conversations",
       );
-      setConversations([]);
-      setLoadingConversations(false);
     }
   };
 
@@ -886,65 +743,7 @@ export default function ChatWidget() {
       return;
     }
 
-    setLoadingHistory(true);
     console.log("[Chatbot] Loading conversation history for:", conversationId);
-
-    try {
-      const response = await fetch(
-        `/api/conversations/${conversationId}?session_id=${encodeURIComponent(sessionId)}`,
-      );
-      console.log("[Chatbot] History API response status:", response.status);
-
-      if (response.ok) {
-        const history: HistoryItem[] = await response.json();
-        console.log(
-          "[Chatbot] Successfully fetched conversation history:",
-          history.length,
-          "items",
-        );
-
-        const historyMessages: Message[] = [];
-        history.forEach((item, index) => {
-          if (item.user_message) {
-            historyMessages.push({
-              id: `history-user-${index}`,
-              content: item.user_message,
-              role: "user",
-              timestamp: new Date(item.timestamp),
-              type: "text",
-            });
-          }
-          if (item.ai_message) {
-            historyMessages.push({
-              id: `history-ai-${index}`,
-              content: item.ai_message,
-              role: "webhook",
-              timestamp: new Date(item.timestamp),
-              type: "text",
-              cards: item.cards || undefined,
-            });
-          }
-        });
-
-        setMessages(historyMessages);
-        setCurrentConversationId(conversationId);
-        setLoadingHistory(false);
-        return;
-      } else {
-        const errorText = await response.text();
-        console.warn(
-          "[Chatbot] History API failed with status:",
-          response.status,
-          "Error:",
-          errorText,
-        );
-      }
-    } catch (error) {
-      console.error(
-        "[Chatbot] Error loading conversation history via API:",
-        error,
-      );
-    }
 
     if (window.parent && window.parent !== window) {
       console.log(
@@ -957,17 +756,6 @@ export default function ChatWidget() {
         },
         "https://zenmato.myshopify.com",
       );
-
-      setTimeout(() => {
-        if (loadingHistory) {
-          console.warn(
-            "[Chatbot] Timeout waiting for conversation history from parent",
-          );
-          setLoadingHistory(false);
-        }
-      }, 10000);
-    } else {
-      setLoadingHistory(false);
     }
   };
 
@@ -983,47 +771,10 @@ export default function ChatWidget() {
         type: "text",
       },
     ]);
-    setCurrentConversationId(null);
-    setConversationInitialized(false); // Reset initialization flag
-    setLoadingConversations(false);
-    if (sessionId) {
-      console.log(
-        "[Chatbot] Refreshing conversations list after starting new conversation",
-      );
-      setTimeout(() => {
-        fetchConversations();
-      }, 100);
-    }
+    console.log(
+      "[Chatbot] Refreshing conversations list after starting new conversation",
+    );
   };
-
-  // Track if we've already initialized a conversation for this session
-  const [conversationInitialized, setConversationInitialized] = useState(false);
-
-  useEffect(() => {
-    if (sessionId && sessionReceived && !currentConversationId && !conversationInitialized && isOpen && messages.length === 1 && messages[0]?.id === "welcome") {
-      // Only proceed if we have a proper Shopify session ID (UUID format or any valid session format)
-      const isValidShopifySession = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sessionId) || sessionId.length > 10;
-      
-      if (isValidShopifySession) {
-        setConversationInitialized(true); // Prevent multiple initialization
-        const newConversationId = crypto.randomUUID();
-        setCurrentConversationId(newConversationId);
-        console.log(
-          "[Chatbot] Generated new conversation ID:",
-          newConversationId,
-        );
-        console.log("[Chatbot] Saving conversation on initialization");
-
-        // Add a small delay to prevent race conditions
-        setTimeout(() => {
-          saveConversation(newConversationId, sessionId);
-        }, 500);
-      } else {
-        console.error("[Chatbot] Invalid session ID format. Not initializing conversation.");
-        setIsOpen(false); // Force close if invalid session
-      }
-    }
-  }, [sessionId, sessionReceived, currentConversationId, conversationInitialized, isOpen, messages, setCurrentConversationId]);
 
   return (
     <>
@@ -1109,17 +860,6 @@ export default function ChatWidget() {
               </div>
 
               <div className="flex items-center space-x-3 mt-2 relative z-10">
-                {currentConversationId && messages.length > 1 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={startNewConversation}
-                    className="text-white hover:bg-white/25 h-12 w-12 p-0 rounded-full transition-all duration-500 hover:scale-110 backdrop-blur-md border-2 border-white/30 hover:shadow-neon"
-                    title="Back to home"
-                  >
-                    <ChevronDown className="h-6 w-6 rotate-90" />
-                  </Button>
-                )}
                 <Button
                   variant="ghost"
                   size="sm"
@@ -1202,14 +942,6 @@ export default function ChatWidget() {
                         </div>
                       )}
                     </div>
-
-                    <ConversationsList
-                      conversations={conversations}
-                      loadingConversations={loadingConversations}
-                      loadingHistory={loadingHistory}
-                      onLoadConversation={loadConversationHistory}
-                      onStartNewConversation={startNewConversation}
-                    />
                   </div>
                 </div>
               ) : (
