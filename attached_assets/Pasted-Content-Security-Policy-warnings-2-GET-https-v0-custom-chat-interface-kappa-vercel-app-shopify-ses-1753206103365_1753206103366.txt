@@ -1,0 +1,81 @@
+Content-Security-Policy warnings 2
+GET
+https://v0-custom-chat-interface-kappa.vercel.app/shopify-session-manager.js
+NS_BINDING_ABORTED
+
+GET
+https://v0-custom-chat-interface-kappa.vercel.app/shopify-api-client.js
+NS_BINDING_ABORTED
+
+GET
+https://v0-custom-chat-interface-kappa.vercel.app/shopify-chatbot-integration.js
+NS_BINDING_ABORTED
+
+asm.js type error: Asm.js optimizer disabled because debugger is active es-modules-shim.2.4.0.js
+A resource is blocked by OpaqueResponseBlocking, please check browser console for details. shopify-api-client.js
+A resource is blocked by OpaqueResponseBlocking, please check browser console for details. shopify-session-manager.js
+Loading failed for the <script> with source “https://v0-custom-chat-interface-kappa.vercel.app/shopify-session-manager.js”. zenmato.myshopify.com:2658:92
+A resource is blocked by OpaqueResponseBlocking, please check browser console for details. shopify-chatbot-integration.js
+GET
+https://v0-custom-chat-interface-kappa.vercel.app/shopify-api-client.js
+NS_BINDING_ABORTED
+
+Source map error: Error: request failed with status 404
+Stack in the worker:networkRequest@resource://devtools/client/shared/source-map-loader/utils/network-request.js:43:9
+
+Resource URL: https://zenmato.myshopify.com/cdn/shopifycloud/importmap-polyfill/es-modules-shim.2.4.0.js
+Source Map URL: es-module-shims.js.map
+A resource is blocked by OpaqueResponseBlocking, please check browser console for details. shopify-api-client.js
+Loading failed for the <script> with source “https://v0-custom-chat-interface-kappa.vercel.app/shopify-api-client.js”. zenmato.myshopify.com:2659:87
+Cookie “_shopify_s” has been rejected for invalid domain. zenmato.myshopify.com
+Cookie “_shopify_sa_p” has been rejected for invalid domain. zenmato.myshopify.com
+Cookie “_shopify_sa_t” has been rejected for invalid domain. zenmato.myshopify.com
+Cookie “_shopify_y” has been rejected for invalid domain. zenmato.myshopify.com
+Cookie “_shopify_test” has been rejected for invalid domain. 4 zenmato.myshopify.com
+GET
+https://v0-custom-chat-interface-kappa.vercel.app/shopify-chatbot-integration.js
+NS_BINDING_ABORTED
+
+A resource is blocked by OpaqueResponseBlocking, please check browser console for details. shopify-chatbot-integration.js
+Loading failed for the <script> with source “https://v0-custom-chat-interface-kappa.vercel.app/shopify-chatbot-integration.js”. zenmato.myshopify.com:2660:96
+Uncaught TypeError: can't access property "closest", discountBlock is null
+    handleGenerateDiscountBlock https://cdn.shopify.com/extensions/e5160c7c-70b8-442a-aabf-bc586a4cca11/ns-discount-in-cart-49/assets/bluesky-toolkit.js:282
+    <anonymous> https://cdn.shopify.com/extensions/e5160c7c-70b8-442a-aabf-bc586a4cca11/ns-discount-in-cart-49/assets/bluesky-toolkit.js:294
+bluesky-toolkit.js:282:5
+Cookie warnings 2
+Content-Security-Policy: Ignoring ‘block-all-mixed-content’ because mixed content display upgrading makes block-all-mixed-content obsolete. modern
+Layout was forced before the page was fully loaded. If stylesheets are not yet loaded this may cause a flash of unstyled content. modern
+In a sandboxed environment, addEventListener may not behave as expected. modern:7:71139
+recaptchacompat disabled api.js:4:188809
+Partitioned cookie or storage access was provided to “https://v0-custom-chat-interface-kappa.vercel.app/” because it is loaded in the third-party context and dynamic state partitioning is enabled. webpack-9ce1feb1a7ba3ba5.js:2:60
+Partitioned cookie or storage access was provided to “https://newassets.hcaptcha.com/captcha/v1/e34a17199a5ad5f79373a8e86f1f5508fb0d8531/static/hcaptcha.html#frame=challenge&id=0nns3grcnl7&host=zenmato.myshopify.com&sentry=true&reportapi=https%3A%2F%2Faccounts.hcaptcha.com&recaptchacompat=off&custom=false&hl=en&tplinks=on&andint=off&pstissuer=https%3A%2F%2Fpst-issuer.hcaptcha.com&sitekey=f06e6c50-85a8-45c8-87d0-21a2b65856fe&size=invisible&theme=light&origin=https%3A%2F%2Fzenmato.myshopify.com” because it is loaded in the third-party context and dynamic state partitioning is enabled. hsw.js:2:712829
+Partitioned cookie or storage access was provided to “https://newassets.hcaptcha.com/captcha/v1/e34a17199a5ad5f79373a8e86f1f5508fb0d8531/static/hcaptcha.html#frame=challenge&id=1kmfj4dky8nl&host=zenmato.myshopify.com&sentry=true&reportapi=https%3A%2F%2Faccounts.hcaptcha.com&recaptchacompat=off&custom=false&hl=en&tplinks=on&andint=off&pstissuer=https%3A%2F%2Fpst-issuer.hcaptcha.com&sitekey=f06e6c50-85a8-45c8-87d0-21a2b65856fe&size=invisible&theme=light&origin=https%3A%2F%2Fzenmato.myshopify.com” because it is loaded in the third-party context and dynamic state partitioning is enabled. hsw.js:2:712829
+Source map error: Error: URL constructor:  is not a valid URL.
+Stack in the worker:resolveSourceMapURL@resource://devtools/client/shared/source-map-loader/utils/fetchSourceMap.js:56:22
+getOriginalURLs@resource://devtools/client/shared/source-map-loader/source-map.js:73:24
+workerHandler/</<@resource://devtools/client/shared/worker-utils.js:115:52
+workerHandler/<@resource://devtools/client/shared/worker-utils.js:113:13
+
+Resource URL: wasm:https://newassets.hcaptcha.com/c/b1d89b0e99726b0c6df690327c8273a6bf094a3b04015d98a388fafe79963a6f/hsw.js%20line%202%20%3E%20WebAssembly.instantiate
+Source Map URL: null
+Source map error: Error: URL constructor:  is not a valid URL.
+Stack in the worker:resolveSourceMapURL@resource://devtools/client/shared/source-map-loader/utils/fetchSourceMap.js:56:22
+getOriginalURLs@resource://devtools/client/shared/source-map-loader/source-map.js:73:24
+workerHandler/</<@resource://devtools/client/shared/worker-utils.js:115:52
+workerHandler/<@resource://devtools/client/shared/worker-utils.js:113:13
+
+Resource URL: wasm:https://newassets.hcaptcha.com/captcha/v1/e34a17199a5ad5f79373a8e86f1f5508fb0d8531/static/hcaptcha.html#frame=challenge&id=1kmfj4dky8nl&host=zenmato.myshopify.com&sentry=true&reportapi=https%253A%252F%252Faccounts.hcaptcha.com&recaptchacompat=off&custom=false&hl=en&tplinks=on&andint=off&pstissuer=https%253A%252F%252Fpst-issuer.hcaptcha.com&sitekey=f06e6c50-85a8-45c8-87d0-21a2b65856fe&size=invisible&theme=light&origin=https%253A%252F%252Fzenmato.myshopify.com%20line%2014%20%3E%20WebAssembly.Module
+Source Map URL: null
+[Chatbot] No session_id received from parent, using fallback: fallback-1753205847817-7r99f7 page-1147eb15a19a4ff0.js:1:13861
+The resource at “https://zenmato.myshopify.com/cdn/fonts/dm_sans/dmsans_n4.ec80bd4dd7e1a334c969c265873491ae56018d72.woff2?h1=ZHJvcHNoaXBlbGVjdGlvbjIwMjQuYWNjb3VudC5teXNob3BpZnkuY29t&h2=emVubWF0by5teXNob3BpZnkuY29t&hmac=a9634ea6c9eb8cfa3f6eba02e453843df9424d7e579fba67426d5404833284a4” preloaded with link preload was not used within a few seconds. Make sure all attributes of the preload tag are set correctly. zenmato.myshopify.com
+The resource at “https://zenmato.myshopify.com/cdn/fonts/avenir_next/avenirnext_n6.dce2bdac497386d21072e6d18a9651d6fab43f93.woff2?h1=ZHJvcHNoaXBlbGVjdGlvbjIwMjQuYWNjb3VudC5teXNob3BpZnkuY29t&h2=emVubWF0by5teXNob3BpZnkuY29t&hmac=f00467bcde457b62a36fa4f16ede86fa6abb52bba97a91916e9a7036b9f24ceb” preloaded with link preload was not used within a few seconds. Make sure all attributes of the preload tag are set correctly. zenmato.myshopify.com
+Analytics event skipped: No session ID available. page-1147eb15a19a4ff0.js:1:11327
+[Chatbot] Sending text message: recommend me kaakshi tee page-1147eb15a19a4ff0.js:1:21572
+[Chatbot] Created new conversation ID: conv_fallback-1753205847817-7r99f7_1753205856504 page-1147eb15a19a4ff0.js:1:21693
+Analytics event skipped: No session ID available. page-1147eb15a19a4ff0.js:1:11327
+[Chatbot] Sending to n8n chat webhook: 
+Object { session_id: "fallback-1753205847817-7r99f7", message: "recommend me kaakshi tee", timestamp: "2025-07-22T17:37:38.120Z", conversation_id: "conv_fallback-1753205847817-7r99f7_1753205856504", source_url: null, page_context: null, cart_currency: null, localization: null, type: "text" }
+page-1147eb15a19a4ff0.js:1:22684
+[Chatbot] Error sending message: SyntaxError: JSON.parse: unexpected end of data at line 1 column 1 of the JSON data 954-afcbf4d36871b7ad.js:1:17078
+Analytics event skipped: No session ID available. page-1147eb15a19a4ff0.js:1:11327
+Error: Could not establish connection. Receiving end does not exist. metrics.js:10:32
