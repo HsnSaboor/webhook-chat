@@ -29,21 +29,33 @@ export const ConversationsList: React.FC<ConversationsListProps> = ({
           </div>
         ) : conversations.length > 0 ? (
           <>
-            {conversations.map((conversation) => (
-              <button
-                key={conversation.conversation_id}
-                onClick={() => onLoadConversation(conversation.conversation_id)}
-                disabled={loadingHistory}
-                className="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800 transition-colors duration-200 disabled:opacity-50"
-              >
-                <div className="font-medium text-sm text-foreground truncate">
-                  {conversation.name || "Untitled Conversation"}
-                </div>
-                <div className="text-xs text-muted-foreground mt-1">
-                  {new Date(conversation.started_at).toLocaleDateString()}
-                </div>
-              </button>
-            ))}
+            {conversations.map((conversation, index) => {
+              // Safety check for conversation object
+              if (!conversation || typeof conversation !== 'object') {
+                console.warn(`[ConversationsList] Invalid conversation at index ${index}:`, conversation);
+                return null;
+              }
+
+              const conversationId = conversation.conversation_id || conversation.id || `fallback-${index}`;
+              const conversationName = conversation.name || conversation.title || "Untitled Conversation";
+              const startedAt = conversation.started_at || conversation.timestamp || new Date().toISOString();
+
+              return (
+                <button
+                  key={conversationId}
+                  onClick={() => onLoadConversation(conversationId)}
+                  disabled={loadingHistory}
+                  className="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800 transition-colors duration-200 disabled:opacity-50"
+                >
+                  <div className="font-medium text-sm text-foreground truncate">
+                    {conversationName}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {new Date(startedAt).toLocaleDateString()}
+                  </div>
+                </button>
+              );
+            }).filter(Boolean)}
             <button
               onClick={onStartNewConversation}
               className="w-full text-left p-3 rounded-lg border-2 border-dashed border-blue-300 hover:border-blue-400 hover:bg-blue-50 dark:border-blue-600 dark:hover:border-blue-500 dark:hover:bg-blue-900/20 transition-colors duration-200"

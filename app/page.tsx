@@ -188,11 +188,42 @@ export default function ChatWidget() {
             console.warn("[Chatbot] Received init message without session_id");
           }
         } else if (messageData?.type === "conversations-response") {
-          console.log(
-            "[Chatbot] Received conversations from parent:",
-            messageData.conversations,
-          );
-          setConversations(messageData.conversations || []);
+          const handleConversationsReceived = (conversationsData: any[]) => {
+    console.log("[Chatbot] Received conversations from parent:", conversationsData);
+    try {
+      if (Array.isArray(conversationsData)) {
+        const formattedConversations = conversationsData.map((conv, index) => {
+          // Ensure we have a valid conversation object
+          if (!conv || typeof conv !== 'object') {
+            console.warn(`[Chatbot] Invalid conversation at index ${index}:`, conv);
+            return null;
+          }
+
+          // Extract ID from either conversation_id or id field
+          const conversationId = conv.conversation_id || conv.id || `fallback-${index}-${Date.now()}`;
+
+          return {
+            id: conversationId,
+            conversation_id: conversationId,
+            title: conv.name || conv.title || `Chat ${conversationId.slice(-4)}`,
+            name: conv.name || conv.title || `Chat ${conversationId.slice(-4)}`,
+            started_at: conv.started_at || conv.timestamp || new Date().toISOString(),
+            timestamp: conv.started_at || conv.timestamp || new Date().toISOString()
+          };
+        }).filter(Boolean); // Remove any null entries
+
+        console.log("[Chatbot] Formatted conversations:", formattedConversations);
+        setConversations(formattedConversations);
+      } else {
+        console.warn("[Chatbot] Conversations data is not an array:", conversationsData);
+        setConversations([]);
+      }
+    } catch (error) {
+      console.error("[Chatbot] Error processing conversations:", error);
+      setConversations([]);
+    }
+  };
+          handleConversationsReceived(messageData.conversations);
         } else if (messageData?.type === "conversation-response") {
           console.log(
             "[Chatbot] Received conversation history from parent:",
@@ -691,7 +722,7 @@ export default function ChatWidget() {
         console.error("[Chatbot] Failed to parse webhook response as JSON:", e);
         data = { message: "I received your message but had trouble processing the response. Please try again." };
       }
-      
+
       console.log("[Chatbot] Parsed chat webhook response:", data);
 
       // Create the webhook response message
@@ -710,7 +741,7 @@ export default function ChatWidget() {
       // Save both user and AI messages to Supabase
       try {
         const effectiveSessionId = window.shopifyContext?.session_id || sessionId;
-        
+
         // Save user message
         const userSaveResponse = await fetch('/api/messages/save', {
           method: 'POST',
@@ -950,15 +981,30 @@ export default function ChatWidget() {
     }
   };
 
-  const loadConversationAndStartChat = (conversationId: string) => {
-    loadConversationFromParent(conversationId);
-    setShowHomepage(false);
+  const loadConversationAndStartChat = async (conversationId: string) => {
+    try {
+      console.log(`[Chatbot] Loading conversation: ${conversationId}`);
+
+      // Validate conversation ID
+      if (!conversationId || typeof conversationId !== 'string') {
+        console.error("[Chatbot] Invalid conversation ID:", conversationId);
+        return;
+      }
+
+      setCurrentConversationId(conversationId);
+      await loadConversationFromParent(conversationId);
+      setShowHomepage(false);
+    } catch (error) {
+      console.error("[Chatbot] Error loading conversation:", error);
+      // Reset state on error
+      setCurrentConversationId(null);      setIsLoading(false);
+    }
   };
 
   const trackAnalyticsEvent = (eventName: string, eventData: any = {}) => {
     const contextSessionId = window.shopifyContext?.session_id;
     const effectiveSessionId = contextSessionId || sessionId;
-    
+
     if (!effectiveSessionId || effectiveSessionId.startsWith('fallback-')) {
       console.warn("Analytics event skipped: No valid session ID available.");
       return;
