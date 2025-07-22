@@ -34,11 +34,29 @@ import { useAudio } from "@/components/chat/hooks/useAudio";
 import type { Message, ProductCardData, HistoryItem } from "@/components/chat/types";
 
 export default function ChatWidget() {
+  // Session data from parent window (Shopify)
+  const [sessionId, setSessionId] = useState<string>("");
+  const [sessionReceived, setSessionReceived] = useState(false);
+
+  // Generate fallback session ID if not received from parent
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (!sessionReceived && !sessionId) {
+        const fallbackSessionId = `fallback-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+        console.log('[Chatbot] No session_id received from parent, using fallback:', fallbackSessionId);
+        setSessionId(fallbackSessionId);
+        setSessionReceived(true);
+      }
+    }, 3000); // Wait 3 seconds for parent session
+
+    return () => clearTimeout(timeout);
+  }, [sessionReceived, sessionId]);
+
   const {
-    sessionId,
-    setSessionId,
-    sessionReceived,
-    setSessionReceived,
+    sessionId: chatSessionId,
+    setSessionId: setChatSessionId,
+    sessionReceived: chatSessionReceived,
+    setSessionReceived: setChatSessionReceived,
     sourceUrl,
     setSourceUrl,
     pageContext,
@@ -645,26 +663,42 @@ export default function ChatWidget() {
       // Add webhook response to chat
       setMessages((prev) => [...prev, webhookMessage]);
 
-      // Save webhook response to database
+      // Save both user and AI messages to Supabase
       try {
-        await fetch("/api/messages/save", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+        // Save user message
+        await fetch('/api/messages/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            conversation_id: conversationId,
+            conversation_id: currentConversationId || `conv-${sessionId}-${Date.now()}`,
             session_id: sessionId,
-            content: webhookMessage.content,
-            role: "webhook",
-            type: "text",
-            cards: webhookMessage.cards,
-            timestamp: webhookMessage.timestamp.toISOString(),
-          }),
+            content: messageText,
+            role: 'user',
+            type: type,
+            audio_url: audioBlob ? URL.createObjectURL(audioBlob) : null,
+            timestamp: userMessage.timestamp.toISOString()
+          })
+        });
+
+        // Save AI response
+        await fetch('/api/messages/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            conversation_id: currentConversationId || `conv-${sessionId}-${Date.now()}`,
+            session_id: sessionId,
+            content: data.message,
+            role: 'webhook',
+            type: 'text',
+            cards: data.cards,
+            timestamp: webhookMessage.timestamp.toISOString()
+          })
         });
       } catch (error) {
-        console.error("[Chatbot] Error saving webhook message:", error);
+        console.error('Failed to save messages:', error);
       }
+
+      setIsLoading(false);
 
       // Track the response received event
       await trackEvent("response_received", {
@@ -949,7 +983,7 @@ export default function ChatWidget() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setIsOpen(false)}
+                  onClick={(){() => setIsOpen(false)}
                   className="text-gray-600 hover:text-black hover:bg-gray-100 h-8 w-8 p-0 rounded-lg"
                 >
                   <X className="h-4 w-4" />
@@ -977,7 +1011,7 @@ export default function ChatWidget() {
                   {conversations.length > 0 && (
                     <div className="mb-8">
                       <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Chats</h3>
-                      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">```tool_code
+                      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
                         {conversations.slice(0, 3).map((conv, index) => (
                           <div key={conv.id}>
                             <button
@@ -1168,7 +1202,13 @@ export default function ChatWidget() {
             {/* Input - Modern Minimalist - Only show in chat interface */}
             {!showHomepage && (
               <CardFooter className="p-4 border-t border-gray-100 bg-white">
-                <form onSubmit={sendMessage} className="flex w-full space-x-3">
+                <form onSubmit={(e) => {
+                    e.preventDefault();
+                    if (input.trim()) {
+                      sendMessage(input, "text");
+                      setInput("");
+                    }
+                  }} className="flex w-full space-x-3">
                   <div className="flex-1 relative">
                     <Input
                       value={input}
