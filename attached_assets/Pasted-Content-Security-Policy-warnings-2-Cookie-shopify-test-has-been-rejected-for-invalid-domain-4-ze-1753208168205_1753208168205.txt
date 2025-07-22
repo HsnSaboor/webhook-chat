@@ -1,0 +1,125 @@
+Content-Security-Policy warnings 2
+Cookie “_shopify_test” has been rejected for invalid domain. 4 zenmato.myshopify.com
+Cookie “_shopify_s” has been rejected for invalid domain. zenmato.myshopify.com
+Cookie “_shopify_sa_p” has been rejected for invalid domain. zenmato.myshopify.com
+Cookie “_shopify_sa_t” has been rejected for invalid domain. zenmato.myshopify.com
+Cookie “_shopify_y” has been rejected for invalid domain. zenmato.myshopify.com
+[Shopify Session Manager] Initializing enhanced session manager... shopify-session-manager.js:1:34
+[Session Manager] Enhanced session manager loaded successfully shopify-session-manager.js:1:5840
+[Shopify API Client] Initializing enhanced API client... shopify-api-client.js:1:34
+[API Client] Enhanced API client loaded successfully shopify-api-client.js:1:3943
+[Shopify Integration] Initializing enhanced chatbot integration... shopify-chatbot-integration.js:1:34
+[Shopify Integration] Starting dependency check... shopify-chatbot-integration.js:12:1502
+[Shopify Integration] Dependencies loaded, proceeding with initialization... shopify-chatbot-integration.js:1:4486
+[Session Manager] Initializing session... shopify-session-manager.js:1:4957
+[Session Manager] Looking for Shopify session cookies... shopify-session-manager.js:1:389
+[Session Manager] Available cookies: 
+Array(10) [ "localization", "cart_currency", "_shopify_y", "_tracking_consent", "_ab", "skip_shop_pay", "cart", "theme4:exit:sections--17568270549039__exit_popup_MMerM4", "keep_alive", "_shopify_s" ]
+shopify-session-manager.js:1:491
+[Session Manager] Found session cookie: _shopify_y = 78ddfd09-7df6-4750-8... shopify-session-manager.js:1:807
+[Session Manager] Session initialized: 
+Object { session_id: "78ddfd09-7df6-4750-8e83-41e67f9b21b9", source_url: "https://zenmato.myshopify.com/?pb=0", page_context: "Home: home: EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en", shopify_context: {…}, timestamp: "2025-07-22T18:10:49.211Z" }
+shopify-session-manager.js:1:5383
+[Shopify Integration] Found existing chatbot iframe shopify-chatbot-integration.js:12:501
+[Shopify Integration] Main initialization complete shopify-chatbot-integration.js:12:1436
+[Shopify Integration] Received message from iframe: 
+Array(7) [ "esms", true, false, true, false, false, false ]
+shopify-chatbot-integration.js:1:3471
+Content-Security-Policy: Ignoring ‘block-all-mixed-content’ because mixed content display upgrading makes block-all-mixed-content obsolete. modern
+Layout was forced before the page was fully loaded. If stylesheets are not yet loaded this may cause a flash of unstyled content. modern
+In a sandboxed environment, addEventListener may not behave as expected. modern:7:71139
+[Shopify Integration] Received message from iframe: remote-ui::ready shopify-chatbot-integration.js:1:3471
+[Shopify Integration] Received message from iframe: 
+Array [ 5, (3) […] ]
+shopify-chatbot-integration.js:1:3471
+[Shopify Integration] Received message from iframe: 
+Array [ 1, (3) […] ]
+shopify-chatbot-integration.js:1:3471
+[Shopify Integration] Received message from iframe: 
+Array [ 5, (3) […] ]
+shopify-chatbot-integration.js:1:3471
+[Shopify Integration] Received message from iframe: 
+Array [ 6, (3) […] ]
+shopify-chatbot-integration.js:1:3471
+No style found! bluesky-toolkit.js:33:29
+Cookie warnings 2
+[Shopify Integration] Valid Shopify session detected! shopify-chatbot-integration.js:12:1230
+recaptchacompat disabled api.js:4:188809
+[Shopify Integration] Received message from iframe: 
+Object { source: "hcaptcha", t: "r" }
+shopify-chatbot-integration.js:1:3471
+[Shopify Integration] Received message from iframe: 
+Object { source: "hcaptcha", t: "ri" }
+shopify-chatbot-integration.js:1:3471
+[Shopify Integration] Received message from iframe: {"source":"hcaptcha","label":"get-url","id":"0hbaoelidbgp","promise":"create","lookup":"vktzrefli9"} shopify-chatbot-integration.js:1:3471
+[Shopify Integration] Received message from iframe: {"source":"hcaptcha","label":"challenge-loaded","id":"0hbaoelidbgp"} shopify-chatbot-integration.js:1:3471
+[Shopify Integration] Received message from iframe: 
+Object { source: "hcaptcha", t: "r" }
+shopify-chatbot-integration.js:1:3471
+[Shopify Integration] Received message from iframe: 
+Object { source: "hcaptcha", t: "ri" }
+shopify-chatbot-integration.js:1:3471
+[Shopify Integration] Received message from iframe: {"source":"hcaptcha","label":"get-url","id":"1mls8tb3sat8","promise":"create","lookup":"8gh73evkai6"} shopify-chatbot-integration.js:1:3471
+[Shopify Integration] Received message from iframe: {"source":"hcaptcha","label":"challenge-loaded","id":"1mls8tb3sat8"} shopify-chatbot-integration.js:1:3471
+Partitioned cookie or storage access was provided to “https://v0-custom-chat-interface-kappa.vercel.app/” because it is loaded in the third-party context and dynamic state partitioning is enabled. webpack-9ce1feb1a7ba3ba5.js:2:60
+[Shopify Integration] Received message from iframe: {"source":"hcaptcha","label":"site-setup","id":"1mls8tb3sat8","contents":{"ok":{"features":{"custom_theme":true,"enc_get_req":true},"c":{"type":"hsw","req":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJmIjowLCJzIjoyLCJ0IjoidyIsImQiOiJOaHptSElpWGxiM21vTlhzb29Cb1BLWmVTU3poWWJEUVJESDdxQkxoY2JONVV4enVrbzV2dmRkdVhmcHhEV0h4Q3k0cmpsOXJmVDRzazVSTVR0akV3bjIzcVNIZXZOVkhQMVN6VVp4dGhaWnFtL2kvRTRlQ3J6YTdsUS9FSlhZKzFwbmJIay9uSGdyV2EzOWpJQ3l0S1NDTk55V2p6OGtzc3A2OG9OZDB2YWszUGdjT2s1a3RTWXU3V3JGdndEeXRFWHlCQzJBN3FNYTZoL2FwWVgxU3crL3ppUHR6RXBUWWRZM0gzcVdJT3FXWk51c1dkRUlwVkdSR3VJb201QmM9cE9DdUpoeHE1VEdRQnJDdyIsImwiOiIvYy9iMWQ4OWIwZTk5NzI2YjBjNmRmNjkwMzI3YzgyNzNhNmJmMDk0YTNiMDQwMTVkOThhMzg4ZmFmZTc5OTYzYTZmIiwiaSI6InNoYTI1Ni0rU0VRMWRpakluMFlkdUhnKzNaWlZUMFg1YlA3Q3FMVmVFT2NHVFNsS2swPSIsImUiOjE3NTMyMDk2NTMsIm4iOiJoc3ciLCJjIjoxMDAwfQ.J4HOTdSyhf32nRrd_kziARaDjsbbEmvIIsYoBswupks"},"pass":true}}} shopify-chatbot-integration.js:1:3471
+[Shopify Integration] Received message from iframe: {"source":"hcaptcha","label":"site-setup","id":"0hbaoelidbgp","contents":{"ok":{"features":{"custom_theme":true,"enc_get_req":true},"c":{"type":"hsw","req":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJmIjowLCJzIjoyLCJ0IjoidyIsImQiOiJLbzBaejZ6ZU51K3NNeUJVUjNrdWNVZ0JJNnh5QVU0ako2VUYrUGNLZHd3NEhGaXhUbFczTmVkQlFhWGJoVlBMUm5FNS9vVVJUUElUVzZDSkZQaVZuTFJUamRZb05ZVStiU3JIdWpEWUhGeEY3RHlybWtNLzRhUzBXcTVDNTg5KzdFaEtnV3ZJNGN1MHBmZ0x1WUZGQ21ISFB3K2JuWjc1NS9NV0lQWlQ5b2M0QTJ1Q055V2lEakU2SWZFWk5EekNZai9rdVZRdzVVcDgxVnFJbnovd0dxZjJHa0RkUmU3ckN1bVk0bmtlZElkSm1xZ3ZhNzR0KzhJRE0wc3RseHM9QlRreng5ek5GTlo4b013TiIsImwiOiIvYy9iMWQ4OWIwZTk5NzI2YjBjNmRmNjkwMzI3YzgyNzNhNmJmMDk0YTNiMDQwMTVkOThhMzg4ZmFmZTc5OTYzYTZmIiwiaSI6InNoYTI1Ni0rU0VRMWRpakluMFlkdUhnKzNaWlZUMFg1YlA3Q3FMVmVFT2NHVFNsS2swPSIsImUiOjE3NTMyMDk2NTMsIm4iOiJoc3ciLCJjIjoxMDAwfQ.b-v1uP4a_wJs8gJBRRtSuHbxVrZBi3hJdC0WvzSZx9k"},"pass":true}}} shopify-chatbot-integration.js:1:3471
+Error: Promised response from onMessage listener went out of scope background.js:505:27
+[Shopify Integration] Initializing chatbot... shopify-chatbot-integration.js:1:4011
+[Shopify Integration] Chatbot system initialized. shopify-chatbot-integration.js:1:4202
+Partitioned cookie or storage access was provided to “https://newassets.hcaptcha.com/captcha/v1/e34a17199a5ad5f79373a8e86f1f5508fb0d8531/static/hcaptcha.html#frame=challenge&id=1mls8tb3sat8&host=zenmato.myshopify.com&sentry=true&reportapi=https%3A%2F%2Faccounts.hcaptcha.com&recaptchacompat=off&custom=false&hl=en&tplinks=on&andint=off&pstissuer=https%3A%2F%2Fpst-issuer.hcaptcha.com&sitekey=f06e6c50-85a8-45c8-87d0-21a2b65856fe&size=invisible&theme=light&origin=https%3A%2F%2Fzenmato.myshopify.com” because it is loaded in the third-party context and dynamic state partitioning is enabled. hsw.js:2:712829
+Partitioned cookie or storage access was provided to “https://newassets.hcaptcha.com/captcha/v1/e34a17199a5ad5f79373a8e86f1f5508fb0d8531/static/hcaptcha.html#frame=challenge&id=0hbaoelidbgp&host=zenmato.myshopify.com&sentry=true&reportapi=https%3A%2F%2Faccounts.hcaptcha.com&recaptchacompat=off&custom=false&hl=en&tplinks=on&andint=off&pstissuer=https%3A%2F%2Fpst-issuer.hcaptcha.com&sitekey=f06e6c50-85a8-45c8-87d0-21a2b65856fe&size=invisible&theme=light&origin=https%3A%2F%2Fzenmato.myshopify.com” because it is loaded in the third-party context and dynamic state partitioning is enabled. hsw.js:2:712829
+Source map error: Error: URL constructor:  is not a valid URL.
+Stack in the worker:resolveSourceMapURL@resource://devtools/client/shared/source-map-loader/utils/fetchSourceMap.js:56:22
+getOriginalURLs@resource://devtools/client/shared/source-map-loader/source-map.js:73:24
+workerHandler/</<@resource://devtools/client/shared/worker-utils.js:115:52
+workerHandler/<@resource://devtools/client/shared/worker-utils.js:113:13
+
+Resource URL: wasm:https://newassets.hcaptcha.com/c/b1d89b0e99726b0c6df690327c8273a6bf094a3b04015d98a388fafe79963a6f/hsw.js%20line%202%20%3E%20WebAssembly.instantiate
+Source Map URL: null 2
+[Shopify Integration] Attempting to send session data to chatbot iframe... shopify-chatbot-integration.js:1:216
+[Shopify Integration] Sending session data to chatbot iframe shopify-chatbot-integration.js:1:953
+[Shopify Integration] Session data sent successfully: 
+Object { type: "init", session_id: "78ddfd09-7df6-4750-8e83-41e67f9b21b9", source_url: "https://zenmato.myshopify.com/?pb=0", page_context: "Home: home: EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en", shopify_context: {…}, timestamp: "2025-07-22T18:10:49.211Z", conversation_id: "conv_78ddfd09-7df6-4750-8e83-41e67f9b21b9_1753207854906" }
+shopify-chatbot-integration.js:1:1202
+[Chatbot] Received message from origin: https://zenmato.myshopify.com Data: 
+Object { type: "init", session_id: "78ddfd09-7df6-4750-8e83-41e67f9b21b9", source_url: "https://zenmato.myshopify.com/?pb=0", page_context: "Home: home: EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en", shopify_context: {…}, timestamp: "2025-07-22T18:10:49.211Z", conversation_id: "conv_78ddfd09-7df6-4750-8e83-41e67f9b21b9_1753207854906" }
+page-221b6d5965b2f469.js:1:15306
+[Chatbot] Received session_id from parent: 78ddfd09-7df6-4750-8e83-41e67f9b21b9 page-221b6d5965b2f469.js:1:15578
+[Chatbot] Stored complete Shopify context: 
+Object { session_id: "78ddfd09-7df6-4750-8e83-41e67f9b21b9", source_url: "https://zenmato.myshopify.com/?pb=0", page_context: "Home: home: EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en", conversation_id: "conv_78ddfd09-7df6-4750-8e83-41e67f9b21b9_1753207854906", shopify_context: {…} }
+page-221b6d5965b2f469.js:1:15911
+[Chatbot] Received source_url: https://zenmato.myshopify.com/?pb=0 page-221b6d5965b2f469.js:1:16005
+[Chatbot] Received page_context: Home: home: EcomHQ Zenmato Demo – ZENMATO page-221b6d5965b2f469.js:1:16080
+[Chatbot] Received cart_currency: USD page-221b6d5965b2f469.js:1:16160
+[Chatbot] Received localization: en page-221b6d5965b2f469.js:1:16241
+[Chatbot] No session_id received from parent, using fallback: fallback-1753207856909-ee02x page-221b6d5965b2f469.js:1:13861
+The resource at “https://zenmato.myshopify.com/cdn/fonts/dm_sans/dmsans_n4.ec80bd4dd7e1a334c969c265873491ae56018d72.woff2?h1=ZHJvcHNoaXBlbGVjdGlvbjIwMjQuYWNjb3VudC5teXNob3BpZnkuY29t&h2=emVubWF0by5teXNob3BpZnkuY29t&hmac=a9634ea6c9eb8cfa3f6eba02e453843df9424d7e579fba67426d5404833284a4” preloaded with link preload was not used within a few seconds. Make sure all attributes of the preload tag are set correctly. zenmato.myshopify.com
+The resource at “https://zenmato.myshopify.com/cdn/fonts/avenir_next/avenirnext_n6.dce2bdac497386d21072e6d18a9651d6fab43f93.woff2?h1=ZHJvcHNoaXBlbGVjdGlvbjIwMjQuYWNjb3VudC5teXNob3BpZnkuY29t&h2=emVubWF0by5teXNob3BpZnkuY29t&hmac=f00467bcde457b62a36fa4f16ede86fa6abb52bba97a91916e9a7036b9f24ceb” preloaded with link preload was not used within a few seconds. Make sure all attributes of the preload tag are set correctly. zenmato.myshopify.com
+Analytics event skipped: No session ID available. page-221b6d5965b2f469.js:1:11327
+[Shopify Integration] Received message from iframe: 
+Object { type: "get-all-conversations" }
+shopify-chatbot-integration.js:1:3471
+[Shopify Integration] Unknown message type: get-all-conversations shopify-chatbot-integration.js:1:3904
+[Chatbot] Sending text message: recommend me a kakashi tee page-221b6d5965b2f469.js:1:22149
+[Chatbot] Created new conversation ID: conv_fallback-1753207856909-ee02x_1753207872716 page-221b6d5965b2f469.js:1:22270
+Analytics event skipped: No session ID available. page-221b6d5965b2f469.js:1:11327
+[Chatbot] Using Shopify context for message: 
+Object { session_id: "78ddfd09-7df6-4750-8e83-41e67f9b21b9", source_url: "https://zenmato.myshopify.com/?pb=0", page_context: "Home: home: EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en", conversation_id: "conv_78ddfd09-7df6-4750-8e83-41e67f9b21b9_1753207854906", shopify_context: {…} }
+page-221b6d5965b2f469.js:1:23143
+[Chatbot] Sending to n8n chat webhook: 
+Object { session_id: "fallback-1753207856909-ee02x", message: "recommend me a kakashi tee", timestamp: "2025-07-22T18:11:15.116Z", conversation_id: "conv_fallback-1753207856909-ee02x_1753207872716", source_url: "https://zenmato.myshopify.com/?pb=0", page_context: "Home: home: EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en", type: "text" }
+page-221b6d5965b2f469.js:1:23430
+[Chatbot] Error sending message: SyntaxError: JSON.parse: unexpected end of data at line 1 column 1 of the JSON data 954-afcbf4d36871b7ad.js:1:17078
+Analytics event skipped: No session ID available. page-221b6d5965b2f469.js:1:11327
+[Chatbot] Sending text message: hi page-221b6d5965b2f469.js:1:22149
+Analytics event skipped: No session ID available. page-221b6d5965b2f469.js:1:11327
+[Chatbot] Using Shopify context for message: 
+Object { session_id: "78ddfd09-7df6-4750-8e83-41e67f9b21b9", source_url: "https://zenmato.myshopify.com/?pb=0", page_context: "Home: home: EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en", conversation_id: "conv_78ddfd09-7df6-4750-8e83-41e67f9b21b9_1753207854906", shopify_context: {…} }
+page-221b6d5965b2f469.js:1:23143
+[Chatbot] Sending to n8n chat webhook: 
+Object { session_id: "fallback-1753207856909-ee02x", message: "hi", timestamp: "2025-07-22T18:15:39.100Z", conversation_id: "conv_fallback-1753207856909-ee02x_1753207872716", source_url: "https://zenmato.myshopify.com/?pb=0", page_context: "Home: home: EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en", type: "text" }
+page-221b6d5965b2f469.js:1:23430
+[Chatbot] Error sending message: SyntaxError: JSON.parse: unexpected end of data at line 1 column 1 of the JSON data 954-afcbf4d36871b7ad.js:1:17078
+    NextJS 27
+Analytics event skipped: No session ID available. page-221b6d5965b2f469.js:1:11327
