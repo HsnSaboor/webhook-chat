@@ -193,6 +193,26 @@
           // Re-send session data when requested
           sendSessionDataToChatbot();
           break;
+
+        case 'get-all-conversations':
+          // Handle conversation list request
+          if (window.ShopifyAPIClient) {
+            window.ShopifyAPIClient.fetchAllConversations()
+              .then(conversations => {
+                event.source.postMessage({
+                  type: 'conversations-response',
+                  conversations: conversations
+                }, '*');
+              })
+              .catch(error => {
+                console.error('[Shopify Integration] Error fetching conversations:', error);
+                event.source.postMessage({
+                  type: 'conversations-response',
+                  conversations: []
+                }, '*');
+              });
+          }
+          break;
           
         default:
           console.log('[Shopify Integration] Unknown message type:', event.data.type);

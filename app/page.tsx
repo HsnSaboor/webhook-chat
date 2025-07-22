@@ -154,6 +154,10 @@ export default function ChatWidget() {
           if (messageData.session_id) {
             console.log("[Chatbot] Received session_id from parent:", messageData.session_id);
 
+            // Set the actual session ID from Shopify
+            setSessionId(messageData.session_id);
+            setSessionReceived(true);
+
             // Initialize shopifyContext with all available data
             window.shopifyContext = {
               session_id: messageData.session_id,
@@ -645,8 +649,11 @@ export default function ChatWidget() {
       const context = window.shopifyContext || {};
       console.log("[Chatbot] Using Shopify context for message:", context);
 
+      // Use the session ID from context if available, otherwise use the local sessionId
+      const effectiveSessionId = context.session_id || sessionId;
+
       const webhookPayload = {
-        session_id: sessionId,
+        session_id: effectiveSessionId,
         message: messageText,
         timestamp: new Date().toISOString(),
         conversation_id: conversationId,
@@ -672,8 +679,18 @@ export default function ChatWidget() {
         throw new Error(`Chat webhook request failed: ${response.status}`);
       }
 
-      const data = await response.json();
-      console.log("[Chatbot] Received chat webhook response:", data);
+      const responseText = await response.text();
+      console.log("[Chatbot] Raw webhook response:", responseText);
+
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        console.error("[Chatbot] Failed to parse webhook response as JSON:", e);
+        data = { message: "I received your message but had trouble processing the response. Please try again." };
+      }
+      
+      console.log("[Chatbot] Parsed chat webhook response:", data);
 
       // Create the webhook response message
       const webhookMessage: Message = {
@@ -927,13 +944,15 @@ export default function ChatWidget() {
   };
 
   const trackAnalyticsEvent = (eventName: string, eventData: any = {}) => {
-    const sessionId = window.shopifyContext?.session_id;
-    if (!sessionId || sessionId.startsWith('fallback-')) {
+    const contextSessionId = window.shopifyContext?.session_id;
+    const effectiveSessionId = contextSessionId || sessionId;
+    
+    if (!effectiveSessionId || effectiveSessionId.startsWith('fallback-')) {
       console.warn("Analytics event skipped: No valid session ID available.");
       return;
     }
 
-    trackEvent(eventName, { ...eventData, sessionId });
+    trackEvent(eventName, { ...eventData, sessionId: effectiveSessionId });
   };
 
   return (
