@@ -153,37 +153,32 @@ export default function ChatWidget() {
         if (messageData?.type === "init") {
           if (messageData.session_id) {
             console.log("[Chatbot] Received session_id from parent:", messageData.session_id);
-            setSessionId(messageData.session_id);
-            setSessionReceived(true);
 
-            // Store additional Shopify data for use in messages
+            // Initialize shopifyContext with all available data
+            window.shopifyContext = {
+              session_id: messageData.session_id,
+              source_url: messageData.source_url || null,
+              page_context: messageData.page_context || null,
+              cart_currency: messageData.cart_currency || null,
+              localization: messageData.localization || null,
+              conversation_id: messageData.conversation_id || null,
+              shopify_context: messageData.shopify_context || null
+            };
+
+            console.log("[Chatbot] Stored complete Shopify context:", window.shopifyContext);
+
+            // Log individual received values
             if (messageData.source_url) {
               console.log("[Chatbot] Received source_url:", messageData.source_url);
-              window.shopifyContext = {
-                ...window.shopifyContext,
-                source_url: messageData.source_url
-              };
             }
             if (messageData.page_context) {
               console.log("[Chatbot] Received page_context:", messageData.page_context);
-              window.shopifyContext = {
-                ...window.shopifyContext,
-                page_context: messageData.page_context
-              };
             }
             if (messageData.cart_currency) {
               console.log("[Chatbot] Received cart_currency:", messageData.cart_currency);
-              window.shopifyContext = {
-                ...window.shopifyContext,
-                cart_currency: messageData.cart_currency
-              };
             }
             if (messageData.localization) {
               console.log("[Chatbot] Received localization:", messageData.localization);
-              window.shopifyContext = {
-                ...window.shopifyContext,
-                localization: messageData.localization
-              };
             }
           } else {
             console.warn("[Chatbot] Received init message without session_id");
@@ -646,15 +641,19 @@ export default function ChatWidget() {
       const chatWebhookUrl = process.env.NEXT_PUBLIC_N8N_CHAT_WEBHOOK || 
         "https://similarly-secure-mayfly.ngrok-free.app/webhook/chat";
 
+      // Get the latest context data
+      const context = window.shopifyContext || {};
+      console.log("[Chatbot] Using Shopify context for message:", context);
+
       const webhookPayload = {
         session_id: sessionId,
         message: messageText,
         timestamp: new Date().toISOString(),
         conversation_id: conversationId,
-        source_url: sourceUrl,
-        page_context: pageContext,
-        cart_currency: cartCurrency,
-        localization: localization,
+        source_url: context.source_url || null,
+        page_context: context.page_context || null,
+        cart_currency: context.cart_currency || null,
+        localization: context.localization || null,
         type,
       };
 
@@ -927,6 +926,16 @@ export default function ChatWidget() {
     setShowHomepage(false);
   };
 
+  const trackAnalyticsEvent = (eventName: string, eventData: any = {}) => {
+    const sessionId = window.shopifyContext?.session_id;
+    if (!sessionId || sessionId.startsWith('fallback-')) {
+      console.warn("Analytics event skipped: No valid session ID available.");
+      return;
+    }
+
+    trackEvent(eventName, { ...eventData, sessionId });
+  };
+
   return (
     <>
       {/* Chat Widget Button - Minimalist Design */}
@@ -977,7 +986,7 @@ export default function ChatWidget() {
                     variant="ghost"
                     size="sm"
                     onClick={() => setShowHomepage(true)}
-                    className="text-gray-600 hover:text-black hover:bg-gray-100 h-8 w-8 p-0 rounded-lg"
+className="text-gray-600 hover:text-black hover:bg-gray-100 h-8 w-8 p-0 rounded-lg"
                   >
                     <ChevronDown className="h-4 w-4 rotate-90" />
                   </Button>
