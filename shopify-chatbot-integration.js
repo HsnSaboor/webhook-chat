@@ -1,19 +1,32 @@
 
 /**
- * Shopify Chatbot Integration
- * Main coordinator that handles iframe communication and initialization
+ * Shopify Chatbot Integration - Inline Version
+ * This script should be embedded directly in the Shopify theme
  */
 (function() {
   'use strict';
 
-  console.log('[Shopify Integration] Initializing chatbot system...');
+  console.log('[Shopify Integration] Initializing inline chatbot integration...');
 
   let initializationTimeout = null;
+  let conversationId = null;
+
+  function generateConversationId(sessionId) {
+    const timestamp = Date.now();
+    return `conv_${sessionId}_${timestamp}`;
+  }
 
   function sendSessionDataToChatbot() {
+    console.log('[Shopify Integration] Attempting to send session data to chatbot iframe...');
+    
     const chatbotIframe = document.getElementById('chatbot');
     if (!chatbotIframe || !chatbotIframe.contentWindow) {
       console.error('[Shopify Integration] Chatbot iframe not found or not loaded');
+      return;
+    }
+
+    if (!window.ShopifySessionManager) {
+      console.error('[Shopify Integration] ShopifySessionManager not available');
       return;
     }
 
@@ -30,12 +43,21 @@
       ...sessionData
     };
 
-    chatbotIframe.contentWindow.postMessage(messageData, '*');
-    console.log('[Shopify Integration] Session data sent:', messageData);
+    try {
+      chatbotIframe.contentWindow.postMessage(messageData, '*');
+      console.log('[Shopify Integration] Session data sent successfully:', messageData);
+    } catch (error) {
+      console.error('[Shopify Integration] Error sending session data:', error);
+    }
   }
 
   function handleConversationAction(event, action, conversationId, name) {
     console.log('[Shopify Integration] Handling conversation action:', action);
+
+    if (!window.ShopifyAPIClient) {
+      console.error('[Shopify Integration] ShopifyAPIClient not available');
+      return;
+    }
 
     let apiPromise;
     switch (action) {
@@ -83,17 +105,7 @@
     window.addEventListener('message', function(event) {
       console.log('[Shopify Integration] Received message from iframe:', event.data);
 
-      const trustedOrigins = [
-        'https://zenmato.myshopify.com',
-        'https://cdn.shopify.com',
-        window.location.origin
-      ];
-
-      if (!trustedOrigins.includes(event.origin)) {
-        console.warn('[Shopify Integration] Ignoring message from untrusted origin:', event.origin);
-        return;
-      }
-
+      // Accept messages from the chatbot iframe (any origin for now)
       if (event.data.type === 'CONVERSATION_ACTION') {
         const { action, conversationId, name } = event.data.data;
         handleConversationAction(event, action, conversationId, name);
@@ -171,11 +183,12 @@
     // Setup session validation timeout
     setTimeout(() => {
       if (!window.ShopifySessionManager.isValid()) {
-        console.error('[Shopify Integration] No valid session after 5 seconds. Chatbot cannot function without proper Shopify session.');
+        console.warn('[Shopify Integration] Session may not be properly authenticated, but proceeding anyway.');
       }
     }, 5000);
   }
 
   // Start the process
+  console.log('[Shopify Integration] Starting dependency check...');
   waitForDependencies();
 })();

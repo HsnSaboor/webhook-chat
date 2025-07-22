@@ -1,0 +1,489 @@
+
+<!-- 
+  Complete Shopify Chatbot Integration Script
+  Add this to your Shopify theme.liquid file before the closing </body> tag
+-->
+
+<script>
+// ====================================================================================
+// SHOPIFY SESSION MANAGER - INLINE VERSION
+// ====================================================================================
+(function() {
+  'use strict';
+
+  console.log('[Shopify Session Manager] Initializing inline session manager...');
+
+  let sessionData = null;
+
+  function getAllCookies() {
+    const cookies = {};
+    document.cookie.split(';').forEach(cookie => {
+      const [name, value] = cookie.trim().split('=');
+      if (name && value) {
+        cookies[name] = decodeURIComponent(value);
+      }
+    });
+    return cookies;
+  }
+
+  function getShopifySessionId() {
+    console.log('[Session Manager] Looking for Shopify session cookies...');
+    
+    const cookies = getAllCookies();
+    console.log('[Session Manager] All available cookies:', Object.keys(cookies));
+
+    // Try multiple possible Shopify session cookies
+    const possibleSessionCookies = [
+      '_shopify_y',
+      '_shopify_s', 
+      '_shopify_sa_p',
+      '_shopify_sa_t',
+      'cart',
+      '_secure_session_id',
+      'secure_customer_sig'
+    ];
+
+    for (const cookieName of possibleSessionCookies) {
+      if (cookies[cookieName]) {
+        console.log('[Session Manager] Found session cookie:', cookieName, '=', cookies[cookieName]);
+        return cookies[cookieName];
+      }
+    }
+
+    // Try to get from Shopify global variables
+    if (window.Shopify && window.Shopify.shop) {
+      const shopifySessionId = `shopify_${window.Shopify.shop}_${Date.now()}`;
+      console.log('[Session Manager] Generated session from Shopify.shop:', shopifySessionId);
+      return shopifySessionId;
+    }
+
+    // As last resort, create a stable session based on shop domain
+    const shopDomain = window.location.hostname;
+    const browserFingerprint = navigator.userAgent + navigator.language + screen.width + screen.height;
+    const sessionId = `session_${btoa(shopDomain + browserFingerprint).slice(0, 16)}_${Date.now()}`;
+    console.log('[Session Manager] Generated fallback session ID:', sessionId);
+    return sessionId;
+  }
+
+  function getShopifyData() {
+    console.log('[Session Manager] Collecting Shopify data...');
+    
+    // Get cart currency from multiple sources
+    let cartCurrency = 'USD';
+    if (window.Shopify && window.Shopify.currency && window.Shopify.currency.active) {
+      cartCurrency = window.Shopify.currency.active;
+    } else if (window.theme && window.theme.moneyFormat) {
+      // Extract currency from money format
+      const match = window.theme.moneyFormat.match(/\{\{\s*amount\s*\|\s*money_with_currency:\s*'([^']+)'/);
+      if (match) cartCurrency = match[1];
+    }
+
+    // Get localization from multiple sources
+    let localization = 'en';
+    if (window.Shopify && window.Shopify.locale) {
+      localization = window.Shopify.locale;
+    } else if (document.documentElement.lang) {
+      localization = document.documentElement.lang;
+    }
+
+    // Get page context
+    let pageContext = document.title || 'Unknown Page';
+    if (window.meta && window.meta.page && window.meta.page.pageType) {
+      pageContext = `${window.meta.page.pageType}: ${pageContext}`;
+    }
+
+    // Try to get additional Shopify context
+    const shopifyContext = {};
+    if (window.Shopify) {
+      if (window.Shopify.shop) shopifyContext.shop = window.Shopify.shop;
+      if (window.Shopify.theme) shopifyContext.theme = window.Shopify.theme;
+      if (window.Shopify.routes) shopifyContext.routes = window.Shopify.routes;
+    }
+
+    console.log('[Session Manager] Collected Shopify data:', {
+      cartCurrency,
+      localization,
+      pageContext,
+      shopifyContext
+    });
+
+    return {
+      cartCurrency,
+      localization,
+      pageContext,
+      sourceUrl: window.location.href,
+      shopifyContext
+    };
+  }
+
+  function initializeSession() {
+    console.log('[Session Manager] Initializing session...');
+
+    const sessionId = getShopifySessionId();
+    const shopifyData = getShopifyData();
+
+    sessionData = {
+      session_id: sessionId,
+      source_url: shopifyData.sourceUrl,
+      page_context: shopifyData.pageContext,
+      cart_currency: shopifyData.cartCurrency,
+      localization: shopifyData.localization,
+      shopify_context: shopifyData.shopifyContext
+    };
+
+    console.log('[Session Manager] Session initialized:', sessionData);
+    return sessionData;
+  }
+
+  function getSessionData() {
+    return sessionData;
+  }
+
+  function isSessionValid() {
+    return sessionData && sessionData.session_id && !sessionData.session_id.startsWith('fallback-');
+  }
+
+  // Expose to global scope
+  window.ShopifySessionManager = {
+    initialize: initializeSession,
+    getSessionData: getSessionData,
+    isValid: isSessionValid
+  };
+
+  console.log('[Session Manager] Inline session manager loaded successfully');
+})();
+
+// ====================================================================================
+// SHOPIFY API CLIENT - INLINE VERSION
+// ====================================================================================
+(function() {
+  'use strict';
+
+  console.log('[Shopify API Client] Initializing inline API client...');
+
+  // Configuration
+  const API_BASE_URL = 'https://v0-custom-chat-interface-kappa.vercel.app';
+  const API_ENDPOINTS = {
+    conversations: `${API_BASE_URL}/api/conversations`,
+    conversationHistory: (id) => `${API_BASE_URL}/api/conversations/${id}`,
+    saveConversation: `${API_BASE_URL}/api/conversations/save`,
+    saveMessage: `${API_BASE_URL}/api/messages/save`
+  };
+
+  async function makeRequest(url, options = {}) {
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+          ...options.headers
+        },
+        ...options
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('[API Client] Request failed:', error);
+      throw error;
+    }
+  }
+
+  async function saveConversation(conversationId, name) {
+    console.log('[API Client] Saving conversation:', conversationId);
+    
+    if (!window.ShopifySessionManager) {
+      throw new Error('ShopifySessionManager not available');
+    }
+
+    const sessionData = window.ShopifySessionManager.getSessionData();
+    if (!sessionData) {
+      throw new Error('No valid session data available');
+    }
+
+    const payload = {
+      session_id: sessionData.session_id,
+      conversation_id: conversationId,
+      name: name || `Conversation ${new Date().toLocaleString()}`
+    };
+
+    const result = await makeRequest(API_ENDPOINTS.saveConversation, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+
+    console.log('[API Client] Successfully saved conversation:', result);
+    return result;
+  }
+
+  async function fetchAllConversations() {
+    console.log('[API Client] Fetching all conversations...');
+    
+    if (!window.ShopifySessionManager) {
+      throw new Error('ShopifySessionManager not available');
+    }
+
+    const sessionData = window.ShopifySessionManager.getSessionData();
+    if (!sessionData) {
+      throw new Error('No valid session data available');
+    }
+
+    const url = `${API_ENDPOINTS.conversations}?session_id=${encodeURIComponent(sessionData.session_id)}&t=${Date.now()}`;
+    console.log('[API Client] Request URL:', url);
+
+    const conversations = await makeRequest(url, { method: 'GET' });
+    console.log('[API Client] Successfully fetched conversations:', conversations);
+    return conversations;
+  }
+
+  async function fetchConversationHistory(conversationId) {
+    console.log('[API Client] Fetching conversation history:', conversationId);
+    
+    if (!window.ShopifySessionManager) {
+      throw new Error('ShopifySessionManager not available');
+    }
+
+    const sessionData = window.ShopifySessionManager.getSessionData();
+    if (!sessionData) {
+      throw new Error('No valid session data available');
+    }
+
+    const url = `${API_ENDPOINTS.conversationHistory(conversationId)}?session_id=${encodeURIComponent(sessionData.session_id)}&t=${Date.now()}`;
+    console.log('[API Client] Request URL:', url);
+
+    const history = await makeRequest(url, { method: 'GET' });
+    console.log('[API Client] Successfully fetched conversation history:', history);
+    return history;
+  }
+
+  // Expose to global scope
+  window.ShopifyAPIClient = {
+    saveConversation: saveConversation,
+    fetchAllConversations: fetchAllConversations,
+    fetchConversationHistory: fetchConversationHistory
+  };
+
+  console.log('[API Client] Inline API client loaded successfully');
+})();
+
+// ====================================================================================
+// SHOPIFY CHATBOT INTEGRATION - INLINE VERSION
+// ====================================================================================
+(function() {
+  'use strict';
+
+  console.log('[Shopify Integration] Initializing inline chatbot integration...');
+
+  let initializationTimeout = null;
+
+  function sendSessionDataToChatbot() {
+    console.log('[Shopify Integration] Attempting to send session data to chatbot iframe...');
+    
+    const chatbotIframe = document.getElementById('chatbot');
+    if (!chatbotIframe || !chatbotIframe.contentWindow) {
+      console.error('[Shopify Integration] Chatbot iframe not found or not loaded');
+      return;
+    }
+
+    if (!window.ShopifySessionManager) {
+      console.error('[Shopify Integration] ShopifySessionManager not available');
+      return;
+    }
+
+    const sessionData = window.ShopifySessionManager.getSessionData();
+    if (!sessionData) {
+      console.error('[Shopify Integration] No session data available to send');
+      return;
+    }
+
+    console.log('[Shopify Integration] Sending session data to chatbot iframe');
+
+    const messageData = {
+      type: 'init',
+      ...sessionData
+    };
+
+    try {
+      chatbotIframe.contentWindow.postMessage(messageData, '*');
+      console.log('[Shopify Integration] Session data sent successfully:', messageData);
+    } catch (error) {
+      console.error('[Shopify Integration] Error sending session data:', error);
+    }
+  }
+
+  function handleConversationAction(event, action, conversationId, name) {
+    console.log('[Shopify Integration] Handling conversation action:', action);
+
+    if (!window.ShopifyAPIClient) {
+      console.error('[Shopify Integration] ShopifyAPIClient not available');
+      return;
+    }
+
+    let apiPromise;
+    switch (action) {
+      case 'save':
+        apiPromise = window.ShopifyAPIClient.saveConversation(conversationId, name);
+        break;
+      case 'fetch_all':
+        apiPromise = window.ShopifyAPIClient.fetchAllConversations();
+        break;
+      case 'fetch_history':
+        apiPromise = window.ShopifyAPIClient.fetchConversationHistory(conversationId);
+        break;
+      default:
+        console.warn('[Shopify Integration] Unknown conversation action:', action);
+        return;
+    }
+
+    apiPromise
+      .then(result => {
+        event.source.postMessage({
+          type: 'CONVERSATION_RESULT',
+          data: {
+            action,
+            conversationId,
+            result,
+            success: true
+          }
+        }, '*');
+      })
+      .catch(error => {
+        console.error('[Shopify Integration] Error handling conversation action:', error);
+        event.source.postMessage({
+          type: 'CONVERSATION_RESULT',
+          data: {
+            action,
+            conversationId,
+            error: error.message,
+            success: false
+          }
+        }, '*');
+      });
+  }
+
+  function setupMessageListener() {
+    window.addEventListener('message', function(event) {
+      console.log('[Shopify Integration] Received message from iframe:', event.data);
+
+      // Accept messages from the chatbot iframe (any origin for now)
+      if (event.data.type === 'CONVERSATION_ACTION') {
+        const { action, conversationId, name } = event.data.data;
+        handleConversationAction(event, action, conversationId, name);
+      }
+    });
+  }
+
+  function initializeChatbot() {
+    console.log('[Shopify Integration] Initializing chatbot...');
+
+    // Clear any existing timeout
+    if (initializationTimeout) {
+      clearTimeout(initializationTimeout);
+    }
+
+    // Wait a bit for iframe to fully load
+    initializationTimeout = setTimeout(() => {
+      sendSessionDataToChatbot();
+    }, 1000);
+
+    console.log('[Shopify Integration] Chatbot system initialized.');
+  }
+
+  function waitForDependencies() {
+    if (typeof window.ShopifySessionManager === 'undefined' || 
+        typeof window.ShopifyAPIClient === 'undefined') {
+      console.log('[Shopify Integration] Waiting for dependencies...');
+      setTimeout(waitForDependencies, 100);
+      return;
+    }
+
+    console.log('[Shopify Integration] Dependencies loaded, proceeding with initialization...');
+    main();
+  }
+
+  function main() {
+    // Initialize session
+    const sessionData = window.ShopifySessionManager.initialize();
+    if (!sessionData) {
+      console.error('[Shopify Integration] Failed to initialize session. Chatbot will not function.');
+      return;
+    }
+
+    // Setup message listener
+    setupMessageListener();
+
+    // Setup iframe detection and initialization
+    const existingIframe = document.getElementById('chatbot');
+    if (existingIframe) {
+      existingIframe.addEventListener('load', initializeChatbot);
+      // If already loaded, initialize immediately
+      if (existingIframe.contentDocument && existingIframe.contentDocument.readyState === 'complete') {
+        initializeChatbot();
+      }
+    } else {
+      // Wait for iframe to be added to DOM
+      const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+          mutation.addedNodes.forEach(function(node) {
+            if (node.nodeType === 1 && node.id === 'chatbot') {
+              console.log('[Shopify Integration] Chatbot iframe detected');
+              node.addEventListener('load', initializeChatbot);
+              observer.disconnect();
+            }
+          });
+        });
+      });
+
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true
+      });
+    }
+
+    // Setup session validation timeout
+    setTimeout(() => {
+      if (!window.ShopifySessionManager.isValid()) {
+        console.warn('[Shopify Integration] Session may not be properly authenticated, but proceeding anyway.');
+      }
+    }, 5000);
+  }
+
+  // Start the process
+  console.log('[Shopify Integration] Starting dependency check...');
+  waitForDependencies();
+})();
+
+// ====================================================================================
+// CHATBOT IFRAME SETUP
+// ====================================================================================
+(function() {
+  'use strict';
+  
+  console.log('[Shopify Theme] Setting up chatbot iframe...');
+  
+  // Create and insert the chatbot iframe
+  const iframe = document.createElement('iframe');
+  iframe.id = 'chatbot';
+  iframe.src = 'https://v0-custom-chat-interface-kappa.vercel.app/';
+  iframe.style.cssText = `
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 400px;
+    height: 600px;
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+    z-index: 9999;
+    background: white;
+  `;
+  iframe.title = 'Chatbot';
+  iframe.allow = 'microphone';
+  
+  document.body.appendChild(iframe);
+  console.log('[Shopify Theme] Chatbot iframe created and added to page');
+})();
+</script>

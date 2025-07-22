@@ -1,10 +1,12 @@
 
 /**
- * Shopify API Client
- * Handles all API communications with the Next.js chatbot backend
+ * Shopify API Client - Inline Version
+ * This script should be embedded directly in the Shopify theme
  */
-window.ShopifyAPIClient = (function() {
+(function() {
   'use strict';
+
+  console.log('[Shopify API Client] Initializing inline API client...');
 
   // Configuration
   const API_BASE_URL = 'https://v0-custom-chat-interface-kappa.vercel.app';
@@ -40,6 +42,10 @@ window.ShopifyAPIClient = (function() {
   async function saveConversation(conversationId, name) {
     console.log('[API Client] Saving conversation:', conversationId);
     
+    if (!window.ShopifySessionManager) {
+      throw new Error('ShopifySessionManager not available');
+    }
+
     const sessionData = window.ShopifySessionManager.getSessionData();
     if (!sessionData) {
       throw new Error('No valid session data available');
@@ -63,6 +69,10 @@ window.ShopifyAPIClient = (function() {
   async function fetchAllConversations() {
     console.log('[API Client] Fetching all conversations...');
     
+    if (!window.ShopifySessionManager) {
+      throw new Error('ShopifySessionManager not available');
+    }
+
     const sessionData = window.ShopifySessionManager.getSessionData();
     if (!sessionData) {
       throw new Error('No valid session data available');
@@ -79,6 +89,10 @@ window.ShopifyAPIClient = (function() {
   async function fetchConversationHistory(conversationId) {
     console.log('[API Client] Fetching conversation history:', conversationId);
     
+    if (!window.ShopifySessionManager) {
+      throw new Error('ShopifySessionManager not available');
+    }
+
     const sessionData = window.ShopifySessionManager.getSessionData();
     if (!sessionData) {
       throw new Error('No valid session data available');
@@ -92,10 +106,12 @@ window.ShopifyAPIClient = (function() {
     return history;
   }
 
-  // Public API
-  return {
+  // Expose to global scope
+  window.ShopifyAPIClient = {
     saveConversation: saveConversation,
     fetchAllConversations: fetchAllConversations,
     fetchConversationHistory: fetchConversationHistory
   };
+
+  console.log('[API Client] Inline API client loaded successfully');
 })();

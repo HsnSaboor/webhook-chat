@@ -151,17 +151,43 @@ export default function ChatWidget() {
 
       if (trustedOrigins.includes(event.origin)) {
         if (messageData?.type === "init") {
-          console.log("[Chatbot] Received init data from parent:", messageData);
-          setSessionId(messageData.session_id);
-          setSessionReceived(true);
-          console.log(
-            "[Chatbot] Set session_id from parent:",
-            messageData.session_id,
-          );
-          setSourceUrl(messageData.source_url || null);
-          setPageContext(messageData.page_context || null);
-          setCartCurrency(messageData.cart_currency || null);
-          setLocalization(messageData.localization || null);
+          if (messageData.session_id) {
+            console.log("[Chatbot] Received session_id from parent:", messageData.session_id);
+            setSessionId(messageData.session_id);
+            setSessionReceived(true);
+
+            // Store additional Shopify data for use in messages
+            if (messageData.source_url) {
+              console.log("[Chatbot] Received source_url:", messageData.source_url);
+              window.shopifyContext = {
+                ...window.shopifyContext,
+                source_url: messageData.source_url
+              };
+            }
+            if (messageData.page_context) {
+              console.log("[Chatbot] Received page_context:", messageData.page_context);
+              window.shopifyContext = {
+                ...window.shopifyContext,
+                page_context: messageData.page_context
+              };
+            }
+            if (messageData.cart_currency) {
+              console.log("[Chatbot] Received cart_currency:", messageData.cart_currency);
+              window.shopifyContext = {
+                ...window.shopifyContext,
+                cart_currency: messageData.cart_currency
+              };
+            }
+            if (messageData.localization) {
+              console.log("[Chatbot] Received localization:", messageData.localization);
+              window.shopifyContext = {
+                ...window.shopifyContext,
+                localization: messageData.localization
+              };
+            }
+          } else {
+            console.warn("[Chatbot] Received init message without session_id");
+          }
         } else if (messageData?.type === "conversations-response") {
           console.log(
             "[Chatbot] Received conversations from parent:",
@@ -510,7 +536,7 @@ export default function ChatWidget() {
         event_type: eventType,
         user_message: `Voice message (${duration}s)`,
         source_url: sourceUrl,
-        page_context: pageContext,
+        page_context: page_context,
         chatbot_triggered: true,
         conversion_tracked: false,
         type: "voice",
