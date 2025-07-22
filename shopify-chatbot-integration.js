@@ -196,9 +196,11 @@
 
         case 'get-all-conversations':
           // Handle conversation list request
+          console.log('[Shopify Integration] Handling get-all-conversations request');
           if (window.ShopifyAPIClient) {
             window.ShopifyAPIClient.fetchAllConversations()
               .then(conversations => {
+                console.log('[Shopify Integration] Sending conversations response:', conversations);
                 event.source.postMessage({
                   type: 'conversations-response',
                   conversations: conversations
@@ -211,6 +213,12 @@
                   conversations: []
                 }, '*');
               });
+          } else {
+            console.error('[Shopify Integration] ShopifyAPIClient not available for conversations request');
+            event.source.postMessage({
+              type: 'conversations-response',
+              conversations: []
+            }, '*');
           }
           break;
           

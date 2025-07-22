@@ -14,10 +14,14 @@ export const useChat = () => {
 
   const trackEvent = useCallback(
     async (eventType: string, data: Record<string, any> = {}) => {
-      if (!sessionId) {
+      // Use the provided sessionId or try to get from window context
+      const effectiveSessionId = data.sessionId || sessionId || (typeof window !== 'undefined' && window.shopifyContext?.session_id);
+      
+      if (!effectiveSessionId) {
         console.warn("Analytics event skipped: No session ID available.");
         return;
       }
+      
       try {
         await fetch("/api/analytics", {
           method: "POST",
@@ -25,12 +29,13 @@ export const useChat = () => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            session_id: sessionId,
+            session_id: effectiveSessionId,
             eventType,
             timestamp: new Date().toISOString(),
             data,
           }),
         });
+        console.log(`[Analytics] Event tracked: ${eventType}`);
       } catch (error) {
         console.error("Failed to send analytics event:", error);
       }

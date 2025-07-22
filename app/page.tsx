@@ -635,7 +635,7 @@ export default function ChatWidget() {
 
     try {
       // Track the message sent event
-      await trackEvent("message_sent", {
+      trackAnalyticsEvent("message_sent", {
         message: messageText,
         type,
         conversationId,
@@ -684,7 +684,9 @@ export default function ChatWidget() {
 
       let data;
       try {
-        data = JSON.parse(responseText);
+        const parsedResponse = JSON.parse(responseText);
+        // Handle array responses from webhook
+        data = Array.isArray(parsedResponse) ? parsedResponse[0] : parsedResponse;
       } catch (e) {
         console.error("[Chatbot] Failed to parse webhook response as JSON:", e);
         data = { message: "I received your message but had trouble processing the response. Please try again." };
@@ -707,13 +709,15 @@ export default function ChatWidget() {
 
       // Save both user and AI messages to Supabase
       try {
+        const effectiveSessionId = window.shopifyContext?.session_id || sessionId;
+        
         // Save user message
-        await fetch('/api/messages/save', {
+        const userSaveResponse = await fetch('/api/messages/save', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            conversation_id: currentConversationId || `conv-${sessionId}-${Date.now()}`,
-            session_id: sessionId,
+            conversation_id: conversationId,
+            session_id: effectiveSessionId,
             content: messageText,
             role: 'user',
             type: type,
@@ -722,20 +726,28 @@ export default function ChatWidget() {
           })
         });
 
+        if (!userSaveResponse.ok) {
+          console.error('[Chatbot] Failed to save user message:', await userSaveResponse.text());
+        }
+
         // Save AI response
-        await fetch('/api/messages/save', {
+        const aiSaveResponse = await fetch('/api/messages/save', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            conversation_id: currentConversationId || `conv-${sessionId}-${Date.now()}`,
-            session_id: sessionId,
-            content: data.message,
+            conversation_id: conversationId,
+            session_id: effectiveSessionId,
+            content: data.message || "No response content",
             role: 'webhook',
             type: 'text',
-            cards: data.cards,
+            cards: data.cards || null,
             timestamp: webhookMessage.timestamp.toISOString()
           })
         });
+
+        if (!aiSaveResponse.ok) {
+          console.error('[Chatbot] Failed to save AI message:', await aiSaveResponse.text());
+        }
       } catch (error) {
         console.error('Failed to save messages:', error);
       }
@@ -743,7 +755,7 @@ export default function ChatWidget() {
       setIsLoading(false);
 
       // Track the response received event
-      await trackEvent("response_received", {
+      trackAnalyticsEvent("response_received", {
         response: webhookMessage.content,
         conversationId,
       });
@@ -762,7 +774,7 @@ export default function ChatWidget() {
       setMessages((prev) => [...prev, errorMessage]);
 
       // Track the error event
-      await trackEvent("message_error", {
+      trackAnalyticsEvent("message_error", {
         error: error instanceof Error ? error.message : "Unknown error",
         conversationId,
       });
@@ -952,6 +964,7 @@ export default function ChatWidget() {
       return;
     }
 
+    // Use the trackEvent function from useChat hook with proper session ID
     trackEvent(eventName, { ...eventData, sessionId: effectiveSessionId });
   };
 
