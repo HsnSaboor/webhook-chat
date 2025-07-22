@@ -170,6 +170,65 @@
       });
   }
 
+  function handleAddToCart(event, payload) {
+    console.log('[Shopify Integration] Processing add to cart:', payload);
+    
+    const { variantId, quantity = 1, redirect = true } = payload;
+    
+    if (!variantId) {
+      console.error('[Shopify Integration] No variantId provided for add to cart');
+      event.source.postMessage({
+        type: 'add-to-cart-error',
+        error: 'No variant ID provided'
+      }, '*');
+      return;
+    }
+
+    // Use Shopify's AJAX Cart API
+    const formData = new FormData();
+    formData.append('id', variantId);
+    formData.append('quantity', quantity);
+
+    console.log('[Shopify Integration] Adding to cart - variantId:', variantId, 'quantity:', quantity);
+
+    fetch('/cart/add.js', {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('[Shopify Integration] Successfully added to cart:', data);
+      
+      // Notify the chatbot of success
+      event.source.postMessage({
+        type: 'add-to-cart-success',
+        variantId: variantId,
+        data: data
+      }, '*');
+
+      // Redirect to cart if requested
+      if (redirect) {
+        console.log('[Shopify Integration] Redirecting to cart page...');
+        window.location.href = '/cart';
+      }
+    })
+    .catch(error => {
+      console.error('[Shopify Integration] Error adding to cart:', error);
+      
+      // Notify the chatbot of error
+      event.source.postMessage({
+        type: 'add-to-cart-error',
+        variantId: variantId,
+        error: error.message
+      }, '*');
+    });
+  }
+
   function setupMessageListener() {
     window.addEventListener('message', function(event) {
       console.log('[Shopify Integration] Received message from iframe:', event.data);
@@ -220,6 +279,12 @@
               conversations: []
             }, '*');
           }
+          break;
+
+        case 'add-to-cart':
+          // Handle add to cart request
+          console.log('[Shopify Integration] Handling add-to-cart request:', event.data.payload);
+          handleAddToCart(event, event.data.payload);
           break;
           
         default:
