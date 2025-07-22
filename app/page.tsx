@@ -983,7 +983,7 @@ export default function ChatWidget() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={(){() => setIsOpen(false)}
+                  onClick={() => setIsOpen(false)}
                   className="text-gray-600 hover:text-black hover:bg-gray-100 h-8 w-8 p-0 rounded-lg"
                 >
                   <X className="h-4 w-4" />

@@ -41,14 +41,12 @@
         console.log('[Shopify Theme] Sending session data to chatbot iframe');
 
         const sessionData = {
-          type: 'SESSION_DATA',
-          data: {
-            session_id: sessionId,
-            source_url: sourceUrl,
-            page_context: pageContext,
-            cart_currency: cartCurrency,
-            localization: localization
-          }
+          type: 'init',
+          session_id: sessionId,
+          source_url: sourceUrl,
+          page_context: pageContext,
+          cart_currency: cartCurrency,
+          localization: localization
         };
 
         chatbotIframe.contentWindow.postMessage(sessionData, '*');
