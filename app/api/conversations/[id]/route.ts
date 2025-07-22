@@ -1,4 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { getMessagesByConversation } from "../../../../lib/database/messages";
+import { getConversationById } from "../../../../lib/database/conversations";
 
 export async function GET(
   request: NextRequest,
@@ -33,71 +35,41 @@ export async function GET(
   }
 
   try {
-    // Get the n8n webhook URL from environment
-    const webhookUrl = process.env.N8N_CONVERSATION_HISTORY_WEBHOOK ||
-      "https://similarly-secure-mayfly.ngrok-free.app/webhook/get-single-conversations";
+    console.log(`[Conversation History API] Fetching conversation from Supabase`);
 
-    console.log(`[Conversation History API] Target webhook URL: ${webhookUrl}`);
+    // Verify conversation exists and belongs to session
+    const conversation = await getConversationById(conversationId);
 
-    if (!webhookUrl) {
-      console.error("[Conversation History API] N8N_CONVERSATION_HISTORY_WEBHOOK environment variable not set");
+    if (!conversation) {
+      console.error("[Conversation History API] Conversation not found");
       return NextResponse.json(
-        { error: "Configuration error: webhook URL not configured" },
-        { status: 500, headers: corsHeaders }
+        { error: "Conversation not found" },
+        { status: 404, headers: corsHeaders }
       );
     }
 
-    const payload = {
-      conversation_id: conversationId,
-      session_id: sessionId,
-      timestamp: new Date().toISOString(),
-      request_type: "get_conversation_history"
-    };
-
-    console.log(`[Conversation History API] Payload to send:`, JSON.stringify(payload, null, 2));
-
-    const startTime = Date.now();
-    console.log(`[Conversation History API] Making POST request to n8n webhook...`);
-
-    const response = await fetch(webhookUrl, {
-      method: "POST", // n8n webhooks expect POST
-      headers: {
-        "Content-Type": "application/json",
-        "User-Agent": "Shopify-Chat-Proxy/1.0",
-        "ngrok-skip-browser-warning": "true",
-      },
-      body: JSON.stringify(payload),
-    });
-
-    const requestDuration = Date.now() - startTime;
-    console.log(`[Conversation History API] Response received after ${requestDuration}ms`);
-    console.log(`[Conversation History API] Response status: ${response.status}`);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`[Conversation History API] n8n webhook error (${response.status}):`, errorText);
-      console.error(`[Conversation History API] Full error response:`, errorText);
-
+    if (conversation.session_id !== sessionId) {
+      console.error("[Conversation History API] Session ID mismatch");
       return NextResponse.json(
-        { error: `Failed to fetch conversation history: ${response.status}` },
-        { status: response.status, headers: corsHeaders }
+        { error: "Unauthorized access to conversation" },
+        { status: 403, headers: corsHeaders }
       );
     }
 
-    const responseText = await response.text();
-    console.log(`[Conversation History API] Raw response:`, responseText);
+    console.log(`[Conversation History API] Fetching messages from Supabase`);
 
-    let history;
-    try {
-      history = JSON.parse(responseText);
-      console.log(`[Conversation History API] Parsed history:`, JSON.stringify(history, null, 2));
-    } catch (parseError) {
-      console.error(`[Conversation History API] Failed to parse JSON:`, parseError);
-      return NextResponse.json(
-        { error: "Invalid response format from webhook" },
-        { status: 502, headers: corsHeaders }
-      );
-    }
+    const messages = await getMessagesByConversation(conversationId);
+
+    console.log(`[Conversation History API] Found ${messages.length} messages`);
+
+    // Transform database format to frontend format
+    const history = messages.map(msg => ({
+      event_type: 'message',
+      user_message: msg.role === 'user' ? msg.content : '',
+      ai_message: msg.role === 'webhook' ? msg.content : '',
+      cards: msg.cards,
+      timestamp: msg.timestamp
+    }));
 
     console.log("[Conversation History API] Successfully fetched conversation history");
     console.log(`[Conversation History API] ============== REQUEST COMPLETED ==============`);
@@ -123,7 +95,7 @@ export async function GET(
 
     return NextResponse.json(
       { error: "Failed to fetch conversation history" },
-      { status: 502, headers: corsHeaders }
+      { status: 500, headers: corsHeaders }
     );
   }
 }
@@ -134,7 +106,7 @@ export async function OPTIONS() {
   return new Response(null, {
     status: 200,
     headers: {
-      "Access-Control-Allow-Origin": "https://zenmato.myshopify.com",
+      "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type, Authorization",
     },

@@ -1,4 +1,3 @@
-
 "use client";
 
 import type React from "react";
@@ -299,15 +298,70 @@ export default function ChatWidget() {
     }
   };
 
-  const loadConversationFromParent = (conversationId: string) => {
-    if (window.parent && window.parent !== window) {
-      window.parent.postMessage(
-        {
-          type: "get-single-conversation",
-          payload: { conversationId },
-        },
-        "https://zenmato.myshopify.com",
+  const loadConversationFromParent = async (conversationId: string) => {
+    if (!sessionId) {
+      console.error("[Chatbot] Cannot load conversation: No session ID");
+      return;
+    }
+
+    console.log(`[Chatbot] Loading conversation: ${conversationId}`);
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(
+        `/api/conversations/${conversationId}?session_id=${sessionId}`,
       );
+
+      if (!response.ok) {
+        console.error(
+          `[Chatbot] Failed to load conversation: ${response.status}`,
+        );
+        return;
+      }
+
+      const history = await response.json();
+      console.log("[Chatbot] Loaded conversation history:", history);
+
+      // Convert history to messages
+      const loadedMessages: Message[] = history
+        .map((item: HistoryItem, index: number) => {
+          const messages: Message[] = [];
+
+          // Add user message if it exists
+          if (item.user_message && item.user_message.trim()) {
+            messages.push({
+              id: `user-${conversationId}-${index}`,
+              content: item.user_message,
+              role: "user",
+              timestamp: new Date(item.timestamp),
+              type: "text",
+            });
+          }
+
+          // Add AI message if it exists
+          if (item.ai_message && item.ai_message.trim()) {
+            messages.push({
+              id: `ai-${conversationId}-${index}`,
+              content: item.ai_message,
+              role: "webhook",
+              timestamp: new Date(item.timestamp),
+              type: "text",
+              cards: item.cards,
+            });
+          }
+
+          return messages;
+        })
+        .flat();
+
+      console.log("[Chatbot] Converted messages:", loadedMessages);
+
+      setMessages(loadedMessages);
+      setCurrentConversationId(conversationId);
+    } catch (error) {
+      console.error("[Chatbot] Error loading conversation:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -465,67 +519,178 @@ export default function ChatWidget() {
     }
   };
 
-  const sendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim()) return;
+  const sendMessage = async (messageText: string, type: "text" | "voice" = "text", audioBlob?: Blob) => {
+    if (!sessionId) {
+      console.error("[Chatbot] Cannot send message: No session ID");
+      return;
+    }
 
-    const userMessageText = input.trim();
+    console.log(`[Chatbot] Sending ${type} message:`, messageText);
+
+    // Create conversation ID if this is the first message
+    let conversationId = currentConversationId;
+    if (!conversationId) {
+      conversationId = `conv_${sessionId}_${Date.now()}`;
+      setCurrentConversationId(conversationId);
+      console.log("[Chatbot] Created new conversation ID:", conversationId);
+
+      // Save new conversation to database
+      try {
+        await fetch("/api/conversations/save", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            session_id: sessionId,
+            conversation_id: conversationId,
+            name: `Conversation ${new Date().toLocaleString()}`,
+          }),
+        });
+      } catch (error) {
+        console.error("[Chatbot] Error saving conversation:", error);
+      }
+    }
+
+    // Create the user message
     const userMessage: Message = {
-      id: Date.now().toString(),
-      content: userMessageText,
+      id: `user-${Date.now()}`,
+      content: messageText,
       role: "user",
       timestamp: new Date(),
-      type: "text",
+      type,
     };
 
+    // Handle audio URL for voice messages
+    if (type === "voice" && audioBlob) {
+      userMessage.audioUrl = URL.createObjectURL(audioBlob);
+    }
+
+    // Add user message to chat
     setMessages((prev) => [...prev, userMessage]);
-    trackEvent("message_sent", {
-      type: "text",
-      messageContent: userMessageText,
-    });
-    setInput("");
     setIsLoading(true);
 
+    // Save user message to database
     try {
-      let eventType = "user_message";
-      if (!sessionStorage.getItem("chat_started_logged")) {
-        eventType = "chat_started";
-        sessionStorage.setItem("chat_started_logged", "true");
-      }
+      await fetch("/api/messages/save", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          conversation_id: conversationId,
+          session_id: sessionId,
+          content: messageText,
+          role: "user",
+          type,
+          timestamp: userMessage.timestamp.toISOString(),
+        }),
+      });
+    } catch (error) {
+      console.error("[Chatbot] Error saving user message:", error);
+    }
 
-      console.log(
-        "[Chatbot] Current sessionId state before sending:",
-        sessionId,
-      );
+    try {
+      // Track the message sent event
+      await trackEvent("message_sent", {
+        message: messageText,
+        type,
+        conversationId,
+      });
 
-      const messageData = {
-        id: crypto.randomUUID(),
+      // Send only to n8n chat webhook (simplified payload)
+      const chatWebhookUrl = process.env.NEXT_PUBLIC_N8N_CHAT_WEBHOOK || 
+        "https://similarly-secure-mayfly.ngrok-free.app/webhook/chat";
+
+      const webhookPayload = {
         session_id: sessionId,
+        message: messageText,
         timestamp: new Date().toISOString(),
-        event_type: eventType,
-        user_message: userMessageText,
+        conversation_id: conversationId,
         source_url: sourceUrl,
         page_context: pageContext,
-        chatbot_triggered: true,
-        conversion_tracked: false,
-        type: "text",
-        text: userMessageText,
         cart_currency: cartCurrency,
         localization: localization,
+        type,
       };
 
-      console.log("[Chatbot] Sending text message to parent:", messageData);
-      sendChatMessageToParent(messageData);
+      console.log("[Chatbot] Sending to n8n chat webhook:", webhookPayload);
 
+      const response = await fetch(chatWebhookUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "ngrok-skip-browser-warning": "true",
+        },
+        body: JSON.stringify(webhookPayload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Chat webhook request failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("[Chatbot] Received chat webhook response:", data);
+
+      // Create the webhook response message
+      const webhookMessage: Message = {
+        id: `webhook-${Date.now()}`,
+        content: data.message || "I'm sorry, I couldn't process your request right now.",
+        role: "webhook",
+        timestamp: new Date(),
+        type: "text",
+        cards: data.cards,
+      };
+
+      // Add webhook response to chat
+      setMessages((prev) => [...prev, webhookMessage]);
+
+      // Save webhook response to database
+      try {
+        await fetch("/api/messages/save", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            conversation_id: conversationId,
+            session_id: sessionId,
+            content: webhookMessage.content,
+            role: "webhook",
+            type: "text",
+            cards: webhookMessage.cards,
+            timestamp: webhookMessage.timestamp.toISOString(),
+          }),
+        });
+      } catch (error) {
+        console.error("[Chatbot] Error saving webhook message:", error);
+      }
+
+      // Track the response received event
+      await trackEvent("response_received", {
+        response: webhookMessage.content,
+        conversationId,
+      });
     } catch (error) {
+      console.error("[Chatbot] Error sending message:", error);
+
+      // Add error message
       const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: "Connection error. Please check your internet and try again.",
+        id: `error-${Date.now()}`,
+        content: "I'm sorry, there was an error processing your message. Please try again.",
         role: "webhook",
         timestamp: new Date(),
         type: "text",
       };
+
       setMessages((prev) => [...prev, errorMessage]);
+
+      // Track the error event
+      await trackEvent("message_error", {
+        error: error instanceof Error ? error.message : "Unknown error",
+        conversationId,
+      });
+    } finally {
       setIsLoading(false);
     }
   };
@@ -714,7 +879,7 @@ export default function ChatWidget() {
             className="relative h-14 w-14 rounded-full bg-black text-white hover:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border-0"
           >
             <MessageCircle className={`h-6 w-6 transition-all duration-300 ${isHovered ? "scale-110" : ""}`} />
-            
+
             {/* Online indicator */}
             <div className="absolute -top-1 -right-1 h-4 w-4 bg-green-500 rounded-full border-2 border-white">
               <div className="absolute inset-0 bg-green-500 rounded-full animate-ping opacity-75"></div>
@@ -743,7 +908,7 @@ export default function ChatWidget() {
           }}
         >
           <Card className="h-full flex flex-col shadow-2xl bg-white border border-gray-200 rounded-2xl overflow-hidden">
-            
+
             {/* Minimalist Header */}
             <CardHeader className="flex flex-row items-center justify-between p-4 bg-white border-b border-gray-100">
               <div className="flex items-center space-x-3">
@@ -812,7 +977,7 @@ export default function ChatWidget() {
                   {conversations.length > 0 && (
                     <div className="mb-8">
                       <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Chats</h3>
-                      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">```tool_code
                         {conversations.slice(0, 3).map((conv, index) => (
                           <div key={conv.id}>
                             <button
@@ -852,7 +1017,7 @@ export default function ChatWidget() {
                       <MessageCircle className="h-5 w-5 mr-2" />
                       Start New Chat
                     </Button>
-                    
+
                     {voiceSupported && (
                       <p className="text-xs text-gray-500 mt-3 flex items-center justify-center space-x-2">
                         <Mic className="h-3 w-3" />

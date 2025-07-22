@@ -1,4 +1,3 @@
-
 <script>
   (function() {
     console.log('[Shopify Theme] Initializing chatbot system...');
@@ -26,27 +25,47 @@
     const cartCurrency = (window.Shopify && window.Shopify.currency && window.Shopify.currency.active) || 'USD';
     const localization = (window.Shopify && window.Shopify.locale) || 'en';
 
-    const N8N_BASE_URL = 'https://similarly-secure-mayfly.ngrok-free.app'; // Your n8n instance URL
+    // Use Next.js API base URL
+    const API_BASE_URL = 'https://v0-custom-chat-interface-kappa.vercel.app'; // Your Next.js app URL
     const API_ENDPOINTS = {
-      saveConversation: `${N8N_BASE_URL}/webhook/save-conversation`,
-      conversations: `${N8N_BASE_URL}/webhook/get-all-conversations`,
-      conversationHistory: (id) => `${N8N_BASE_URL}/webhook/get-single-conversations`,
-      chat: `${N8N_BASE_URL}/webhook/chat`
+      conversations: `${API_BASE_URL}/api/conversations`,
+      conversationHistory: (id) => `${API_BASE_URL}/api/conversations/${id}`,
+      saveConversation: `${API_BASE_URL}/api/conversations/save`,
+      saveMessage: `${API_BASE_URL}/api/messages/save`
     };
 
-    async function saveConversation(conversationId) {
+    // Send session data to chatbot iframe
+    function sendSessionDataToChatbot() {
+      const chatbotIframe = document.getElementById('chatbot');
+      if (chatbotIframe && chatbotIframe.contentWindow) {
+        console.log('[Shopify Theme] Sending session data to chatbot iframe');
+
+        const sessionData = {
+          type: 'SESSION_DATA',
+          data: {
+            session_id: sessionId,
+            source_url: sourceUrl,
+            page_context: pageContext,
+            cart_currency: cartCurrency,
+            localization: localization
+          }
+        };
+
+        chatbotIframe.contentWindow.postMessage(sessionData, '*');
+        console.log('[Shopify Theme] Session data sent:', sessionData);
+      } else {
+        console.error('[Shopify Theme] Chatbot iframe not found or not loaded');
+      }
+    }
+
+    // Save conversation function (simplified)
+    async function saveConversation(conversationId, name) {
       try {
         console.log('[Shopify Theme] Saving conversation:', conversationId);
         const payload = {
-          id: crypto.randomUUID(),
           session_id: sessionId,
           conversation_id: conversationId,
-          timestamp: new Date().toISOString(),
-          event_type: 'conversation_created',
-          source_url: sourceUrl,
-          page_context: pageContext,
-          cart_currency: cartCurrency,
-          localization: localization
+          name: name || `Conversation ${new Date().toLocaleString()}`
         };
 
         const result = await fetch(API_ENDPOINTS.saveConversation, {
@@ -57,236 +76,168 @@
           body: JSON.stringify(payload)
         });
 
-        console.log('[Shopify Theme] Successfully saved conversation:', result);
-        return await result.json();
+        if (!result.ok) {
+          throw new Error(`HTTP error! status: ${result.status}`);
+        }
+
+        const data = await result.json();
+        console.log('[Shopify Theme] Successfully saved conversation:', data);
+        return data;
       } catch (error) {
         console.error('[Shopify Theme] Failed to save conversation:', error);
         throw error;
       }
     }
 
+    // Fetch conversations function (simplified)
     async function fetchAllConversations() {
       try {
-        const payload = {
-          session_id: sessionId,
-          timestamp: new Date().toISOString(),
-          request_type: "get_all_conversations",
-          action: "fetch_conversations"
-        };
+        console.log('[Shopify Theme] Fetching conversations for session:', sessionId);
 
-        const response = await fetch(API_ENDPOINTS.conversations, {
-          method: 'POST',
+        const url = `${API_ENDPOINTS.conversations}?session_id=${encodeURIComponent(sessionId)}&t=${Date.now()}`;
+        console.log('[Shopify Theme] Request URL:', url);
+
+        const result = await fetch(url, {
+          method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'User-Agent': 'Shopify-Chat-Proxy/1.0',
-            'ngrok-skip-browser-warning': 'true',
-          },
-          body: JSON.stringify(payload)
+            'Cache-Control': 'no-cache'
+          }
         });
-        
-        const conversations = await response.json();
-        console.log('[Shopify Theme] Successfully fetched all conversations:', conversations);
+
+        if (!result.ok) {
+          throw new Error(`HTTP error! status: ${result.status}`);
+        }
+
+        const conversations = await result.json();
+        console.log('[Shopify Theme] Successfully fetched conversations:', conversations);
         return conversations;
       } catch (error) {
         console.error('[Shopify Theme] Failed to fetch conversations:', error);
-        throw error;
+        return [];
       }
     }
 
-    async function fetchSingleConversation(conversationId) {
+    // Fetch conversation history function (simplified)
+    async function fetchConversationHistory(conversationId) {
       try {
-        const payload = {
-          conversation_id: conversationId,
-          session_id: sessionId,
-          timestamp: new Date().toISOString(),
-          request_type: "get_conversation_history"
-        };
+        console.log('[Shopify Theme] Fetching conversation history:', conversationId);
 
-        const response = await fetch(API_ENDPOINTS.conversationHistory(), {
-          method: 'POST',
+        const url = `${API_ENDPOINTS.conversationHistory(conversationId)}?session_id=${encodeURIComponent(sessionId)}&t=${Date.now()}`;
+        console.log('[Shopify Theme] Request URL:', url);
+
+        const result = await fetch(url, {
+          method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'User-Agent': 'Shopify-Chat-Proxy/1.0',
-            'ngrok-skip-browser-warning': 'true',
-          },
-          body: JSON.stringify(payload)
-        });
-        
-        const conversation = await response.json();
-        console.log('[Shopify Theme] Successfully fetched conversation:', conversation);
-        return conversation;
-      } catch (error) {
-        console.error('[Shopify Theme] Failed to fetch single conversation:', error);
-        throw error;
-      }
-    }
-
-    async function sendChatMessage(messageData) {
-      try {
-        console.log('[Shopify Theme] Sending chat message to N8N:', messageData);
-        
-        const response = await fetch(API_ENDPOINTS.chat, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'User-Agent': 'Shopify-Chat-Proxy/1.0',
-            'ngrok-skip-browser-warning': 'true',
-          },
-          body: JSON.stringify(messageData)
+            'Cache-Control': 'no-cache'
+          }
         });
 
-        console.log(`[Shopify Theme] N8N chat response status: ${response.status}`);
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error(`[Shopify Theme] N8N chat error (${response.status}):`, errorText);
-          throw new Error(`N8N chat failed with status: ${response.status}`);
+        if (!result.ok) {
+          throw new Error(`HTTP error! status: ${result.status}`);
         }
 
-        const responseData = await response.json();
-        console.log('[Shopify Theme] N8N chat response data:', responseData);
-        return responseData;
+        const history = await result.json();
+        console.log('[Shopify Theme] Successfully fetched conversation history:', history);
+        return history;
       } catch (error) {
-        console.error('[Shopify Theme] Failed to send chat message:', error);
-        throw error;
+        console.error('[Shopify Theme] Failed to fetch conversation history:', error);
+        return [];
       }
     }
 
+    // Listen for messages from the chatbot iframe
     window.addEventListener('message', async function(event) {
-      if (event.origin !== 'https://v0-custom-chat-interface-kappa.vercel.app') { // Your chatbot app URL
-        console.warn('[Shopify Theme] Ignoring message from untrusted origin:', event.origin);
-        return;
-      }
+      console.log('[Shopify Theme] Received message from iframe:', event.data);
 
-      const message = event.data;
-      console.log('[Shopify Theme] Received message from iframe:', message.type, message.payload);
+      if (event.data.type === 'CONVERSATION_ACTION') {
+        const { action, conversationId, name } = event.data.data;
 
-      try {
-        switch (message.type) {
-          case 'save-conversation':
-            await saveConversation(message.payload.conversationId);
-            break;
-          
-          case 'get-all-conversations':
-            const conversations = await fetchAllConversations();
-            event.source.postMessage({
-              type: 'conversations-response',
-              conversations: conversations
-            }, event.origin);
-            break;
-          
-          case 'get-single-conversation':
-            const conversation = await fetchSingleConversation(message.payload.conversationId);
-            event.source.postMessage({
-              type: 'conversation-response',
-              conversation: conversation
-            }, event.origin);
-            break;
-          
-          case 'send-chat-message':
-            try {
-              const chatResponse = await sendChatMessage(message.payload);
-              event.source.postMessage({
-                type: 'chat-response',
-                response: chatResponse
-              }, event.origin);
-            } catch (error) {
-              event.source.postMessage({
-                type: 'chat-error',
-                error: error.message
-              }, event.origin);
+        try {
+          let result;
+          switch (action) {
+            case 'save':
+              result = await saveConversation(conversationId, name);
+              break;
+            case 'fetch_all':
+              result = await fetchAllConversations();
+              break;
+            case 'fetch_history':
+              result = await fetchConversationHistory(conversationId);
+              break;
+            default:
+              console.warn('[Shopify Theme] Unknown conversation action:', action);
+              return;
+          }
+
+          // Send result back to iframe
+          event.source.postMessage({
+            type: 'CONVERSATION_RESULT',
+            data: {
+              action,
+              conversationId,
+              result,
+              success: true
             }
-            break;
-          
-          case 'add-to-cart':
-            // Handle add to cart functionality
-            try {
-              const { variantId, quantity = 1, redirect = false } = message.payload;
-              
-              // Use Shopify's AJAX API to add to cart
-              const cartResponse = await fetch('/cart/add.js', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  id: variantId,
-                  quantity: quantity
-                })
-              });
+          }, '*');
 
-              if (cartResponse.ok) {
-                console.log('[Shopify Theme] Successfully added to cart:', variantId);
-                
-                event.source.postMessage({
-                  type: 'add-to-cart-success',
-                  variantId: variantId
-                }, event.origin);
+        } catch (error) {
+          console.error('[Shopify Theme] Error handling conversation action:', error);
 
-                // Optionally redirect to cart
-                if (redirect) {
-                  window.location.href = '/cart';
-                }
-              } else {
-                throw new Error('Failed to add to cart');
-              }
-            } catch (error) {
-              console.error('[Shopify Theme] Failed to add to cart:', error);
-              event.source.postMessage({
-                type: 'add-to-cart-error',
-                error: error.message
-              }, event.origin);
+          // Send error back to iframe
+          event.source.postMessage({
+            type: 'CONVERSATION_RESULT',
+            data: {
+              action,
+              conversationId,
+              error: error.message,
+              success: false
             }
-            break;
-          
-          default:
-            console.log('[Shopify Theme] Unknown message type:', message.type);
+          }, '*');
         }
-      } catch (error) {
-        console.error('[Shopify Theme] Error handling message:', error);
       }
     });
 
-    // Function to initialize the chatbot iframe
+    // Initialize chatbot when iframe is loaded
     function initializeChatbot() {
-      const iframe = document.createElement('iframe');
-      iframe.id = 'chatbot';
-      iframe.src = 'https://v0-custom-chat-interface-kappa.vercel.app'; // Your chatbot app URL
-      iframe.style.cssText = `
-        position: fixed;
-        bottom: 24px;
-        right: 24px;
-        width: 450px;
-        height: 800px;
-        border: none;
-        z-index: 9999;
-        overflow: hidden;
-        border-radius: 1rem;
-      `;
-      iframe.allow = 'microphone';
-      document.body.appendChild(iframe);
+      console.log('[Shopify Theme] Initializing chatbot...');
 
-      iframe.onload = function() {
-        const initData = {
-          type: 'init',
-          session_id: sessionId,
-          source_url: sourceUrl,
-          page_context: pageContext,
-          cart_currency: cartCurrency,
-          localization: localization
-        };
-
-        console.log('[Shopify Theme] Sent init data to chatbot iframe:', initData);
-        iframe.contentWindow.postMessage(initData, 'https://v0-custom-chat-interface-kappa.vercel.app'); // Your chatbot app URL
-      };
+      // Wait a bit for iframe to fully load
+      setTimeout(() => {
+        sendSessionDataToChatbot();
+      }, 1000);
 
       console.log('[Shopify Theme] Chatbot system initialized.');
     }
 
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initializeChatbot);
+    // Check if iframe already exists
+    const existingIframe = document.getElementById('chatbot');
+    if (existingIframe) {
+      existingIframe.addEventListener('load', initializeChatbot);
+      // If already loaded, initialize immediately
+      if (existingIframe.contentDocument && existingIframe.contentDocument.readyState === 'complete') {
+        initializeChatbot();
+      }
     } else {
-      initializeChatbot();
+      // Wait for iframe to be added to DOM
+      const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+          mutation.addedNodes.forEach(function(node) {
+            if (node.nodeType === 1 && node.id === 'chatbot') {
+              console.log('[Shopify Theme] Chatbot iframe detected');
+              node.addEventListener('load', initializeChatbot);
+              observer.disconnect();
+            }
+          });
+        });
+      });
+
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true
+      });
     }
+
   })();
 </script>
