@@ -1,0 +1,1573 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "chat",
+        "responseMode": "responseNode",
+        "options": {
+          "binaryPropertyName": "data"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1560,
+        0
+      ],
+      "id": "cdcf9744-9533-4c8a-b4ed-8b366e037427",
+      "name": "Webhook",
+      "webhookId": "16aaf712-aa9b-45a5-834a-39b979becada"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1120,
+        -40
+      ],
+      "id": "ed3a4ff2-ea5a-4786-953a-a8a3b1cbfee5",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.type }}",
+                    "rightValue": "text",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "9a6de156-cc63-45ce-8886-985f57056cfd"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "text"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "4881920e-093f-4cf1-a85f-72669d3537c6",
+                    "leftValue": "={{ $json.body.type }}",
+                    "rightValue": "voice",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "voice"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -1340,
+        0
+      ],
+      "id": "a93e73b3-954b-47ef-a6c6-ee6a81493f92",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "body.audioData",
+        "options": {
+          "fileName": "=voice_{{ $json.body.timestamp.toDateTime().format('yyyy-MM-dd:hh-mm-ss') }}.webm",
+          "mimeType": "audio/webm"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        -1140,
+        240
+      ],
+      "id": "c8f51044-79c0-495e-81e7-c24be08c3aef",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/audio/transcriptions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "groqApi",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "=file",
+              "inputDataFieldName": "=data"
+            },
+            {
+              "name": "=model",
+              "value": "=whisper-large-v3-turbo"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -920,
+        240
+      ],
+      "id": "b24a8df8-6cbb-4be3-9fad-be7d7c5b43c6",
+      "name": "Transcribe Audio",
+      "credentials": {
+        "groqApi": {
+          "id": "kEc1aoL1zwFA06WE",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        260,
+        360
+      ],
+      "id": "fb3ed384-86c0-4fc6-8bd2-fa05071617bf",
+      "name": "Calculator"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.conversation_id }}",
+        "contextWindowLength": "=5"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -20,
+        180
+      ],
+      "id": "09f07f3b-59dd-431c-b63e-cb81ababda71",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Retrieves detailed information for a specific order using its unique Order ID. Useful for follow-ups, issue resolution, or order status checks.",
+        "authentication": "accessToken",
+        "operation": "get",
+        "orderId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Order_ID', `The unique identifier of the order you want to fetch. Use this to retrieve a specific order’s details.`, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.shopifyTool",
+      "typeVersion": 1,
+      "position": [
+        380,
+        180
+      ],
+      "id": "b4657b6a-ae22-4b89-a071-724acf7c9c5f",
+      "name": "Get single order",
+      "credentials": {
+        "shopifyAccessTokenApi": {
+          "id": "iUDKzacw69XlBcUa",
+          "name": "Shopify Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Get a product in Shopify",
+        "authentication": "accessToken",
+        "resource": "product",
+        "operation": "get",
+        "productId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Product_ID', `The ID of the Product to Get Details Of.`, 'string') }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.shopifyTool",
+      "typeVersion": 1,
+      "position": [
+        540,
+        180
+      ],
+      "id": "85c262fc-3511-4545-8c3c-d854335059af",
+      "name": "Get single product",
+      "credentials": {
+        "shopifyAccessTokenApi": {
+          "id": "iUDKzacw69XlBcUa",
+          "name": "Shopify Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Updates a specific order in your store with new fulfillment status, tracking details, tags, notes, or custom attributes. Ideal for automating order management or syncing updates from external systems.",
+        "authentication": "accessToken",
+        "operation": "update",
+        "orderId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Order_ID', `The unique identifier of the order you want to fetch. Use this to retrieve a specific order’s details.`, 'string') }}",
+        "updateFields": {
+          "email": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Email', ` The customer’s email address to update for order notifications or invoices.`, 'string') }}",
+          "note": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Note', ` An internal note or comment on the order, visible only to store staff.`, 'string') }}",
+          "shippingAddressUi": {
+            "shippingAddressValues": {
+              "firstName": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('First_Name', ` Recipient’s first name for the shipping label.`, 'string') }}",
+              "lastName": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Last_Name', ` Recipient’s last name for the shipping label.`, 'string') }}",
+              "company": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Company', ` Company name (if applicable) for business deliveries.`, 'string') }}",
+              "country": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Country', ` Two‑letter country code (ISO 3166‑1 alpha‑2) for the shipping address.`, 'string') }}",
+              "address1": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Address_Line_1', ` Primary street address (e.g. house number and street name).`, 'string') }}",
+              "address2": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Address_Line_2', ` Secondary address info (e.g. apartment, suite, unit).`, 'string') }}",
+              "city": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('City', ` City for the shipping destination.`, 'string') }}",
+              "province": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Province', ` State, province, or region for the shipping destination.`, 'string') }}",
+              "zip": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Zip_Code', ` Postal code for the shipping address.`, 'string') }}",
+              "phone": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Phone', ` Recipient’s phone number, used for shipping carrier contact.`, 'string') }}"
+            }
+          },
+          "tags": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Tags', ` A comma‑separated list of tags to add or replace on the order for categorization or automation triggers.`, 'string') }}"
+        }
+      },
+      "type": "n8n-nodes-base.shopifyTool",
+      "typeVersion": 1,
+      "position": [
+        460,
+        360
+      ],
+      "id": "cacc02d5-5bc3-44c8-a078-601328deb9a1",
+      "name": "Update single order",
+      "credentials": {
+        "shopifyAccessTokenApi": {
+          "id": "iUDKzacw69XlBcUa",
+          "name": "Shopify Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Get All orders ",
+        "url": "https://zenmato.myshopify.com/admin/api/2025-07/orders.json",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Shopify-Access-Token",
+              "value": "={{ $json.constants.SHOPIFY_ACCESS_TOKEN }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        180
+      ],
+      "id": "7aed52dc-677e-4be4-8d3d-96a135ecc744",
+      "name": "Get Many Orders"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Customer : {{ $('Webhook').item.json.body.user_message }},\nCart Currency : {{ $json.cart_currency ?? null }},\nLocalization : {{ $json.localization ?? null }}\n\n\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are Zeno — a warm, anime‑loving but professional customer support agent for Zenmato, an e‑commerce store selling anime art clothing built on Shopify.\n\nDate/Time: {{ $now.format('yyyy-MM-dd hh:mm:ss') }}\n\n+ ## Core Operating Principles\n+ 1.  **Tool-First Mandate:** You have **NO** internal knowledge of the store's product catalog, inventory, or specific order details. You **MUST** use the provided tools to answer any question about products or orders. Your primary function is to call the correct tool.\n+ 2.  **No Hallucination:** Never, under any circumstances, invent or make up product names, details, prices, or order information. If a tool returns no results, you must inform the user you couldn't find the item and ask if they need help with something else.\n+ 3.  **Strict JSON Output:** Your final response must *only* be the JSON object defined in the schema. Do not add any introductory text, conversation, or markdown before or after the JSON structure.\n\nYou sound human, casual, and caring — but never robotic or overly casual. Your goal is to help the customer quickly, clearly, and kindly by using your tools. You're here to assist customers with:\n    - Questions about orders, tracking, returns, and shipping\n    - Product questions, sizing help, and recommendations\n    - Guiding people to the perfect product (soft upsells)\n    - General store questions or casual banter\n\nRespond as if you're a real human support agent, but output exactly and only the JSON object defined below — no extra text, no wrapper keys, nothing outside the schema.\n\n🛠️ TOOLS AVAILABLE\n... (Keep the Tools section exactly as it is) ...\n\n⚠️ Privacy Rule\n... (Keep the Privacy Rule section as is) ...\n\n🧾 EVENT TAGGING & OPTIONAL FIELDS\n... (Keep the Event Tagging section as is) ...\n\n📐 OUTPUT FORMAT (REQUIRED)\n\n**ALWAYS INCLUDE THESE FIELDS:**\n- `message`: Your response text (always required)\n- `event_type`: Event classification (always required)\n\n**CONDITIONALLY INCLUDE THESE FIELDS:**\n- `product_id`: Include when discussing a specific product\n- `product_name`: Include when discussing a specific product  \n- `order_id`: Include when discussing a specific order\n- `cards`: Include when recommending multiple products (array of product cards)\n\n**JSON Schema:**\n```json\n{\n  \"message\": \"string (required)\",\n  \"event_type\": \"string (required)\",\n  \"product_id\": \"string (optional - only for specific product discussions)\",\n  \"product_name\": \"string (optional - only for specific product discussions)\", \n  \"order_id\": \"string (optional - only for order-related responses)\",\n  \"cards\": \"array (optional - only for product recommendations with multiple items)\"\n}\n```\n\n**Card Object Schema (when using cards array):**\n```json\n{\n  \"id\": \"product_id\",\n  \"variantId\": \"variant_id\", \n  \"name\": \"Product Name\",\n  \"image\": \"image_url\",\n  \"price\": \"$XX.XX\"\n}\n```\n\n🎯 INTERACTION & TOOL USAGE\n- 1. Recognize Intent\n- Acknowledge the user clearly and warmly — anime flair welcome! 🌸\n- 2. Retrieve User Email\n- From webhook/session for order-related actions.\n- 3. Choose Tool & Filter\n+ Your entire goal is to determine the user's intent and immediately call the appropriate tool. Follow this logic strictly:\n\nIntent | Tool to Call | Notes\n---|---|---\n+ **ANY product search or recommendation request** (e.g., \"show me gojo tees\", \"do you have kakashi merch?\", \"recommend something\") | **Get many products** | **Always use this tool for product searches.** Use `titleFilter` with keywords from the user's message (e.g., \"kakashi\"). Pass the `currency` from the session data.\nProduct Detail | Get single product | Respond with specs or details\nTrack Order | Get single order / Get many orders | Validate email before returning info\nUpdate Order | Update single order | Only proceed if email matches\n\n🔥 EXAMPLES\n\nA) Recommend Multiple Products (Must include cards array)\n\nUser: \"Got anything cool with Gojo?\"\n\nCall: Get many products with:\n{ \n  \"titleFilter\": \"Gojo\", \n  \"currency\": \"USD\" \n}\n\nRespond:\n```json\n{\n  \"message\": \"Gojo Satoru fans unite! Here are our top picks just for you 💙\",\n  \"event_type\": \"upsell_sent\",\n  \"cards\": [\n    {\n      \"id\": \"998877\",\n      \"variantId\": \"998877\",\n      \"name\": \"Gojo Infinity Tee\",\n      \"image\": \"https://cdn.shopify.com/s/files/gojo1.jpg\",\n      \"price\": \"$32.00\"\n    },\n    {\n      \"id\": \"998878\", \n      \"variantId\": \"998878\",\n      \"name\": \"Cursed Technique Reversal Tee\",\n      \"image\": \"https://cdn.shopify.com/s/files/gojo2.jpg\",\n      \"price\": \"$30.00\"\n    }\n  ]\n}\n```\n\nB) Single Product Detail (Include product_id and product_name)\n\nUser: \"What's the fabric of the Gojo tee?\"\n\nCall: Get single product with productId=\"998877\"\n\nRespond:\n```json\n{\n  \"message\": \"Our Gojo Infinity Tee is crafted from ultra-soft, 100% organic cotton for maximum comfort and breathability 🌿\",\n  \"event_type\": \"store_question\",\n  \"product_id\": \"998877\",\n  \"product_name\": \"Gojo Infinity Tee\"\n}\n```\n\nC) Order Tracking (Include order_id)\n\nUser: \"Where's my order #223344?\"\n\nCall: Get single order, verify email match\n\nRespond:\n```json\n{\n  \"message\": \"Your order #223344 is on the way and should arrive by July 20! 🚚✨\",\n  \"event_type\": \"order_tracking\", \n  \"order_id\": \"223344\"\n}\n```\n\nD) General Question (Only message and event_type required)\n\nUser: \"What are your shipping options?\"\n\nRespond:\n```json\n{\n  \"message\": \"We offer standard shipping (5-7 days) for $4.99 and express shipping (2-3 days) for $9.99! Free shipping on orders over $50 ✨\",\n  \"event_type\": \"store_question\"\n}\n```\n\n**CRITICAL REMINDERS:**\n1. Always include `message` and `event_type` in every response\n2. Include `product_id` and `product_name` when discussing specific products\n3. Include `order_id` when discussing specific orders  \n4. Include `cards` array when recommending multiple products\n5. Use proper JSON formatting with no extra text outside the JSON object"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        140,
+        -40
+      ],
+      "id": "37c6f79f-23be-48df-980f-f153b9d8b6bf",
+      "name": "Shopify Agent"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "chatbot_events",
+          "mode": "list",
+          "cachedResultName": "chatbot_events"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "chatbot_triggered": "={{ $('Webhook').item.json.body.chatbot_triggered }}",
+            "id": "={{ $('Webhook').item.json.body.id }}",
+            "timestamp": "={{ $('Webhook').item.json.body.timestamp }}",
+            "session_id": "={{ $('Webhook').item.json.body.session_id }}",
+            "event_type": "={{ $('Webhook').item.json.body.event_type }}",
+            "user_message": "={{ $('Webhook').item.json.body.user_message }}",
+            "source_url": "={{ $('Webhook').item.json.body.source_url }}",
+            "page_context": "={{ $('Webhook').item.json.body.page_context }}",
+            "webhook_url": "={{ $('Webhook').item.json.webhookUrl }}",
+            "type": "={{ $('Webhook').item.json.body.type }}",
+            "text": "={{ $('Webhook').item.json.body.text }}",
+            "cart_currency": "={{ $('Webhook').item.json.body.cart_currency }}",
+            "localization": "={{ $('Webhook').item.json.body.localization }}",
+            "conversation_id": "={{ $json.id }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "session_id",
+              "displayName": "session_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "user_message",
+              "displayName": "user_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "product_id",
+              "displayName": "product_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "product_name",
+              "displayName": "product_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "order_id",
+              "displayName": "order_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "source_url",
+              "displayName": "source_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "page_context",
+              "displayName": "page_context",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "chatbot_triggered",
+              "displayName": "chatbot_triggered",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "conversion_tracked",
+              "displayName": "conversion_tracked",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "webhook_url",
+              "displayName": "webhook_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "type",
+              "displayName": "type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "text",
+              "displayName": "text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "cart_currency",
+              "displayName": "cart_currency",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "localization",
+              "displayName": "localization",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": true,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "conversation_id",
+              "displayName": "conversation_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "ai_message",
+              "displayName": "ai_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "cards",
+              "displayName": "cards",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -240,
+        -40
+      ],
+      "id": "b29b5c81-0c84-4fb0-a54d-0f6a083e75db",
+      "name": "Insert rows in a table",
+      "credentials": {
+        "postgres": {
+          "id": "Jc2co9tl3jbXLNeG",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "Call this tool to get all Products from the Store And Optionally Filter Them By Title and Output Their data in User's Currency based on users Country Code or Currency.",
+        "workflowId": {
+          "__rl": true,
+          "value": "kG50rRxzlBo9Jm5N",
+          "mode": "list",
+          "cachedResultName": "Get Many Products"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "titleFilter": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('titleFilter', `(Optional) A keyword or phrase to filter products by their title. Only products whose titles include this text (case-insensitive) will be returned.\nExample: \"Naruto\" will return products like Naruto Hoodie, Naruto Poster, etc.`, 'string') }}",
+            "currency": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('currency', `(Optional) The preferred currency code (e.g., USD, PKR, EUR) used to determine localized pricing or formatting when displaying products. This does not affect Shopify’s actual pricing data unless extended in the workflow logic.\nExample: \"USD\" or \"PKR\"`, 'string') }}"
+          },
+          "matchingColumns": [
+            "titleFilter_firstItem"
+          ],
+          "schema": [
+            {
+              "id": "titleFilter",
+              "displayName": "titleFilter",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "currency",
+              "displayName": "currency",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        660,
+        360
+      ],
+      "id": "5ab96e4a-d2f8-4914-a6dc-ad92557ac3c6",
+      "name": "Get Many Products"
+    },
+    {
+      "parameters": {
+        "model": "moonshotai/kimi-k2-instruct",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        140,
+        180
+      ],
+      "id": "f0c52b12-9958-412d-8d41-8f59d40794e2",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "kEc1aoL1zwFA06WE",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nconst processedItems = items.map(item => {\n  let rawOutput = item.json.output;\n  let parsedOutput;\n\n  // Clean up if it's wrapped in a Markdown code block like ```json\\n...\\n```\n  if (typeof rawOutput === 'string' && rawOutput.trim().startsWith('```')) {\n    rawOutput = rawOutput.trim().replace(/^```json\\n?|```$/g, '').trim();\n  }\n\n  try {\n    parsedOutput = JSON.parse(rawOutput);\n  } catch (e) {\n    parsedOutput = { message: rawOutput };\n  }\n\n  const finalJson = Array.isArray(parsedOutput) ? parsedOutput[0] : parsedOutput;\n\n  const noUsefulContent =\n    (!finalJson.message || finalJson.message.trim() === \"\") &&\n    (!finalJson.cards || finalJson.cards.length === 0) &&\n    (!finalJson.product_id || finalJson.product_id === \"\") &&\n    (!finalJson.product_name || finalJson.product_name === \"\");\n\n  if (noUsefulContent) {\n    return null;\n  }\n\n  return { json: finalJson };\n}).filter(Boolean); // Remove nulls\n\nreturn processedItems.length > 0 ? processedItems[0] : {};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        -40
+      ],
+      "id": "7cfc5123-e259-4638-9ae6-3e9f7bfe9ef1",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "chatbot_events",
+          "mode": "list",
+          "cachedResultName": "chatbot_events"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "event_type": "={{ $json.event_type }}",
+            "id": "={{ $('Webhook').item.json.body.id }}",
+            "product_id": "={{ $json.product_id }}",
+            "product_name": "={{ $json.product_name }}",
+            "order_id": "={{ $json.order_id }}",
+            "session_id": "={{ $('Webhook').item.json.body.session_id }}",
+            "conversation_id": "={{  $('Edit Fields').item.json.conversation_id }}",
+            "ai_message": "={{ $json.message }}",
+            "cards": "={{ $json.cards }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false,
+              "removed": true
+            },
+            {
+              "id": "session_id",
+              "displayName": "session_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "user_message",
+              "displayName": "user_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": true
+            },
+            {
+              "id": "product_id",
+              "displayName": "product_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "product_name",
+              "displayName": "product_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "order_id",
+              "displayName": "order_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "source_url",
+              "displayName": "source_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": true
+            },
+            {
+              "id": "page_context",
+              "displayName": "page_context",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": true
+            },
+            {
+              "id": "chatbot_triggered",
+              "displayName": "chatbot_triggered",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false,
+              "removed": true
+            },
+            {
+              "id": "conversion_tracked",
+              "displayName": "conversion_tracked",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false,
+              "removed": true
+            },
+            {
+              "id": "webhook_url",
+              "displayName": "webhook_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": true
+            },
+            {
+              "id": "type",
+              "displayName": "type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": true
+            },
+            {
+              "id": "text",
+              "displayName": "text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": true
+            },
+            {
+              "id": "cart_currency",
+              "displayName": "cart_currency",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": true
+            },
+            {
+              "id": "localization",
+              "displayName": "localization",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": true
+            },
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": true,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "conversation_id",
+              "displayName": "conversation_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "ai_message",
+              "displayName": "ai_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "cards",
+              "displayName": "cards",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "replaceEmptyStrings": false
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        900,
+        -40
+      ],
+      "id": "9266d10d-03f6-41b4-81d0-0d93c473f5c5",
+      "name": "Insert or update rows in a table",
+      "credentials": {
+        "postgres": {
+          "id": "Jc2co9tl3jbXLNeG",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id FROM conversations\nWHERE session_id = $1 AND ended_at IS NULL\nORDER BY created_at DESC\nLIMIT 1;\n",
+        "options": {
+          "queryReplacement": "={{ $('Webhook').item.json.body.session_id }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -740,
+        -20
+      ],
+      "id": "e117efde-cb88-4925-8191-a9da433f09cc",
+      "name": "Execute a SQL query",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "Jc2co9tl3jbXLNeG",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- Only run if no active convo exists for this session\nINSERT INTO conversations (session_id)\nVALUES ('{{ $('Webhook').item.json.body.session_id}}')\nRETURNING id;\n",
+        "options": {
+          "queryReplacement": "={{ $('Webhook').item.json.body.session_id }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -440,
+        140
+      ],
+      "id": "24a60e72-b642-44b7-9f62-ad50cce225dd",
+      "name": "Execute a SQL query1",
+      "credentials": {
+        "postgres": {
+          "id": "Jc2co9tl3jbXLNeG",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Execute a SQL query').item.json }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "object",
+                      "operation": "notEmpty",
+                      "singleValue": true
+                    },
+                    "id": "18c2d3b1-8af7-4c59-8820-156b78fcb060"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Exists"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "a8a9a060-a2bd-414d-806d-c7da191bfea5",
+                    "leftValue": "={{ $('Execute a SQL query').item.json }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "object",
+                      "operation": "empty",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Not Found"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -560,
+        -20
+      ],
+      "id": "b0d568a5-c5a0-47ff-b78a-886d68b3f489",
+      "name": "Switch1"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "chatbot_events",
+          "mode": "list",
+          "cachedResultName": "chatbot_events"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "chatbot_triggered": "={{ $('Webhook').item.json.body.chatbot_triggered }}",
+            "id": "={{ $('Webhook').item.json.body.id }}",
+            "timestamp": "={{ $('Webhook').item.json.body.timestamp }}",
+            "session_id": "={{ $('Webhook').item.json.body.session_id }}",
+            "event_type": "={{ $('Webhook').item.json.body.event_type }}",
+            "user_message": "={{ $('Webhook').item.json.body.user_message }}",
+            "source_url": "={{ $('Webhook').item.json.body.source_url }}",
+            "page_context": "={{ $('Webhook').item.json.body.page_context }}",
+            "webhook_url": "={{ $('Webhook').item.json.webhookUrl }}",
+            "type": "={{ $('Webhook').item.json.body.type }}",
+            "text": "={{ $('Webhook').item.json.body.text }}",
+            "cart_currency": "={{ $('Webhook').item.json.body.cart_currency }}",
+            "localization": "={{ $('Webhook').item.json.body.localization }}",
+            "conversation_id": "={{ $json.id }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "session_id",
+              "displayName": "session_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "event_type",
+              "displayName": "event_type",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "user_message",
+              "displayName": "user_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "product_id",
+              "displayName": "product_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "product_name",
+              "displayName": "product_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "order_id",
+              "displayName": "order_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "source_url",
+              "displayName": "source_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "page_context",
+              "displayName": "page_context",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "chatbot_triggered",
+              "displayName": "chatbot_triggered",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "conversion_tracked",
+              "displayName": "conversion_tracked",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "webhook_url",
+              "displayName": "webhook_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "type",
+              "displayName": "type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "text",
+              "displayName": "text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "cart_currency",
+              "displayName": "cart_currency",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "localization",
+              "displayName": "localization",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": true,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "conversation_id",
+              "displayName": "conversation_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -240,
+        140
+      ],
+      "id": "d024c286-0fec-4e59-b4c3-176b41898e56",
+      "name": "Insert rows in a table1",
+      "credentials": {
+        "postgres": {
+          "id": "Jc2co9tl3jbXLNeG",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5d43ba5e-d779-418d-9fb2-b77ec89b1278",
+              "name": "conversation_id",
+              "value": "={{  $json.conversation_id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -20,
+        -40
+      ],
+      "id": "6067d02f-e2a2-4385-b696-5f63ea644edd",
+      "name": "Edit Fields"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook": {
+      "main": [
+        []
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Transcribe Audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribe Audio": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculator": {
+      "ai_tool": [
+        [
+          {
+            "node": "Shopify Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Shopify Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get single order": {
+      "ai_tool": [
+        [
+          {
+            "node": "Shopify Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get single product": {
+      "ai_tool": [
+        [
+          {
+            "node": "Shopify Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update single order": {
+      "ai_tool": [
+        [
+          {
+            "node": "Shopify Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Many Orders": {
+      "ai_tool": [
+        [
+          {
+            "node": "Shopify Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Shopify Agent": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert rows in a table": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Many Products": {
+      "ai_tool": [
+        [
+          {
+            "node": "Shopify Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Shopify Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Insert or update rows in a table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert or update rows in a table": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Switch1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query1": {
+      "main": [
+        [
+          {
+            "node": "Insert rows in a table1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch1": {
+      "main": [
+        [
+          {
+            "node": "Insert rows in a table",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute a SQL query1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert rows in a table1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Shopify Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {
+    "Webhook": [
+      {
+        "headers": {
+          "host": "similarly-secure-mayfly.ngrok-free.app",
+          "user-agent": "Shopify-Chat-Proxy/1.0",
+          "content-length": "474",
+          "accept": "*/*",
+          "accept-encoding": "br, gzip, deflate",
+          "accept-language": "*",
+          "content-type": "application/json",
+          "ngrok-skip-browser-warning": "true",
+          "sec-fetch-mode": "cors",
+          "x-forwarded-for": "54.92.155.195",
+          "x-forwarded-host": "similarly-secure-mayfly.ngrok-free.app",
+          "x-forwarded-proto": "https",
+          "x-vercel-id": "hkg1::q5kfd-1752817813885-bf91124fcac7"
+        },
+        "params": {},
+        "query": {},
+        "body": {
+          "id": "e23f5ef9-2639-42d3-bdd8-1819a06739ff",
+          "session_id": "78ddfd09-7df6-4750-8e83-41e67f9b21b9",
+          "timestamp": "2025-07-18T05:50:13.231Z",
+          "event_type": "user_message",
+          "user_message": "hi",
+          "webhookUrl": "https://similarly-secure-mayfly.ngrok-free.app/webhook/chat",
+          "source_url": "https://zenmato.myshopify.com/",
+          "page_context": "EcomHQ Zenmato Demo – ZENMATO",
+          "chatbot_triggered": true,
+          "conversion_tracked": false,
+          "type": "text",
+          "text": "hi",
+          "cart_currency": "USD",
+          "localization": "PK"
+        },
+        "webhookUrl": "https://similarly-secure-mayfly.ngrok-free.app/webhook/chat",
+        "executionMode": "production"
+      }
+    ]
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4004a46fb0ea6cf9e1ebfd94bddadb20b9a6fd96d56937adf96616bf737240f5"
+  }
+}
