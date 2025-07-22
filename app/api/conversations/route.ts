@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
   const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, User-Agent",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, User-Agent, Cache-Control",
     "Access-Control-Allow-Credentials": "false",
   };
 
@@ -95,7 +95,7 @@ export async function OPTIONS() {
   const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS", 
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, User-Agent",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, User-Agent, Cache-Control",
     "Access-Control-Allow-Credentials": "false",
   };
 
