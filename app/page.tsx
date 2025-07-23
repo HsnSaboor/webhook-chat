@@ -1118,6 +1118,7 @@ className="text-gray-600 hover:text-black hover:bg-gray-100 h-8 w-8 p-0 rounded-
             </CardHeader>
 
             {/* Enhanced Homepage */}
+            {showHomepage ? (
               <CardContent className="flex-1 flex flex-col p-0 bg-gradient-to-br from-gray-50 to-gray-100 overflow-y-auto">
                 <div className="flex-1 flex flex-col">
                   {/* Hero Section */}
@@ -1250,6 +1251,101 @@ className="text-gray-600 hover:text-black hover:bg-gray-100 h-8 w-8 p-0 rounded-
                   </div>
                 </div>
               </CardContent>
+            ) : (
+              /* Chat Interface */
+              <CardContent className="flex-1 flex flex-col p-0 bg-gray-50">
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50"
+                     ref={messagesContainerRef}>
+                  {messages.length === 1 && messages[0].id === "welcome" && !isLoading ? (
+                    <div className="flex items-center justify-center h-full">
+                      <div className="text-center">
+                        <div className="h-16 w-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                          <MessageCircle className="h-8 w-8 text-gray-600" />
+                        </div>
+                        <h3 className="text-xl font-semibold text-gray-900 mb-2">Welcome!</h3>
+                        <p className="text-gray-600 mb-6">How can we help you today?</p>
+                        <div className="flex items-center justify-center space-x-4 text-sm text-gray-500">
+                          <div className="flex items-center space-x-2">
+                            <MessageCircle className="h-4 w-4" />
+                            <span>Type a message</span>
+                          </div>
+                          {voiceSupported && (
+                            <div className="flex items-center space-x-2">
+                              <Mic className="h-4 w-4" />
+                              <span>Voice message</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      {messages.map((message, index) => (
+                        <div
+                          key={message.id}
+                          className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+                        >
+                          <div className="flex items-start space-x-2 max-w-[85%]">
+                            {message.role === "webhook" && (
+                              <div className="h-8 w-8 rounded-full bg-black flex items-center justify-center flex-shrink-0 mt-1">
+                                <Sparkles className="h-4 w-4 text-white" />
+                              </div>
+                            )}
+                            <div
+                              className={`rounded-2xl p-3 ${
+                                message.role === "user"
+                                  ? "bg-black text-white ml-8"
+                                  : "bg-white text-gray-900 border border-gray-200"
+                              }`}
+                            >
+                              {message.type === "voice" && (
+                                <div className="mb-2">
+                                  <div className="flex items-center space-x-2 mb-2">
+                                    <Mic className="h-4 w-4 opacity-75" />
+                                    <span className="text-xs opacity-75 font-medium">VOICE MESSAGE</span>
+                                  </div>
+                                  <StaticWaveform audioUrl={message.audioUrl} />
+                                </div>
+                              )}
+                              <p className="text-sm leading-relaxed">{message.content}</p>
+                              <p className={`text-xs mt-2 opacity-60`}>
+                                {formatTime(message.timestamp)}
+                              </p>
+
+                              {message.cards && message.cards.length > 0 && (
+                                <ProductCards
+                                  cards={message.cards}
+                                  addedProductVariantId={addedProductVariantId}
+                                  onAddToCart={handleAddToCart}
+                                />
+                              )}
+                            </div>
+                            {message.role === "user" && (
+                              <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 mt-1">
+                                <User className="h-4 w-4 text-gray-600" />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      {isLoading && (
+                        <div className="flex justify-start">
+                          <div className="flex items-start space-x-2">
+                            <div className="h-8 w-8 rounded-full bg-black flex items-center justify-center flex-shrink-0">
+                              <Sparkles className="h-4 w-4 text-white" />
+                            </div>
+                            <div className="bg-white border border-gray-200 rounded-2xl">
+                              <TypingIndicator />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      <div ref={messagesEndRef} />
+                    </>
+                  )}
+                </div>
+              </CardContent>
+            )}
 
             {/* Recording Indicator - Minimal */}
             {isRecording && (
@@ -1277,98 +1373,7 @@ className="text-gray-600 hover:text-black hover:bg-gray-100 h-8 w-8 p-0 rounded-
               </div>
             )}
 
-            {/* Messages - Clean Design */}
-            <CardContent
-              ref={messagesContainerRef}
-              className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50"
-            >
-              {messages.length === 1 && messages[0].id === "welcome" && !isLoading ? (
-                <div className="flex items-center justify-center h-full">
-                  <div className="text-center">
-                    <div className="h-16 w-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                      <MessageCircle className="h-8 w-8 text-gray-600" />
-                    </div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Welcome!</h3>
-                    <p className="text-gray-600 mb-6">How can we help you today?</p>
-                    <div className="flex items-center justify-center space-x-4 text-sm text-gray-500">
-                      <div className="flex items-center space-x-2">
-                        <MessageCircle className="h-4 w-4" />
-                        <span>Type a message</span>
-                      </div>
-                      {voiceSupported && (
-                        <div className="flex items-center space-x-2">
-                          <Mic className="h-4 w-4" />
-                          <span>Voice message</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  {messages.map((message, index) => (
-                    <div
-                      key={message.id}
-                      className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
-                    >
-                      <div className="flex items-start space-x-2 max-w-[85%]">
-                        {message.role === "webhook" && (
-                          <div className="h-8 w-8 rounded-full bg-black flex items-center justify-center flex-shrink-0 mt-1">
-                            <Sparkles className="h-4 w-4 text-white" />
-                          </div>
-                        )}
-                        <div
-                          className={`rounded-2xl p-3 ${
-                            message.role === "user"
-                              ? "bg-black text-white ml-8"
-                              : "bg-white text-gray-900 border border-gray-200"
-                          }`}
-                        >
-                          {message.type === "voice" && (
-                            <div className="mb-2">
-                              <div className="flex items-center space-x-2 mb-2">
-                                <Mic className="h-4 w-4 opacity-75" />
-                                <span className="text-xs opacity-75 font-medium">VOICE MESSAGE</span>
-                              </div>
-                              <StaticWaveform audioUrl={message.audioUrl} />
-                            </div>
-                          )}
-                          <p className="text-sm leading-relaxed">{message.content}</p>
-                          <p className={`text-xs mt-2 opacity-60`}>
-                            {formatTime(message.timestamp)}
-                          </p>
-
-                          {message.cards && message.cards.length > 0 && (
-                            <ProductCards
-                              cards={message.cards}
-                              addedProductVariantId={addedProductVariantId}
-                              onAddToCart={handleAddToCart}
-                            />
-                          )}
-                        </div>
-                        {message.role === "user" && (
-                          <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 mt-1">
-                            <User className="h-4 w-4 text-gray-600" />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                  {isLoading && (
-                    <div className="flex justify-start">
-                      <div className="flex items-start space-x-2">
-                        <div className="h-8 w-8 rounded-full bg-black flex items-center justify-center flex-shrink-0">
-                          <Sparkles className="h-4 w-4 text-white" />
-                        </div>
-                        <div className="bg-white border border-gray-200 rounded-2xl">
-                          <TypingIndicator />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-              
-              <div ref={messagesEndRef} />
-            </CardContent>
+            
 
             {/* Scroll to bottom button */}
             {showScrollToBottom && (
