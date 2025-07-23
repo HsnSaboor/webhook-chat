@@ -1127,7 +1127,6 @@ className="text-gray-600 hover:text-black hover:bg-gray-100 h-8 w-8 p-0 rounded-
                       <div className="h-20 w-20 mx-auto bg-gradient-to-r from-black to-gray-800 rounded-2xl flex items-center justify-center mb-4 shadow-lg transform hover:scale-105 transition-transform duration-300">
                         <MessageCircle className="h-10 w-10 text-white" />
                       </div>
-                      <div className="absolute -top-1 -right-8 w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
                     </div>
                     <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome to Support</h2>
                     <p className="text-gray-600 leading-relaxed text-sm max-w-xs mx-auto">
