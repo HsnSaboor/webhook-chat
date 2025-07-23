@@ -10,6 +10,7 @@ import {
   Card,
   CardContent,
   CardHeader,
+  CardFooter,
 } from "@/components/ui/card";
 import {
   MessageCircle,
@@ -994,7 +995,7 @@ export default function ChatWidget() {
     }
   };
 
-  const loadConversationAndStartChat = async (conversationId: string) => {
+  const loadConversationAndStartChat = async (conversationId: string){
     try {
       console.log(`[Chatbot] Loading conversation: ${conversationId}`);
 
@@ -1372,7 +1373,7 @@ className="text-gray-600 hover:text-black hover:bg-gray-100 h-8 w-8 p-0 rounded-
               </div>
             )}
 
-            
+
 
             {/* Scroll to bottom button */}
             {showScrollToBottom && (
