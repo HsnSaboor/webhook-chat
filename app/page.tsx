@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
-  CardFooter,
   CardHeader,
 } from "@/components/ui/card";
 import {
@@ -579,7 +578,7 @@ export default function ChatWidget() {
         event_type: eventType,
         user_message: `Voice message (${duration}s)`,
         source_url: sourceUrl,
-        page_context: page_context,
+        page_context: pageContext,
         chatbot_triggered: true,
         conversion_tracked: false,
         type: "voice",
@@ -1373,8 +1372,7 @@ className="text-gray-600 hover:text-black hover:bg-gray-100 h-8 w-8 p-0 rounded-
                       </div>
                     </div>
                   )}
-                </>
-              )}
+              
               <div ref={messagesEndRef} />
             </CardContent>
 
