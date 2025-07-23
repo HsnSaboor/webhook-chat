@@ -102,6 +102,8 @@ export default function ChatWidget() {
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [isSoundEnabled, setIsSoundEnabled] = useState(true);
   const [showHomepage, setShowHomepage] = useState(true);
+  const [loadingConversations, setLoadingConversations] = useState(false);
+  const [conversationsLoaded, setConversationsLoaded] = useState(false);
 
   const dragStartY = useRef(0);
   const dragStartHeight = useRef(0);
@@ -339,6 +341,14 @@ export default function ChatWidget() {
     }
   }, [isOpen, sessionId, sessionReceived, trackEvent, setMessages]);
 
+  // Load conversations when the component mounts and session is available
+  useEffect(() => {
+    if (sessionId && sessionReceived) {
+      setLoadingConversations(true);
+      requestConversationsFromParent();
+    }
+  }, [sessionId, sessionReceived]);
+
   const handleScroll = useCallback(() => {
     if (messagesContainerRef.current) {
       const { scrollTop, scrollHeight, clientHeight } =
@@ -363,12 +373,15 @@ export default function ChatWidget() {
 
   const requestConversationsFromParent = () => {
     if (window.parent && window.parent !== window) {
+      setLoadingConversations(true);
       window.parent.postMessage(
         {
           type: "get-all-conversations",
         },
         "https://zenmato.myshopify.com",
       );
+      setConversationsLoaded(true);
+      setLoadingConversations(false);
     }
   };
 
@@ -1104,200 +1117,266 @@ className="text-gray-600 hover:text-black hover:bg-gray-100 h-8 w-8 p-0 rounded-
               </div>
             </CardHeader>
 
-            {/* Homepage or Chat Interface */}
-            {showHomepage ? (
-              /* Homepage */
-              <CardContent className="flex-1 flex flex-col items-center justify-center p-6 bg-gray-50">
-                <div className="text-center max-w-sm mx-auto">
-                  {/* Welcome Message */}
-                  <div className="mb-8">
-                    <div className="h-20 w-20 mx-auto bg-black rounded-full flex items-center justify-center mb-6">
-                      <MessageCircle className="h-10 w-10 text-white" />
+            {/* Enhanced Homepage */}
+              <CardContent className="flex-1 flex flex-col p-0 bg-gradient-to-br from-gray-50 to-gray-100 overflow-y-auto">
+                <div className="flex-1 flex flex-col">
+                  {/* Hero Section */}
+                  <div className="text-center p-6 pb-4">
+                    <div className="relative mb-6">
+                      <div className="h-20 w-20 mx-auto bg-gradient-to-r from-black to-gray-800 rounded-2xl flex items-center justify-center mb-4 shadow-lg transform hover:scale-105 transition-transform duration-300">
+                        <MessageCircle className="h-10 w-10 text-white" />
+                      </div>
+                      <div className="absolute -top-1 -right-8 w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-3">Welcome to Support</h2>
-                    <p className="text-gray-600 leading-relaxed">
-                      Get instant help with your questions, find products, and get personalized recommendations.
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome to Support</h2>
+                    <p className="text-gray-600 leading-relaxed text-sm max-w-xs mx-auto">
+                      Get instant help, find products, and receive personalized recommendations
                     </p>
                   </div>
 
+                  {/* Quick Actions */}
+                  <div className="px-6 mb-6">
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        onClick={startChatInterface}
+                        className="p-4 bg-white rounded-xl border border-gray-200 hover:border-black hover:shadow-md transition-all duration-200 group"
+                      >
+                        <MessageCircle className="h-6 w-6 text-black mb-2 mx-auto group-hover:scale-110 transition-transform" />
+                        <span className="text-xs font-medium text-gray-900">New Chat</span>
+                      </button>
+                      {voiceSupported && (
+                        <button
+                          onClick={() => {
+                            startChatInterface();
+                            setTimeout(() => toggleRecording(), 500);
+                          }}
+                          className="p-4 bg-white rounded-xl border border-gray-200 hover:border-red-500 hover:shadow-md transition-all duration-200 group"
+                        >
+                          <Mic className="h-6 w-6 text-red-500 mb-2 mx-auto group-hover:scale-110 transition-transform" />
+                          <span className="text-xs font-medium text-gray-900">Voice Chat</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
                   {/* Recent Conversations */}
-                  {conversations.length > 0 && (
-                    <div className="mb-8">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Chats</h3>
-                      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-                        {conversations.slice(0, 3).map((conv, index) => (
-                          <div key={conv.id}>
-                            <button
-                              onClick={() => loadConversationAndStartChat(conv.id)}
-                              className="w-full text-left p-4 hover:bg-gray-50 transition-all duration-200 flex items-center justify-between group"
-                            >
-                              <div className="flex items-center space-x-3">
-                                <div className="h-10 w-10 bg-gray-100 rounded-full flex items-center justify-center">
-                                  <MessageCircle className="h-5 w-5 text-gray-600" />
-                                </div>
-                                <div>
-                                  <p className="font-medium text-gray-900 text-sm">
-                                    {conv.title || `Chat ${conv.id.slice(-4)}`}
-                                  </p>
-                                  <p className="text-xs text-gray-500">
-                                    {new Date(conv.started_at || conv.timestamp).toLocaleDateString()}
-                                  </p>
-                                </div>
+                  <div className="flex-1 px-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-gray-900">Recent Chats</h3>
+                      {conversations.length > 3 && (
+                        <button className="text-xs text-gray-500 hover:text-gray-700">View All</button>
+                      )}
+                    </div>
+
+                    {loadingConversations && !conversationsLoaded ? (
+                      <div className="space-y-3">
+                        {[1, 2, 3].map((i) => (
+                          <div key={i} className="bg-white rounded-xl border border-gray-200 p-4 animate-pulse">
+                            <div className="flex items-center space-x-3">
+                              <div className="h-10 w-10 bg-gray-200 rounded-full"></div>
+                              <div className="flex-1">
+                                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
                               </div>
-                              <ChevronDown className="h-4 w-4 text-gray-400 -rotate-90 group-hover:text-gray-600 transition-colors" />
-                            </button>
-                            {index < Math.min(conversations.length, 3) - 1 && (
-                              <div className="h-px bg-gray-200"></div>
-                            )}
+                            </div>
                           </div>
                         ))}
                       </div>
-                    </div>
-                  )}
+                    ) : conversations.length > 0 ? (
+                      <div className="space-y-3 mb-6">
+                        {conversations.slice(0, 3).map((conv, index) => (
+                          <div key={conv.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200 transform hover:-translate-y-1">
+                            <button
+                              onClick={() => loadConversationAndStartChat(conv.id)}
+                              className="w-full text-left p-4 flex items-center justify-between group"
+                            >
+                              <div className="flex items-center space-x-3">
+                                <div className="h-10 w-10 bg-gradient-to-r from-gray-100 to-gray-200 rounded-full flex items-center justify-center">
+                                  <MessageCircle className="h-5 w-5 text-gray-600" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium text-gray-900 text-sm truncate">
+                                    {conv.title || `Chat ${conv.id.slice(-4)}`}
+                                  </p>
+                                  <p className="text-xs text-gray-500 flex items-center space-x-1">
+                                    <span>{new Date(conv.started_at || conv.timestamp).toLocaleDateString()}</span>
+                                    <span>•</span>
+                                    <span>{new Date(conv.started_at || conv.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                  </p>
+                                </div>
+                              </div>
+                              <ChevronDown className="h-4 w-4 text-gray-400 -rotate-90 group-hover:text-gray-600 transition-all duration-200 group-hover:translate-x-1" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : conversationsLoaded ? (
+                      <div className="bg-white rounded-xl border-2 border-dashed border-gray-200 p-8 text-center">
+                        <div className="h-12 w-12 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-3">
+                          <MessageCircle className="h-6 w-6 text-gray-400" />
+                        </div>
+                        <p className="text-sm text-gray-500 mb-4">No conversations yet</p>
+                        <Button
+                          onClick={startChatInterface}
+                          size="sm"
+                          className="bg-black hover:bg-gray-800 text-white rounded-lg"
+                        >
+                          Start your first chat
+                        </Button>
+                      </div>
+                    ) : null}
+                  </div>
 
-                  {/* Start New Chat Button */}
-                  <div>
+                  {/* Footer Actions */}
+                  <div className="p-6 pt-0">
                     <Button
                       onClick={startChatInterface}
-                      className="w-full h-12 bg-black hover:bg-gray-800 text-white rounded-xl font-medium transition-all duration-200 transform hover:scale-105"
+                      className="w-full h-12 bg-gradient-to-r from-black to-gray-800 hover:from-gray-800 hover:to-black text-white rounded-xl font-medium transition-all duration-300 transform hover:scale-105 shadow-lg"
                     >
                       <MessageCircle className="h-5 w-5 mr-2" />
-                      Start New Chat
+                      Start New Conversation
                     </Button>
 
-                    {voiceSupported && (
-                      <p className="text-xs text-gray-500 mt-3 flex items-center justify-center space-x-2">
-                        <Mic className="h-3 w-3" />
-                        <span>Voice messages supported</span>
-                      </p>
-                    )}
+                    {/* Feature Pills */}
+                    <div className="flex items-center justify-center space-x-4 mt-4">
+                      <div className="flex items-center space-x-1 text-xs text-gray-500">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <span>Instant replies</span>
+                      </div>
+                      {voiceSupported && (
+                        <div className="flex items-center space-x-1 text-xs text-gray-500">
+                          <Mic className="h-3 w-3" />
+                          <span>Voice support</span>
+                        </div>
+                      )}
+                      <div className="flex items-center space-x-1 text-xs text-gray-500">
+                        <Sparkles className="h-3 w-3" />
+                        <span>AI powered</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </CardContent>
-            ) : (
-              /* Chat Interface */
-              <>
-                {/* Recording Indicator - Minimal */}
-                {isRecording && (
-                  <div className="bg-red-50 border-b border-red-100 p-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-                        <span className="text-red-700 text-sm font-medium">Recording...</span>
-                        <AnimatedWaveform isRecording={isRecording} audioLevel={audioLevel} />
-                      </div>
-                      <div className="text-red-600 text-sm font-mono">
-                        {formatDuration(recordingDuration)}
-                      </div>
-                    </div>
+
+            {/* Recording Indicator - Minimal */}
+            {isRecording && (
+              <div className="bg-red-50 border-b border-red-100 p-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                    <span className="text-red-700 text-sm font-medium">Recording...</span>
+                    <AnimatedWaveform isRecording={isRecording} audioLevel={audioLevel} />
                   </div>
-                )}
-
-                {/* Voice Error - Clean Alert */}
-                {voiceError && (
-                  <div className="bg-orange-50 border-b border-orange-100 p-3">
-                    <div className="flex items-center space-x-3">
-                      <AlertCircle className="h-4 w-4 text-orange-600" />
-                      <span className="text-orange-700 text-sm">{voiceError}</span>
-                    </div>
+                  <div className="text-red-600 text-sm font-mono">
+                    {formatDuration(recordingDuration)}
                   </div>
-                )}
+                </div>
+              </div>
+            )}
 
-                {/* Messages - Clean Design */}
-                <CardContent
-                  ref={messagesContainerRef}
-                  className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50"
-                >
-                  {messages.length === 1 && messages[0].id === "welcome" && !isLoading ? (
-                    <div className="flex items-center justify-center h-full">
-                      <div className="text-center">
-                        <div className="h-16 w-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                          <MessageCircle className="h-8 w-8 text-gray-600" />
-                        </div>
-                        <h3 className="text-xl font-semibold text-gray-900 mb-2">Welcome!</h3>
-                        <p className="text-gray-600 mb-6">How can we help you today?</p>
-                        <div className="flex items-center justify-center space-x-4 text-sm text-gray-500">
-                          <div className="flex items-center space-x-2">
-                            <MessageCircle className="h-4 w-4" />
-                            <span>Type a message</span>
-                          </div>
-                          {voiceSupported && (
-                            <div className="flex items-center space-x-2">
-                              <Mic className="h-4 w-4" />
-                              <span>Voice message</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
+            {/* Voice Error - Clean Alert */}
+            {voiceError && (
+              <div className="bg-orange-50 border-b border-orange-100 p-3">
+                <div className="flex items-center space-x-3">
+                  <AlertCircle className="h-4 w-4 text-orange-600" />
+                  <span className="text-orange-700 text-sm">{voiceError}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Messages - Clean Design */}
+            <CardContent
+              ref={messagesContainerRef}
+              className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50"
+            >
+              {messages.length === 1 && messages[0].id === "welcome" && !isLoading ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center">
+                    <div className="h-16 w-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                      <MessageCircle className="h-8 w-8 text-gray-600" />
                     </div>
-                  ) : (
-                    <>
-                      {messages.map((message, index) => (
-                        <div
-                          key={message.id}
-                          className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
-                        >
-                          <div className="flex items-start space-x-2 max-w-[85%]">
-                            {message.role === "webhook" && (
-                              <div className="h-8 w-8 rounded-full bg-black flex items-center justify-center flex-shrink-0 mt-1">
-                                <Sparkles className="h-4 w-4 text-white" />
-                              </div>
-                            )}
-                            <div
-                              className={`rounded-2xl p-3 ${
-                                message.role === "user"
-                                  ? "bg-black text-white ml-8"
-                                  : "bg-white text-gray-900 border border-gray-200"
-                              }`}
-                            >
-                              {message.type === "voice" && (
-                                <div className="mb-2">
-                                  <div className="flex items-center space-x-2 mb-2">
-                                    <Mic className="h-4 w-4 opacity-75" />
-                                    <span className="text-xs opacity-75 font-medium">VOICE MESSAGE</span>
-                                  </div>
-                                  <StaticWaveform audioUrl={message.audioUrl} />
-                                </div>
-                              )}
-                              <p className="text-sm leading-relaxed">{message.content}</p>
-                              <p className={`text-xs mt-2 opacity-60`}>
-                                {formatTime(message.timestamp)}
-                              </p>
-
-                              {message.cards && message.cards.length > 0 && (
-                                <ProductCards
-                                  cards={message.cards}
-                                  addedProductVariantId={addedProductVariantId}
-                                  onAddToCart={handleAddToCart}
-                                />
-                              )}
-                            </div>
-                            {message.role === "user" && (
-                              <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 mt-1">
-                                <User className="h-4 w-4 text-gray-600" />
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                      {isLoading && (
-                        <div className="flex justify-start">
-                          <div className="flex items-start space-x-2">
-                            <div className="h-8 w-8 rounded-full bg-black flex items-center justify-center flex-shrink-0">
-                              <Sparkles className="h-4 w-4 text-white" />
-                            </div>
-                            <div className="bg-white border border-gray-200 rounded-2xl">
-                              <TypingIndicator />
-                            </div>
-                          </div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Welcome!</h3>
+                    <p className="text-gray-600 mb-6">How can we help you today?</p>
+                    <div className="flex items-center justify-center space-x-4 text-sm text-gray-500">
+                      <div className="flex items-center space-x-2">
+                        <MessageCircle className="h-4 w-4" />
+                        <span>Type a message</span>
+                      </div>
+                      {voiceSupported && (
+                        <div className="flex items-center space-x-2">
+                          <Mic className="h-4 w-4" />
+                          <span>Voice message</span>
                         </div>
                       )}
-                    </>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {messages.map((message, index) => (
+                    <div
+                      key={message.id}
+                      className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+                    >
+                      <div className="flex items-start space-x-2 max-w-[85%]">
+                        {message.role === "webhook" && (
+                          <div className="h-8 w-8 rounded-full bg-black flex items-center justify-center flex-shrink-0 mt-1">
+                            <Sparkles className="h-4 w-4 text-white" />
+                          </div>
+                        )}
+                        <div
+                          className={`rounded-2xl p-3 ${
+                            message.role === "user"
+                              ? "bg-black text-white ml-8"
+                              : "bg-white text-gray-900 border border-gray-200"
+                          }`}
+                        >
+                          {message.type === "voice" && (
+                            <div className="mb-2">
+                              <div className="flex items-center space-x-2 mb-2">
+                                <Mic className="h-4 w-4 opacity-75" />
+                                <span className="text-xs opacity-75 font-medium">VOICE MESSAGE</span>
+                              </div>
+                              <StaticWaveform audioUrl={message.audioUrl} />
+                            </div>
+                          )}
+                          <p className="text-sm leading-relaxed">{message.content}</p>
+                          <p className={`text-xs mt-2 opacity-60`}>
+                            {formatTime(message.timestamp)}
+                          </p>
+
+                          {message.cards && message.cards.length > 0 && (
+                            <ProductCards
+                              cards={message.cards}
+                              addedProductVariantId={addedProductVariantId}
+                              onAddToCart={handleAddToCart}
+                            />
+                          )}
+                        </div>
+                        {message.role === "user" && (
+                          <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 mt-1">
+                            <User className="h-4 w-4 text-gray-600" />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {isLoading && (
+                    <div className="flex justify-start">
+                      <div className="flex items-start space-x-2">
+                        <div className="h-8 w-8 rounded-full bg-black flex items-center justify-center flex-shrink-0">
+                          <Sparkles className="h-4 w-4 text-white" />
+                        </div>
+                        <div className="bg-white border border-gray-200 rounded-2xl">
+                          <TypingIndicator />
+                        </div>
+                      </div>
+                    </div>
                   )}
-                  <div ref={messagesEndRef} />
-                </CardContent>
-              </>
-            )}
+                </>
+              )}
+              <div ref={messagesEndRef} />
+            </CardContent>
 
             {/* Scroll to bottom button */}
             {showScrollToBottom && (
