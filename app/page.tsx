@@ -1374,7 +1374,7 @@ export default function ChatWidget() {
             {isRecording && (
               <div className={`sticky z-10 bg-gradient-to-r from-red-50 to-orange-50 border-b border-red-200 p-4 shadow-sm ${
                 isMobile ? 'top-[41px]' : 'top-[73px]'
-              }`}
+              }`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <div className="relative">
