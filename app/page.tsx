@@ -1,6 +1,7 @@
 "use client";
 
 import type React from "react";
+import { Fragment } from "react";
 import { ChevronDown, ArrowUp } from "lucide-react";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
@@ -1027,7 +1028,7 @@ export default function ChatWidget() {
   };
 
   return (
-    <>
+    <Fragment>
       {/* Chat Widget Button - Minimalist Design */}
       {!isOpen && (
         <div className="fixed bottom-6 right-6 z-50">
@@ -1214,14 +1215,7 @@ className="text-gray-600 hover:text-black hover:bg-gray-100 h-8 w-8 p-0 rounded-
                         <div className="h-12 w-12 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-3">
                           <MessageCircle className="h-6 w-6 text-gray-400" />
                         </div>
-                        <p className="text-sm text-gray-500 mb-4">No conversations yet</p>
-                        <Button
-                          onClick={startChatInterface}
-                          size="sm"
-                          className="bg-black hover:bg-gray-800 text-white rounded-lg"
-                        >
-                          Start your first chat
-                        </Button>
+                        <p className="text-sm text-gray-500">No conversations yet</p>
                       </div>
                     ) : null}
                   </div>
@@ -1443,6 +1437,6 @@ className="text-gray-600 hover:text-black hover:bg-gray-100 h-8 w-8 p-0 rounded-
           </Card>
         </div>
       )}
-    </>
+    </Fragment>
   );
 }
