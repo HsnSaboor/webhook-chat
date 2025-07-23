@@ -995,7 +995,7 @@ export default function ChatWidget() {
     }
   };
 
-  const loadConversationAndStartChat = async (conversationId: string){
+  const loadConversationAndStartChat = async (conversationId: string) => {
     try {
       console.log(`[Chatbot] Loading conversation: ${conversationId}`);
 
