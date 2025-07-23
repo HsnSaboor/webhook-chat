@@ -92,7 +92,12 @@ export default function ChatWidget() {
 
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
-  const [chatHeight, setChatHeight] = useState(600);
+  const [chatHeight, setChatHeight] = useState(() => {
+    if (typeof window !== "undefined") {
+      return Math.min(window.innerHeight * 0.75, 600);
+    }
+    return 600;
+  });
   const [isDragging, setIsDragging] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
@@ -288,7 +293,11 @@ export default function ChatWidget() {
 
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+      if (mobile) {
+        setChatHeight(Math.min(window.innerHeight * 0.75, window.innerHeight - 100));
+      }
     };
 
     checkMobile();
@@ -897,8 +906,8 @@ export default function ChatWidget() {
     if (isDragging && isMobile) {
       const deltaY = dragStartY.current - e.clientY;
       const newHeight = Math.min(
-        Math.max(dragStartHeight.current + deltaY, 300),
-        window.innerHeight * 0.9,
+        Math.max(dragStartHeight.current + deltaY, window.innerHeight * 0.4),
+        window.innerHeight * 0.85,
       );
       setChatHeight(newHeight);
     }
@@ -909,8 +918,8 @@ export default function ChatWidget() {
       e.preventDefault();
       const deltaY = dragStartY.current - e.touches[0].clientY;
       const newHeight = Math.min(
-        Math.max(dragStartHeight.current + deltaY, 300),
-        window.innerHeight * 0.9,
+        Math.max(dragStartHeight.current + deltaY, window.innerHeight * 0.4),
+        window.innerHeight * 0.85,
       );
       setChatHeight(newHeight);
     }
@@ -1061,14 +1070,26 @@ export default function ChatWidget() {
       {isOpen && (
         <div
           className={`fixed z-50 transition-all duration-300 ease-out ${
-            isMobile ? "inset-x-4 bottom-4" : "bottom-6 right-6 w-96"
+            isMobile ? "inset-x-0 bottom-0" : "bottom-6 right-6"
           }`}
           style={{
+            width: isMobile ? "100%" : "600px",
             height: isMobile ? `${chatHeight}px` : "600px",
             maxHeight: isMobile ? "85vh" : "600px",
           }}
         >
           <Card className="h-full flex flex-col shadow-2xl bg-white border border-gray-200 rounded-2xl overflow-hidden">
+
+            {/* Mobile Drag Handle */}
+            {isMobile && (
+              <div
+                className="sticky top-0 z-20 flex items-center justify-center p-2 bg-white/95 backdrop-blur-sm border-b border-gray-200 cursor-grab active:cursor-grabbing"
+                onMouseDown={handleMouseDown}
+                onTouchStart={handleTouchStart}
+              >
+                <div className="w-10 h-1 bg-gray-300 rounded-full"></div>
+              </div>
+            )}
 
             {/* Sticky Header */}
             <CardHeader className="sticky top-0 z-10 flex flex-row items-center justify-between p-4 bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-sm">
@@ -1255,7 +1276,7 @@ export default function ChatWidget() {
             ) : (
               /* Chat Interface */
               <CardContent className="flex-1 flex flex-col p-0 bg-gray-50">
-                <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 chat-messages"
+                <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6 bg-gray-50 chat-messages"
                      ref={messagesContainerRef}
                      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                   {messages.length === 1 && messages[0].id === "welcome" && !isLoading ? (
@@ -1285,16 +1306,16 @@ export default function ChatWidget() {
                       {messages.map((message, index) => (
                         <div
                           key={message.id}
-                          className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+                          className={`flex ${message.role === "user" ? "justify-end" : "justify-start"} mb-4`}
                         >
-                          <div className="flex items-start space-x-2 max-w-[85%]">
+                          <div className="flex items-start space-x-3 max-w-[85%]">
                             {message.role === "webhook" && (
                               <div className="h-8 w-8 rounded-full bg-black flex items-center justify-center flex-shrink-0 mt-1">
                                 <Sparkles className="h-4 w-4 text-white" />
                               </div>
                             )}
                             <div
-                              className={`rounded-2xl p-3 ${
+                              className={`rounded-2xl p-4 shadow-sm ${
                                 message.role === "user"
                                   ? "bg-black text-white ml-8"
                                   : "bg-white text-gray-900 border border-gray-200"
@@ -1331,12 +1352,12 @@ export default function ChatWidget() {
                         </div>
                       ))}
                       {isLoading && (
-                        <div className="flex justify-start">
-                          <div className="flex items-start space-x-2">
-                            <div className="h-8 w-8 rounded-full bg-black flex items-center justify-center flex-shrink-0">
-                              <Sparkles className="h-4 w-4 text-white" />
+                        <div className="flex justify-start mb-4">
+                          <div className="flex items-start space-x-3">
+                            <div className="h-8 w-8 rounded-full bg-black flex items-center justify-center flex-shrink-0 mt-1">
+                              <Sparkles className="h-4 w-4 text-white animate-pulse" />
                             </div>
-                            <div className="bg-white border border-gray-200 rounded-2xl">
+                            <div className="bg-white border border-gray-200 rounded-2xl shadow-sm">
                               <TypingIndicator />
                             </div>
                           </div>
@@ -1351,7 +1372,9 @@ export default function ChatWidget() {
 
             {/* Recording Indicator - Enhanced */}
             {isRecording && (
-              <div className="sticky top-[73px] z-10 bg-gradient-to-r from-red-50 to-orange-50 border-b border-red-200 p-4 shadow-sm">
+              <div className={`sticky z-10 bg-gradient-to-r from-red-50 to-orange-50 border-b border-red-200 p-4 shadow-sm ${
+                isMobile ? 'top-[41px]' : 'top-[73px]'
+              }`}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <div className="relative">
@@ -1402,7 +1425,9 @@ export default function ChatWidget() {
                 size="icon"
                 onClick={scrollToBottom}
                 className={`absolute right-4 h-10 w-10 rounded-full shadow-lg bg-white border border-gray-200 hover:bg-gray-50 transition-all duration-300 z-20 ${
-                  isRecording ? 'bottom-32' : 'bottom-24'
+                  isRecording 
+                    ? (isMobile ? 'bottom-40' : 'bottom-32')
+                    : (isMobile ? 'bottom-28' : 'bottom-24')
                 }`}
                 aria-label="Scroll to bottom"
               >

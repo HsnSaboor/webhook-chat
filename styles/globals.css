@@ -134,36 +134,20 @@ body {
 .chat-messages {
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */
+  scroll-behavior: smooth;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .chat-messages::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera */
 }
 
-/* Smooth scrolling behavior */
-.chat-messages {
-  scroll-behavior: smooth;
-}
-
-/* Fade effect for top and bottom of chat */
-.chat-messages::before {
-  content: '';
-  position: sticky;
-  top: 0;
-  height: 20px;
-  background: linear-gradient(to bottom, #f9fafb, transparent);
-  z-index: 1;
-  pointer-events: none;
-}
-
-.chat-messages::after {
-  content: '';
-  position: sticky;
-  bottom: 0;
-  height: 20px;
-  background: linear-gradient(to top, #f9fafb, transparent);
-  z-index: 1;
-  pointer-events: none;
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .chat-messages {
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 /* Smooth transitions for all interactive elements */
