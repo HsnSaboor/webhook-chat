@@ -1070,15 +1070,15 @@ export default function ChatWidget() {
         >
           <Card className="h-full flex flex-col shadow-2xl bg-white border border-gray-200 rounded-2xl overflow-hidden">
 
-            {/* Minimalist Header */}
-            <CardHeader className="flex flex-row items-center justify-between p-4 bg-white border-b border-gray-100">
+            {/* Sticky Header */}
+            <CardHeader className="sticky top-0 z-10 flex flex-row items-center justify-between p-4 bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-sm">
               <div className="flex items-center space-x-3">
                 {!showHomepage && (
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setShowHomepage(true)}
-className="text-gray-600 hover:text-black hover:bg-gray-100 h-8 w-8 p-0 rounded-lg"
+                    className="text-gray-600 hover:text-black hover:bg-gray-100 h-8 w-8 p-0 rounded-lg transition-all duration-200"
                   >
                     <ChevronDown className="h-4 w-4 rotate-90" />
                   </Button>
@@ -1089,8 +1089,8 @@ className="text-gray-600 hover:text-black hover:bg-gray-100 h-8 w-8 p-0 rounded-
                 <div>
                   <h3 className="font-semibold text-gray-900 text-lg">Support</h3>
                   <p className="text-sm text-gray-500 flex items-center space-x-2">
-                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                    <span>Online</span>
+                    <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                    <span>{isLoading ? "Typing..." : "Online"}</span>
                   </p>
                 </div>
               </div>
@@ -1101,7 +1101,7 @@ className="text-gray-600 hover:text-black hover:bg-gray-100 h-8 w-8 p-0 rounded-
                     variant="ghost"
                     size="sm"
                     onClick={startNewConversation}
-                    className="text-gray-600 hover:text-black hover:bg-gray-100 h-8 px-3 rounded-lg text-xs"
+                    className="text-gray-600 hover:text-black hover:bg-gray-100 h-8 px-3 rounded-lg text-xs transition-all duration-200"
                   >
                     <Plus className="h-4 w-4 mr-1" />
                     New
@@ -1111,7 +1111,8 @@ className="text-gray-600 hover:text-black hover:bg-gray-100 h-8 w-8 p-0 rounded-
                   variant="ghost"
                   size="sm"
                   onClick={() => setIsOpen(false)}
-                  className="text-gray-600 hover:text-black hover:bg-gray-100 h-8 w-8 p-0 rounded-lg"
+                  className="text-gray-600 hover:text-black hover:bg-gray-100 h-8 w-8 p-0 rounded-lg transition-all duration-200"
+                  title="Close chat"
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -1254,8 +1255,9 @@ className="text-gray-600 hover:text-black hover:bg-gray-100 h-8 w-8 p-0 rounded-
             ) : (
               /* Chat Interface */
               <CardContent className="flex-1 flex flex-col p-0 bg-gray-50">
-                <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50"
-                     ref={messagesContainerRef}>
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 chat-messages"
+                     ref={messagesContainerRef}
+                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                   {messages.length === 1 && messages[0].id === "welcome" && !isLoading ? (
                     <div className="flex items-center justify-center h-full">
                       <div className="text-center">
@@ -1347,17 +1349,35 @@ className="text-gray-600 hover:text-black hover:bg-gray-100 h-8 w-8 p-0 rounded-
               </CardContent>
             )}
 
-            {/* Recording Indicator - Minimal */}
+            {/* Recording Indicator - Enhanced */}
             {isRecording && (
-              <div className="bg-red-50 border-b border-red-100 p-3">
+              <div className="sticky top-[73px] z-10 bg-gradient-to-r from-red-50 to-orange-50 border-b border-red-200 p-4 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-                    <span className="text-red-700 text-sm font-medium">Recording...</span>
-                    <AnimatedWaveform isRecording={isRecording} audioLevel={audioLevel} />
+                    <div className="relative">
+                      <div className="w-4 h-4 bg-red-500 rounded-full animate-pulse"></div>
+                      <div className="absolute inset-0 w-4 h-4 bg-red-400 rounded-full animate-ping opacity-75"></div>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-red-700 text-sm font-semibold">Recording Voice Message</span>
+                      <span className="text-red-600 text-xs">Release to send, tap again to cancel</span>
+                    </div>
+                    <div className="ml-4">
+                      <AnimatedWaveform isRecording={isRecording} audioLevel={audioLevel} />
+                    </div>
                   </div>
-                  <div className="text-red-600 text-sm font-mono">
-                    {formatDuration(recordingDuration)}
+                  <div className="flex flex-col items-end">
+                    <div className="text-red-700 text-lg font-mono font-bold">
+                      {formatDuration(recordingDuration)}
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={stopRecording}
+                      className="text-red-600 hover:text-red-800 hover:bg-red-100 h-6 px-2 text-xs"
+                    >
+                      Cancel
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -1376,21 +1396,25 @@ className="text-gray-600 hover:text-black hover:bg-gray-100 h-8 w-8 p-0 rounded-
 
 
             {/* Scroll to bottom button */}
-            {showScrollToBottom && (
+            {showScrollToBottom && !showHomepage && (
               <Button
                 variant="secondary"
                 size="icon"
                 onClick={scrollToBottom}
-                className="absolute bottom-20 right-4 h-8 w-8 rounded-full shadow-lg bg-white border border-gray-200 hover:bg-gray-50"
+                className={`absolute right-4 h-10 w-10 rounded-full shadow-lg bg-white border border-gray-200 hover:bg-gray-50 transition-all duration-300 z-20 ${
+                  isRecording ? 'bottom-32' : 'bottom-24'
+                }`}
                 aria-label="Scroll to bottom"
               >
-                <ArrowUp className="h-4 w-4 rotate-180" />
+                <ArrowUp className="h-4 w-4 rotate-180 text-gray-600" />
               </Button>
             )}
 
             {/* Input - Modern Minimalist - Only show in chat interface */}
             {!showHomepage && (
-              <CardFooter className="p-4 border-t border-gray-100 bg-white">
+              <CardFooter className={`p-4 border-t border-gray-100 bg-white transition-all duration-300 ${
+                isRecording ? 'bg-red-50/50' : ''
+              }`}>
                 <form onSubmit={(e) => {
                     e.preventDefault();
                     if (input.trim()) {
@@ -1402,10 +1426,19 @@ className="text-gray-600 hover:text-black hover:bg-gray-100 h-8 w-8 p-0 rounded-
                     <Input
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
-                      placeholder={isRecording ? "Recording your voice..." : "Type your message..."}
+                      placeholder={isRecording ? "🎤 Recording voice message..." : "Type your message..."}
                       disabled={isLoading || isRecording}
-                      className="h-12 rounded-xl border-gray-200 focus:border-black focus:ring-black transition-all duration-200 bg-gray-50 focus:bg-white"
+                      className={`h-12 rounded-xl border-gray-200 focus:border-black focus:ring-black transition-all duration-200 ${
+                        isRecording 
+                          ? "bg-red-50 border-red-200 text-red-700 placeholder:text-red-500" 
+                          : "bg-gray-50 focus:bg-white"
+                      }`}
                     />
+                    {isLoading && !isRecording && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <div className="animate-spin h-4 w-4 border-2 border-gray-300 border-t-black rounded-full"></div>
+                      </div>
+                    )}
                   </div>
 
                   {voiceSupported && (
@@ -1417,12 +1450,16 @@ className="text-gray-600 hover:text-black hover:bg-gray-100 h-8 w-8 p-0 rounded-
                       disabled={isLoading}
                       className={`h-12 w-12 p-0 rounded-xl transition-all duration-200 ${
                         isRecording
-                          ? "bg-red-500 hover:bg-red-600 border-0"
+                          ? "bg-red-500 hover:bg-red-600 border-0 shadow-lg scale-110"
                           : "border-gray-200 hover:border-black hover:bg-gray-50"
                       }`}
+                      title={isRecording ? "Stop recording" : "Start voice recording"}
                     >
                       {isRecording ? (
-                        <Send className="h-5 w-5 text-white" />
+                        <div className="relative">
+                          <Send className="h-5 w-5 text-white" />
+                          <div className="absolute inset-0 rounded-full bg-white/20 animate-pulse"></div>
+                        </div>
                       ) : (
                         <Mic className="h-5 w-5 text-gray-600" />
                       )}
@@ -1433,8 +1470,13 @@ className="text-gray-600 hover:text-black hover:bg-gray-100 h-8 w-8 p-0 rounded-
                     type="submit"
                     disabled={!input.trim() || isLoading || isRecording}
                     className="h-12 px-6 rounded-xl bg-black hover:bg-gray-800 transition-all duration-200 disabled:opacity-50"
+                    title="Send message"
                   >
-                    <Send className="h-5 w-5" />
+                    {isLoading && !isRecording ? (
+                      <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
+                    ) : (
+                      <Send className="h-5 w-5" />
+                    )}
                   </Button>
                 </form>
               </CardFooter>

@@ -130,27 +130,40 @@ body {
   -webkit-backdrop-filter: blur(10px);
 }
 
-/* Custom scrollbar for chat messages */
+/* Custom scrollbar for chat messages - Hidden but functional */
 .chat-messages {
-  scrollbar-width: thin;
-  scrollbar-color: #e5e7eb transparent;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
 }
 
 .chat-messages::-webkit-scrollbar {
-  width: 4px;
+  display: none; /* Chrome, Safari, Opera */
 }
 
-.chat-messages::-webkit-scrollbar-track {
-  background: transparent;
+/* Smooth scrolling behavior */
+.chat-messages {
+  scroll-behavior: smooth;
 }
 
-.chat-messages::-webkit-scrollbar-thumb {
-  background-color: #e5e7eb;
-  border-radius: 2px;
+/* Fade effect for top and bottom of chat */
+.chat-messages::before {
+  content: '';
+  position: sticky;
+  top: 0;
+  height: 20px;
+  background: linear-gradient(to bottom, #f9fafb, transparent);
+  z-index: 1;
+  pointer-events: none;
 }
 
-.chat-messages::-webkit-scrollbar-thumb:hover {
-  background-color: #d1d5db;
+.chat-messages::after {
+  content: '';
+  position: sticky;
+  bottom: 0;
+  height: 20px;
+  background: linear-gradient(to top, #f9fafb, transparent);
+  z-index: 1;
+  pointer-events: none;
 }
 
 /* Smooth transitions for all interactive elements */
