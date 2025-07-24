@@ -110,6 +110,8 @@ export default function ChatWidget() {
   const [showHomepage, setShowHomepage] = useState(true);
   const [loadingConversations, setLoadingConversations] = useState(false);
   const [conversationsLoaded, setConversationsLoaded] = useState(false);
+  const [conversationsCache, setConversationsCache] = useState<any[]>([]);
+  const [cacheTimestamp, setCacheTimestamp] = useState<number>(0);
 
   const dragStartY = useRef(0);
   const dragStartHeight = useRef(0);
@@ -179,6 +181,12 @@ export default function ChatWidget() {
 
             console.log("[Chatbot] Stored complete Shopify context:", window.shopifyContext);
 
+            // Auto-load conversations immediately when session is received
+            if (!conversationsLoaded && conversationsCache.length === 0) {
+              console.log("[Chatbot] Auto-loading conversations on session init");
+              requestConversationsFromParent();
+            }
+
             // Log individual received values
             if (messageData.source_url) {
               console.log("[Chatbot] Received source_url:", messageData.source_url);
@@ -221,14 +229,26 @@ export default function ChatWidget() {
         }).filter(Boolean); // Remove any null entries
 
         console.log("[Chatbot] Formatted conversations:", formattedConversations);
+        
+        // Update both current conversations and cache
         setConversations(formattedConversations);
+        setConversationsCache(formattedConversations);
+        setCacheTimestamp(Date.now());
+        setConversationsLoaded(true);
+        setLoadingConversations(false);
       } else {
         console.warn("[Chatbot] Conversations data is not an array:", conversationsData);
         setConversations([]);
+        setConversationsCache([]);
+        setConversationsLoaded(true);
+        setLoadingConversations(false);
       }
     } catch (error) {
       console.error("[Chatbot] Error processing conversations:", error);
       setConversations([]);
+      setConversationsCache([]);
+      setConversationsLoaded(true);
+      setLoadingConversations(false);
     }
   };
           handleConversationsReceived(messageData.conversations);
@@ -336,8 +356,19 @@ export default function ChatWidget() {
       if (sessionId && sessionReceived) {
         trackEvent("chat_opened", { initialMessagesCount: messages.length });
 
-        // Request conversations list from parent
-        requestConversationsFromParent();
+        // Use cached conversations if available and recent (within 5 minutes)
+        const cacheAge = Date.now() - cacheTimestamp;
+        const cacheExpired = cacheAge > 5 * 60 * 1000; // 5 minutes
+
+        if (conversationsCache.length > 0 && !cacheExpired) {
+          console.log("[Chatbot] Using cached conversations");
+          setConversations(conversationsCache);
+          setConversationsLoaded(true);
+          setLoadingConversations(false);
+        } else if (!conversationsLoaded || cacheExpired) {
+          console.log("[Chatbot] Cache expired or no conversations loaded, requesting fresh data");
+          requestConversationsFromParent();
+        }
 
         // Always show homepage first when opening chat
         setShowHomepage(true);
@@ -346,18 +377,19 @@ export default function ChatWidget() {
         setIsOpen(false); // Close chat if no proper session
       }
     } else if (!isOpen) {
-      setMessages([]);
+      // Don't clear messages when closing - they will be preserved
       setShowHomepage(true);
     }
-  }, [isOpen, sessionId, sessionReceived, trackEvent, setMessages]);
+  }, [isOpen, sessionId, sessionReceived, trackEvent, conversationsCache, cacheTimestamp, conversationsLoaded]);
 
-  // Load conversations when the component mounts and session is available
+  // Auto-load conversations when the component mounts and session is available
   useEffect(() => {
-    if (sessionId && sessionReceived) {
+    if (sessionId && sessionReceived && !conversationsLoaded && conversationsCache.length === 0) {
+      console.log("[Chatbot] Auto-loading conversations on component mount");
       setLoadingConversations(true);
       requestConversationsFromParent();
     }
-  }, [sessionId, sessionReceived]);
+  }, [sessionId, sessionReceived, conversationsLoaded, conversationsCache.length]);
 
   const handleScroll = useCallback(() => {
     if (messagesContainerRef.current) {
@@ -383,6 +415,7 @@ export default function ChatWidget() {
 
   const requestConversationsFromParent = () => {
     if (window.parent && window.parent !== window) {
+      console.log("[Chatbot] Requesting conversations from parent");
       setLoadingConversations(true);
       window.parent.postMessage(
         {
@@ -390,8 +423,7 @@ export default function ChatWidget() {
         },
         "https://zenmato.myshopify.com",
       );
-      setConversationsLoaded(true);
-      setLoadingConversations(false);
+      // Don't set conversationsLoaded here - let the response handler do it
     }
   };
 
@@ -986,6 +1018,9 @@ export default function ChatWidget() {
     ]);
     setCurrentConversationId(null);
     setShowHomepage(false);
+    
+    // Refresh conversations cache after starting new conversation
+    requestConversationsFromParent();
   };
 
   const startChatInterface = () => {

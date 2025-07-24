@@ -256,10 +256,21 @@
         case 'get-all-conversations':
           // Handle conversation list request
           console.log('[Shopify Integration] Handling get-all-conversations request');
-          if (window.ShopifyAPIClient) {
+          
+          // First try to use preloaded conversations if available
+          if (window.preloadedConversations && window.preloadedConversations.length > 0) {
+            console.log('[Shopify Integration] Using preloaded conversations:', window.preloadedConversations.length);
+            event.source.postMessage({
+              type: 'conversations-response',
+              conversations: window.preloadedConversations
+            }, '*');
+          } else if (window.ShopifyAPIClient) {
+            // Fallback to API call
             window.ShopifyAPIClient.fetchAllConversations()
               .then(conversations => {
                 console.log('[Shopify Integration] Sending conversations response:', conversations);
+                // Update preloaded cache
+                window.preloadedConversations = conversations;
                 event.source.postMessage({
                   type: 'conversations-response',
                   conversations: conversations
@@ -360,6 +371,20 @@
 
     // Setup message listener
     setupMessageListener();
+
+    // Pre-load conversations for better UX
+    console.log('[Shopify Integration] Pre-loading conversations for session:', sessionData.session_id);
+    if (window.ShopifyAPIClient) {
+      window.ShopifyAPIClient.fetchAllConversations()
+        .then(conversations => {
+          console.log('[Shopify Integration] Pre-loaded conversations:', conversations.length);
+          // Store in a global variable for quick access
+          window.preloadedConversations = conversations;
+        })
+        .catch(error => {
+          console.warn('[Shopify Integration] Failed to pre-load conversations:', error);
+        });
+    }
 
     // Setup iframe detection and initialization
     let chatbotIframe = document.getElementById('chatbot');
