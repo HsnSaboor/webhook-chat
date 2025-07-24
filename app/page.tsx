@@ -608,32 +608,8 @@ export default function ChatWidget() {
         String.fromCharCode(...new Uint8Array(arrayBuffer)),
       );
 
-      let eventType = "user_message";
-      if (!sessionStorage.getItem("chat_started_logged")) {
-        eventType = "chat_started";
-        sessionStorage.setItem("chat_started_logged", "true");
-      }
-
-      const messageData = {
-        id: crypto.randomUUID(),
-        session_id: sessionId,
-        timestamp: new Date().toISOString(),
-        event_type: eventType,
-        user_message: `Voice message (${duration}s)`,
-        source_url: sourceUrl,
-        page_context: pageContext,
-        chatbot_triggered: true,
-        conversion_tracked: false,
-        type: "voice",
-        audioData: base64Audio,
-        mimeType: audioBlob.type,
-        duration: duration,
-        cart_currency: cartCurrency,
-        localization: localization,
-      };
-
-      console.log("[Chatbot] Sending voice message to parent:", messageData);
-      sendChatMessageToParent(messageData);
+      // Use the sendMessage function to handle both voice and text messages consistently
+      await sendMessage(`Voice message (${duration}s)`, "voice", audioBlob);
 
     } catch (error) {
       const errorMessage: Message = {
@@ -727,10 +703,6 @@ export default function ChatWidget() {
         conversationId,
       });
 
-      // Send only to n8n chat webhook (simplified payload)
-      const chatWebhookUrl = process.env.NEXT_PUBLIC_N8N_CHAT_WEBHOOK || 
-        "https://similarly-secure-mayfly.ngrok-free.app/webhook/chat";
-
       // Get the latest context data
       const context = window.shopifyContext || {};
       console.log("[Chatbot] Using Shopify context for message:", context);
@@ -738,60 +710,106 @@ export default function ChatWidget() {
       // Use the session ID from context if available, otherwise use the local sessionId
       const effectiveSessionId = context.session_id || sessionId;
 
-      const webhookPayload = {
-        session_id: effectiveSessionId,
-        message: messageText,
-        timestamp: new Date().toISOString(),
-        conversation_id: conversationId,
-        source_url: context.source_url || null,
-        page_context: context.page_context || null,
-        cart_currency: context.cart_currency || null,
-        localization: context.localization || null,
-        type,
-      };
+      // Check if we're in a parent window (Shopify) context
+      const isInShopify = window.parent && window.parent !== window;
 
-      console.log("[Chatbot] Sending to n8n chat webhook:", webhookPayload);
+      if (isInShopify) {
+        // Send through parent window (Shopify integration)
+        const messageData = {
+          id: crypto.randomUUID(),
+          session_id: effectiveSessionId,
+          timestamp: new Date().toISOString(),
+          user_message: messageText,
+          message: messageText,
+          conversation_id: conversationId,
+          source_url: context.source_url || null,
+          page_context: context.page_context || null,
+          cart_currency: context.cart_currency || null,
+          localization: context.localization || null,
+          type,
+        };
 
-      const response = await fetch(chatWebhookUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "ngrok-skip-browser-warning": "true",
-        },
-        body: JSON.stringify(webhookPayload),
-      });
+        // Add audio data for voice messages
+        if (type === "voice" && audioBlob) {
+          const arrayBuffer = await audioBlob.arrayBuffer();
+          const base64Audio = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+          messageData.audioData = base64Audio;
+          messageData.mimeType = audioBlob.type;
+          messageData.duration = Math.floor((audioBlob.size / 16000) / 2); // Rough estimate
+        }
 
-      if (!response.ok) {
-        throw new Error(`Chat webhook request failed: ${response.status}`);
+        console.log("[Chatbot] Sending message through parent window:", messageData);
+        sendChatMessageToParent(messageData);
+        
+        // The response will come through the message listener
+        return;
+      } else {
+        // Direct webhook call (fallback when not in Shopify)
+        const chatWebhookUrl = process.env.NEXT_PUBLIC_N8N_CHAT_WEBHOOK || 
+          "https://similarly-secure-mayfly.ngrok-free.app/webhook/chat";
+
+        const webhookPayload = {
+          session_id: effectiveSessionId,
+          message: messageText,
+          timestamp: new Date().toISOString(),
+          conversation_id: conversationId,
+          source_url: context.source_url || null,
+          page_context: context.page_context || null,
+          cart_currency: context.cart_currency || null,
+          localization: context.localization || null,
+          type,
+        };
+
+        console.log("[Chatbot] Sending directly to n8n chat webhook:", webhookPayload);
+
+        const response = await fetch(chatWebhookUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "ngrok-skip-browser-warning": "true",
+          },
+          body: JSON.stringify(webhookPayload),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Chat webhook request failed: ${response.status}`);
+        }
+
+        const responseText = await response.text();
+        console.log("[Chatbot] Raw webhook response:", responseText);
+
+        let data;
+        try {
+          const parsedResponse = JSON.parse(responseText);
+          // Handle array responses from webhook
+          data = Array.isArray(parsedResponse) ? parsedResponse[0] : parsedResponse;
+        } catch (e) {
+          console.error("[Chatbot] Failed to parse webhook response as JSON:", e);
+          data = { message: "I received your message but had trouble processing the response. Please try again." };
+        }
+
+        console.log("[Chatbot] Parsed chat webhook response:", data);
+
+        // Create the webhook response message
+        const webhookMessage: Message = {
+          id: `webhook-${Date.now()}`,
+          content: data.message || "I'm sorry, I couldn't process your request right now.",
+          role: "webhook",
+          timestamp: new Date(),
+          type: "text",
+          cards: data.cards,
+        };
+
+        // Add webhook response to chat
+        setMessages((prev) => [...prev, webhookMessage]);
+        setIsLoading(false);
+
+        // Track the response received event
+        trackAnalyticsEvent("response_received", {
+          response: webhookMessage.content,
+          conversationId,
+        });
       }
-
-      const responseText = await response.text();
-      console.log("[Chatbot] Raw webhook response:", responseText);
-
-      let data;
-      try {
-        const parsedResponse = JSON.parse(responseText);
-        // Handle array responses from webhook
-        data = Array.isArray(parsedResponse) ? parsedResponse[0] : parsedResponse;
-      } catch (e) {
-        console.error("[Chatbot] Failed to parse webhook response as JSON:", e);
-        data = { message: "I received your message but had trouble processing the response. Please try again." };
-      }
-
-      console.log("[Chatbot] Parsed chat webhook response:", data);
-
-      // Create the webhook response message
-      const webhookMessage: Message = {
-        id: `webhook-${Date.now()}`,
-        content: data.message || "I'm sorry, I couldn't process your request right now.",
-        role: "webhook",
-        timestamp: new Date(),
-        type: "text",
-        cards: data.cards,
-      };
-
-      // Add webhook response to chat
-      setMessages((prev) => [...prev, webhookMessage]);
 
       // Save both user and AI messages to Supabase
       try {

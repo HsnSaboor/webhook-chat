@@ -1,4 +1,3 @@
-
 /**
  * Shopify Chatbot Integration - Enhanced Version
  * Upload this to your Shopify theme assets folder
@@ -14,11 +13,11 @@
 
   function sendSessionDataToChatbot() {
     console.log('[Shopify Integration] Attempting to send session data to chatbot iframe...');
-    
+
     const chatbotIframe = document.getElementById('chatbot');
     if (!chatbotIframe || !chatbotIframe.contentWindow) {
       console.error('[Shopify Integration] Chatbot iframe not found or not loaded');
-      
+
       // Retry logic
       if (retryCount < MAX_RETRIES) {
         retryCount++;
@@ -53,7 +52,7 @@
       retryCount = 0; // Reset retry count on success
     } catch (error) {
       console.error('[Shopify Integration] Error sending session data:', error);
-      
+
       // Retry on error
       if (retryCount < MAX_RETRIES) {
         retryCount++;
@@ -172,9 +171,9 @@
 
   function handleAddToCart(event, payload) {
     console.log('[Shopify Integration] Processing add to cart:', payload);
-    
+
     const { variantId, quantity = 1, redirect = true } = payload;
-    
+
     if (!variantId) {
       console.error('[Shopify Integration] No variantId provided for add to cart');
       event.source.postMessage({
@@ -203,7 +202,7 @@
     })
     .then(data => {
       console.log('[Shopify Integration] Successfully added to cart:', data);
-      
+
       // Notify the chatbot of success
       event.source.postMessage({
         type: 'add-to-cart-success',
@@ -219,7 +218,7 @@
     })
     .catch(error => {
       console.error('[Shopify Integration] Error adding to cart:', error);
-      
+
       // Notify the chatbot of error
       event.source.postMessage({
         type: 'add-to-cart-error',
@@ -242,12 +241,12 @@
           const { action, conversationId, name } = event.data.data;
           handleConversationAction(event, action, conversationId, name);
           break;
-          
+
         case 'CHAT_MESSAGE':
           const { message } = event.data.data;
           handleChatMessage(event, message);
           break;
-          
+
         case 'REQUEST_SESSION_DATA':
           // Re-send session data when requested
           sendSessionDataToChatbot();
@@ -256,7 +255,7 @@
         case 'get-all-conversations':
           // Handle conversation list request
           console.log('[Shopify Integration] Handling get-all-conversations request');
-          
+
           // First try to use preloaded conversations if available
           if (window.preloadedConversations && window.preloadedConversations.length > 0) {
             console.log('[Shopify Integration] Using preloaded conversations:', window.preloadedConversations.length);
@@ -297,7 +296,7 @@
           console.log('[Shopify Integration] Handling add-to-cart request:', event.data.payload);
           handleAddToCart(event, event.data.payload);
           break;
-          
+
         default:
           console.log('[Shopify Integration] Unknown message type:', event.data.type);
       }
@@ -307,18 +306,18 @@
   function initializeChatbot() {
     console.log('[Shopify Integration] Initializing chatbot...');
 
-    // Clear any existing timeout
-    if (initializationTimeout) {
-      clearTimeout(initializationTimeout);
+        // Clear any existing timeout
+        if (initializationTimeout) {
+            clearTimeout(initializationTimeout);
+        }
+
+        // Wait a bit for iframe to fully load
+        initializationTimeout = setTimeout(() => {
+            sendSessionDataToChatbot();
+        }, 1000);
+
+        console.log('[Shopify Integration] Chatbot system initialized.');
     }
-
-    // Wait a bit for iframe to fully load
-    initializationTimeout = setTimeout(() => {
-      sendSessionDataToChatbot();
-    }, 1000);
-
-    console.log('[Shopify Integration] Chatbot system initialized.');
-  }
 
   function waitForDependencies() {
     if (typeof window.ShopifySessionManager === 'undefined' || 
@@ -331,10 +330,18 @@
     console.log('[Shopify Integration] Dependencies loaded, proceeding with initialization...');
     main();
   }
+    function sendMessageToChatbot(message) {
+        const chatbotIframe = document.getElementById('chatbot');
+        if (chatbotIframe && chatbotIframe.contentWindow) {
+            chatbotIframe.contentWindow.postMessage(message, '*');
+        } else {
+            console.error('[Shopify Integration] Chatbot iframe not found or not ready to receive messages.');
+        }
+    }
 
   function createChatbotIframe() {
     console.log('[Shopify Integration] Creating chatbot iframe...');
-    
+
     const iframe = document.createElement('iframe');
     iframe.id = 'chatbot';
     iframe.src = 'https://v0-custom-chat-interface-kappa.vercel.app/';
@@ -352,12 +359,12 @@
     `;
     iframe.title = 'Chatbot';
     iframe.allow = 'microphone';
-    
+
     iframe.addEventListener('load', initializeChatbot);
-    
+
     document.body.appendChild(iframe);
     console.log('[Shopify Integration] Chatbot iframe created and added to page');
-    
+
     return iframe;
   }
 
@@ -388,11 +395,11 @@
 
     // Setup iframe detection and initialization
     let chatbotIframe = document.getElementById('chatbot');
-    
+
     if (chatbotIframe) {
       console.log('[Shopify Integration] Found existing chatbot iframe');
       chatbotIframe.addEventListener('load', initializeChatbot);
-      
+
       // If already loaded, initialize immediately
       if (chatbotIframe.contentDocument && chatbotIframe.contentDocument.readyState === 'complete') {
         initializeChatbot();
@@ -400,7 +407,7 @@
     } else {
       // Create the iframe if it doesn't exist
       chatbotIframe = createChatbotIframe();
-      
+
       // Also watch for iframe being added by other scripts
       const observer = new MutationObserver(function(mutations) {
         mutations.forEach(function(mutation) {
@@ -431,6 +438,115 @@
 
     console.log('[Shopify Integration] Main initialization complete');
   }
+
+    window.addEventListener('message', function(event) {
+      console.log('[Shopify Integration] Received message from parent window:', event.data);
+
+      if (!event.data) {
+        return;
+      }
+
+      const messageData = event.data;
+
+      if (messageData.type === 'chat-response') {
+        console.log('[Shopify Integration] Received chat response from webhook:', messageData.response);
+        sendMessageToChatbot({
+          type: 'chat-response',
+          response: messageData.response
+        });
+      } else if (messageData.type === 'conversations-response') {
+        try {
+          const conversations = JSON.parse(messageData.conversations);
+          console.log('[Shopify Integration] Sending conversations response:', conversations);
+          sendMessageToChatbot({
+            type: 'conversations-response',
+            conversations: conversations
+          });
+        } catch (error) {
+          console.error('[Shopify Integration] Error fetching conversations:', error);
+          sendMessageToChatbot({
+            type: 'conversations-response',
+            conversations: []
+          });
+        }
+      } else if (messageData.type === 'send-chat-message') {
+        console.log('[Shopify Integration] Handling chat message:', messageData.payload);
+        try {
+          // Forward the message to the n8n webhook
+          const webhookUrl = 'https://similarly-secure-mayfly.ngrok-free.app/webhook/chat';
+
+          const payload = {
+            session_id: messageData.payload.session_id,
+            message: messageData.payload.user_message || messageData.payload.message,
+            timestamp: messageData.payload.timestamp,
+            conversation_id: messageData.payload.conversation_id,
+            source_url: messageData.payload.source_url,
+            page_context: messageData.payload.page_context,
+            cart_currency: messageData.payload.cart_currency,
+            localization: messageData.payload.localization,
+            type: messageData.payload.type || 'text'
+          };
+
+          // Add audio data if it's a voice message
+          if (messageData.payload.type === 'voice' && messageData.payload.audioData) {
+            payload.audioData = messageData.payload.audioData;
+            payload.mimeType = messageData.payload.mimeType;
+            payload.duration = messageData.payload.duration;
+          }
+
+          console.log('[Shopify Integration] Sending to n8n webhook:', payload);
+
+          fetch(webhookUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'ngrok-skip-browser-warning': 'true'
+            },
+            body: JSON.stringify(payload)
+          })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`Webhook request failed: ${response.status}`);
+            }
+            return response.text();
+          })
+          .then(responseText => {
+            console.log('[Shopify Integration] Webhook response:', responseText);
+
+            let data;
+            try {
+              const parsedResponse = JSON.parse(responseText);
+              data = Array.isArray(parsedResponse) ? parsedResponse[0] : parsedResponse;
+            } catch (e) {
+              console.error('[Shopify Integration] Failed to parse webhook response:', e);
+              data = { message: "I received your message but had trouble processing the response." };
+            }
+
+            // Send the response back to the chatbot
+            sendMessageToChatbot({
+              type: 'chat-response',
+              response: data
+            });
+          })
+          .catch(error => {
+            console.error('[Shopify Integration] Webhook error:', error);
+            sendMessageToChatbot({
+              type: 'chat-error',
+              error: error.message
+            });
+          });
+
+        } catch (error) {
+          console.error('[Shopify Integration] Error processing chat message:', error);
+          sendMessageToChatbot({
+            type: 'chat-error',
+            error: error.message
+          });
+        }
+      } else {
+        console.log('[Shopify Integration] Unknown message type:', messageData.type);
+      }
+    });
 
   // Start the process
   console.log('[Shopify Integration] Starting dependency check...');
