@@ -861,6 +861,36 @@ export default function ChatWidget() {
     }
   };
 
+  const handleProductClick = (card: ProductCardData) => {
+    console.log(`[Chatbot] Opening product page for: ${card.name}`);
+    
+    // Navigate parent window to product page
+    if (window.parent && window.parent !== window) {
+      try {
+        // Use the product handle if available, otherwise construct from name
+        const productHandle = card.handle || card.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        const productUrl = `https://zenmato.myshopify.com/products/${productHandle}`;
+        
+        window.parent.postMessage(
+          {
+            type: "navigate-to-product",
+            payload: {
+              productUrl: productUrl,
+              productHandle: productHandle,
+              variantId: card.variantId,
+              productName: card.name
+            },
+          },
+          "https://zenmato.myshopify.com",
+        );
+        
+        console.log(`[Chatbot] Sent navigate request for product: ${productUrl}`);
+      } catch (error) {
+        console.error("[Chatbot] Error navigating to product:", error);
+      }
+    }
+  };
+
   const handleAddToCart = (card: ProductCardData) => {
     console.log(
       `[Chatbot] Attempting to send 'add-to-cart' message for variantId: ${card.variantId}`,
@@ -891,14 +921,16 @@ export default function ChatWidget() {
           payload: {
             variantId: card.variantId,
             quantity: 1,
-            redirect: true,
+            redirect: false, // Don't redirect to cart - show popup instead
+            productName: card.name,
+            productPrice: card.price,
           },
         },
         shopifyStoreDomain,
       );
 
       console.log(
-        `[Chatbot] Sent postMessage to parent: type='add-to-cart', variantId=${card.variantId}, redirect=true, targetOrigin=${shopifyStoreDomain}`,
+        `[Chatbot] Sent postMessage to parent: type='add-to-cart', variantId=${card.variantId}, redirect=false, targetOrigin=${shopifyStoreDomain}`,
       );
     } else {
       console.warn(
@@ -1367,6 +1399,7 @@ export default function ChatWidget() {
                                   cards={message.cards}
                                   addedProductVariantId={addedProductVariantId}
                                   onAddToCart={handleAddToCart}
+                                  onProductClick={handleProductClick}
                                 />
                               )}
                             </div>
