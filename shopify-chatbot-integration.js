@@ -543,9 +543,9 @@
             error: error.message
           });
         }
-      } else {
-        console.log('[Shopify Integration] Unknown message type:', messageData.type);
-      }
+      } else if (messageData.type !== 'send-chat-message') {
+          console.log('[Shopify Integration] Unknown message type:', messageData.type);
+        }
     });
 
   // Start the process

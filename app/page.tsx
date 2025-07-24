@@ -584,34 +584,12 @@ export default function ChatWidget() {
   };
 
   const sendVoiceMessage = async (audioBlob: Blob, duration: number) => {
-    const audioUrl = URL.createObjectURL(audioBlob);
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      content: "Voice message",
-      role: "user",
-      timestamp: new Date(),
-      type: "voice",
-      audioUrl: audioUrl,
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-    setIsLoading(true);
-    trackEvent("message_sent", {
-      type: "voice",
-      duration,
-      messageContent: "Voice message",
-    });
-
+    // Don't add the message here - let sendMessage handle it completely
     try {
-      const arrayBuffer = await audioBlob.arrayBuffer();
-      const base64Audio = btoa(
-        String.fromCharCode(...new Uint8Array(arrayBuffer)),
-      );
-
       // Use the sendMessage function to handle both voice and text messages consistently
       await sendMessage(`Voice message (${duration}s)`, "voice", audioBlob);
-
     } catch (error) {
+      console.error("[Chatbot] Error sending voice message:", error);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         content: "Connection error. Please check your internet and try again.",
@@ -741,7 +719,8 @@ export default function ChatWidget() {
         console.log("[Chatbot] Sending message through parent window:", messageData);
         sendChatMessageToParent(messageData);
         
-        // The response will come through the message listener
+        // The response will come through the message listener - don't set isLoading false here
+        // isLoading will be set false when we receive the chat-response or chat-error message
         return;
       } else {
         // Direct webhook call (fallback when not in Shopify)
@@ -802,67 +781,61 @@ export default function ChatWidget() {
 
         // Add webhook response to chat
         setMessages((prev) => [...prev, webhookMessage]);
-        setIsLoading(false);
 
         // Track the response received event
         trackAnalyticsEvent("response_received", {
           response: webhookMessage.content,
           conversationId,
         });
-      }
 
-      // Save both user and AI messages to Supabase
-      try {
-        const effectiveSessionId = window.shopifyContext?.session_id || sessionId;
+        // Save both user and AI messages to Supabase
+        try {
+          const effectiveSessionId = window.shopifyContext?.session_id || sessionId;
 
-        // Save user message
-        const userSaveResponse = await fetch('/api/messages/save', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            conversation_id: conversationId,
-            session_id: effectiveSessionId,
-            content: messageText,
-            role: 'user',
-            type: type,
-            audio_url: audioBlob ? URL.createObjectURL(audioBlob) : null,
-            timestamp: userMessage.timestamp.toISOString()
-          })
-        });
+          // Save user message
+          const userSaveResponse = await fetch('/api/messages/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              conversation_id: conversationId,
+              session_id: effectiveSessionId,
+              content: messageText,
+              role: 'user',
+              type: type,
+              audio_url: audioBlob ? URL.createObjectURL(audioBlob) : null,
+              timestamp: userMessage.timestamp.toISOString()
+            })
+          });
 
-        if (!userSaveResponse.ok) {
-          console.error('[Chatbot] Failed to save user message:', await userSaveResponse.text());
+          if (!userSaveResponse.ok) {
+            console.error('[Chatbot] Failed to save user message:', await userSaveResponse.text());
+          }
+
+          // Save AI response
+          const aiSaveResponse = await fetch('/api/messages/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              conversation_id: conversationId,
+              session_id: effectiveSessionId,
+              content: data.message || "No response content",
+              role: 'webhook',
+              type: 'text',
+              cards: data.cards || null,
+              timestamp: webhookMessage.timestamp.toISOString()
+            })
+          });
+
+          if (!aiSaveResponse.ok) {
+            console.error('[Chatbot] Failed to save AI message:', await aiSaveResponse.text());
+          }
+        } catch (error) {
+          console.error('Failed to save messages:', error);
         }
 
-        // Save AI response
-        const aiSaveResponse = await fetch('/api/messages/save', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            conversation_id: conversationId,
-            session_id: effectiveSessionId,
-            content: data.message || "No response content",
-            role: 'webhook',
-            type: 'text',
-            cards: data.cards || null,
-            timestamp: webhookMessage.timestamp.toISOString()
-          })
-        });
-
-        if (!aiSaveResponse.ok) {
-          console.error('[Chatbot] Failed to save AI message:', await aiSaveResponse.text());
-        }
-      } catch (error) {
-        console.error('Failed to save messages:', error);
+        // Only set loading false after everything is processed
+        setIsLoading(false);
       }
-
-      setIsLoading(false);
-
-      // Track the response received event
-      trackAnalyticsEvent("response_received", {
-        response: webhookMessage.content,
-        conversationId,
-      });
     } catch (error) {
       console.error("[Chatbot] Error sending message:", error);
 
