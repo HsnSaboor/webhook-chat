@@ -54,7 +54,7 @@ export const ConversationsList: React.FC<ConversationsListProps> = ({
               }
 
               const conversationId = conversation.conversation_id || conversation.id || `fallback-${index}`;
-              const conversationName = conversation.name || conversation.title || "Untitled Conversation";
+              const conversationName = conversation.name || "New Chat";
               const startedAt = conversation.started_at || conversation.timestamp || new Date().toISOString();
 
               return (

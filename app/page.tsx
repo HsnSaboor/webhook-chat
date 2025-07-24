@@ -213,8 +213,8 @@ export default function ChatWidget() {
           return {
             id: conversationId,
             conversation_id: conversationId,
-            title: conv.name || conv.title || `Chat ${conversationId.slice(-4)}`,
-            name: conv.name || conv.title || `Chat ${conversationId.slice(-4)}`,
+            title: conv.name || `Chat ${conversationId.slice(-4)}`,
+            name: conv.name || `Chat ${conversationId.slice(-4)}`,
             started_at: conv.started_at || conv.timestamp || new Date().toISOString(),
             timestamp: conv.started_at || conv.timestamp || new Date().toISOString()
           };
@@ -1219,7 +1219,7 @@ export default function ChatWidget() {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <p className="font-medium text-gray-900 text-sm truncate">
-                                    {conv.title || `Chat ${conv.id.slice(-4)}`}
+                                    {conv.title}
                                   </p>
                                   <p className="text-xs text-gray-500 flex items-center space-x-1">
                                     <span>{new Date(conv.started_at || conv.timestamp).toLocaleDateString()}</span>

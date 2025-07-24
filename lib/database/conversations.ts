@@ -51,6 +51,54 @@ export async function getConversationsBySession(sessionId: string): Promise<Data
   }
 }
 
+export async function getConversationsWithLatestMessages(sessionId: string): Promise<(DatabaseConversation & { latest_user_message?: string })[]> {
+  try {
+    // First get all conversations for the session
+    const { data: conversations, error: conversationsError } = await supabase
+      .from('conversations')
+      .select('*')
+      .eq('session_id', sessionId)
+      .order('started_at', { ascending: false })
+
+    if (conversationsError) {
+      console.error('Error fetching conversations:', conversationsError)
+      return []
+    }
+
+    if (!conversations || conversations.length === 0) {
+      return []
+    }
+
+    // For each conversation, get the latest user message
+    const conversationsWithMessages = await Promise.all(
+      conversations.map(async (conversation) => {
+        const { data: latestMessage, error: messageError } = await supabase
+          .from('messages')
+          .select('content')
+          .eq('conversation_id', conversation.conversation_id)
+          .eq('role', 'user')
+          .order('timestamp', { ascending: false })
+          .limit(1)
+          .single()
+
+        if (messageError || !latestMessage) {
+          return conversation
+        }
+
+        return {
+          ...conversation,
+          latest_user_message: latestMessage.content
+        }
+      })
+    )
+
+    return conversationsWithMessages
+  } catch (error) {
+    console.error('Error fetching conversations with messages:', error)
+    return []
+  }
+}
+
 export async function getConversationById(conversationId: string): Promise<DatabaseConversation | null> {
   try {
     const { data: conversation, error } = await supabase
