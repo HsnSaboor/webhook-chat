@@ -1091,8 +1091,8 @@ export default function ChatWidget() {
               </div>
             )}
 
-            {/* Sticky Header */}
-            <CardHeader className="sticky top-0 z-10 flex flex-row items-center justify-between p-4 bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-sm">
+            {/* Header - Only sticky in chat interface */}
+            <CardHeader className={`flex flex-row items-center justify-between p-4 bg-white/95 backdrop-blur-sm border-b border-gray-100 ${!showHomepage ? 'sticky top-0 z-10 shadow-sm' : ''}`}>
               <div className="flex items-center space-x-3">
                 {!showHomepage && (
                   <Button
@@ -1275,8 +1275,8 @@ export default function ChatWidget() {
               </CardContent>
             ) : (
               /* Chat Interface */
-              <CardContent className="flex-1 flex flex-col p-0 bg-gray-50">
-                <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6 bg-gray-50 chat-messages"
+              <CardContent className="flex-1 flex flex-col p-0 bg-gray-50 overflow-hidden">
+                <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 bg-gray-50 chat-messages"
                      ref={messagesContainerRef}
                      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                   {messages.length === 1 && messages[0].id === "welcome" && !isLoading ? (
@@ -1306,19 +1306,19 @@ export default function ChatWidget() {
                       {messages.map((message, index) => (
                         <div
                           key={message.id}
-                          className={`flex ${message.role === "user" ? "justify-end" : "justify-start"} mb-4`}
+                          className={`flex ${message.role === "user" ? "justify-end" : "justify-start"} mb-3`}
                         >
-                          <div className="flex items-start space-x-3 max-w-[85%]">
+                          <div className="flex items-start space-x-2 max-w-[85%]">
                             {message.role === "webhook" && (
-                              <div className="h-8 w-8 rounded-full bg-black flex items-center justify-center flex-shrink-0 mt-1">
-                                <Sparkles className="h-4 w-4 text-white" />
+                              <div className="h-7 w-7 rounded-full bg-black flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <Sparkles className="h-3.5 w-3.5 text-white" />
                               </div>
                             )}
                             <div
-                              className={`rounded-2xl p-4 shadow-sm ${
+                              className={`rounded-2xl p-3 shadow-sm transition-all duration-200 ${
                                 message.role === "user"
-                                  ? "bg-black text-white ml-8"
-                                  : "bg-white text-gray-900 border border-gray-200"
+                                  ? "bg-black text-white ml-6"
+                                  : "bg-white text-gray-900 border border-gray-200 hover:shadow-md"
                               }`}
                             >
                               {message.type === "voice" && (
@@ -1344,18 +1344,18 @@ export default function ChatWidget() {
                               )}
                             </div>
                             {message.role === "user" && (
-                              <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 mt-1">
-                                <User className="h-4 w-4 text-gray-600" />
+                              <div className="h-7 w-7 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <User className="h-3.5 w-3.5 text-gray-600" />
                               </div>
                             )}
                           </div>
                         </div>
                       ))}
                       {isLoading && (
-                        <div className="flex justify-start mb-4">
-                          <div className="flex items-start space-x-3">
-                            <div className="h-8 w-8 rounded-full bg-black flex items-center justify-center flex-shrink-0 mt-1">
-                              <Sparkles className="h-4 w-4 text-white animate-pulse" />
+                        <div className="flex justify-start mb-3">
+                          <div className="flex items-start space-x-2">
+                            <div className="h-7 w-7 rounded-full bg-black flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <Sparkles className="h-3.5 w-3.5 text-white animate-pulse" />
                             </div>
                             <div className="bg-white border border-gray-200 rounded-2xl shadow-sm">
                               <TypingIndicator />
@@ -1372,9 +1372,7 @@ export default function ChatWidget() {
 
             {/* Recording Indicator - Enhanced */}
             {isRecording && (
-              <div className={`sticky z-10 bg-gradient-to-r from-red-50 to-orange-50 border-b border-red-200 p-4 shadow-sm ${
-                isMobile ? 'top-[41px]' : 'top-[73px]'
-              }`}>
+              <div className="bg-gradient-to-r from-red-50 to-orange-50 border-b border-red-200 p-3 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <div className="relative">
@@ -1424,10 +1422,10 @@ export default function ChatWidget() {
                 variant="secondary"
                 size="icon"
                 onClick={scrollToBottom}
-                className={`absolute right-4 h-10 w-10 rounded-full shadow-lg bg-white border border-gray-200 hover:bg-gray-50 transition-all duration-300 z-20 ${
+                className={`absolute right-4 h-9 w-9 rounded-full shadow-lg bg-white border border-gray-200 hover:bg-gray-50 hover:shadow-xl transition-all duration-200 z-20 ${
                   isRecording 
-                    ? (isMobile ? 'bottom-40' : 'bottom-32')
-                    : (isMobile ? 'bottom-28' : 'bottom-24')
+                    ? 'bottom-36'
+                    : 'bottom-20'
                 }`}
                 aria-label="Scroll to bottom"
               >
@@ -1437,8 +1435,8 @@ export default function ChatWidget() {
 
             {/* Input - Modern Minimalist - Only show in chat interface */}
             {!showHomepage && (
-              <CardFooter className={`p-4 border-t border-gray-100 bg-white transition-all duration-300 ${
-                isRecording ? 'bg-red-50/50' : ''
+              <CardFooter className={`p-3 border-t border-gray-100 bg-white transition-all duration-200 ${
+                isRecording ? 'bg-red-50/30' : ''
               }`}>
                 <form onSubmit={(e) => {
                     e.preventDefault();
@@ -1446,17 +1444,17 @@ export default function ChatWidget() {
                       sendMessage(input, "text");
                       setInput("");
                     }
-                  }} className="flex w-full space-x-3">
+                  }} className="flex w-full space-x-2">
                   <div className="flex-1 relative">
                     <Input
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       placeholder={isRecording ? "🎤 Recording voice message..." : "Type your message..."}
                       disabled={isLoading || isRecording}
-                      className={`h-12 rounded-xl border-gray-200 focus:border-black focus:ring-black transition-all duration-200 ${
+                      className={`h-11 rounded-xl border-gray-200 focus:border-black focus:ring-1 focus:ring-black transition-all duration-200 text-sm ${
                         isRecording 
                           ? "bg-red-50 border-red-200 text-red-700 placeholder:text-red-500" 
-                          : "bg-gray-50 focus:bg-white"
+                          : "bg-gray-50 focus:bg-white hover:bg-white"
                       }`}
                     />
                     {isLoading && !isRecording && (
@@ -1470,12 +1468,12 @@ export default function ChatWidget() {
                     <Button
                       type="button"
                       variant={isRecording ? "destructive" : "outline"}
-                      size="lg"
+                      size="icon"
                       onClick={toggleRecording}
                       disabled={isLoading}
-                      className={`h-12 w-12 p-0 rounded-xl transition-all duration-200 ${
+                      className={`h-11 w-11 p-0 rounded-xl transition-all duration-200 ${
                         isRecording
-                          ? "bg-red-500 hover:bg-red-600 border-0 shadow-lg scale-110"
+                          ? "bg-red-500 hover:bg-red-600 border-0 shadow-lg scale-105"
                           : "border-gray-200 hover:border-black hover:bg-gray-50"
                       }`}
                       title={isRecording ? "Stop recording" : "Start voice recording"}
@@ -1494,7 +1492,7 @@ export default function ChatWidget() {
                   <Button
                     type="submit"
                     disabled={!input.trim() || isLoading || isRecording}
-                    className="h-12 px-6 rounded-xl bg-black hover:bg-gray-800 transition-all duration-200 disabled:opacity-50"
+                    className="h-11 px-5 rounded-xl bg-black hover:bg-gray-800 transition-all duration-200 disabled:opacity-50 text-sm font-medium"
                     title="Send message"
                   >
                     {isLoading && !isRecording ? (
