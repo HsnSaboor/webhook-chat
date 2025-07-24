@@ -1,0 +1,95 @@
+Please implement the following features in a Shopify theme where the chatbot is embedded via <iframe>:
+🛍️ 1. Clickable Product Cards (Open Product Page)
+
+Goal: When a user clicks a product card inside the chatbot (inside iframe), it should open the product's page in the parent Shopify store.
+
+Action:
+
+    In the chatbot (iframe code), set the window.top.location.href to navigate the parent page:
+
+window.top.location.href = `https://yourstore.com/products/${productHandle}`;
+
+    This ensures the navigation happens outside the iframe, leading to the actual product page.
+
+💬 2. Persist Chatbot Across Page Navigation (Prevent iFrame Reload/Reset)
+
+Goal: Make sure the chatbot iframe:
+
+    Stays open even when the user navigates to another page.
+
+    Doesn't reset to homepage of the chatbot on each reload.
+
+Actions (in Shopify theme):
+
+    Use JavaScript + localStorage or URL hash to store chatbot open/close state:
+
+// Save chatbot open state
+localStorage.setItem("chatbotOpen", "true");
+
+// On page load, restore chatbot state
+if (localStorage.getItem("chatbotOpen") === "true") {
+  document.getElementById("chatbot").style.display = "block"; // or set iframe visibility
+}
+
+    Inside the iframe app, use URL params or postMessage to avoid resetting the conversation when loaded again. The backend (chatbot) must support session ID or conversation caching.
+
+🛒 3. Add to Cart via Chatbot Without Redirect + Cart Popup in Shopify
+
+Goal: When user clicks "Add to Cart" on a product inside the chatbot iframe:
+
+    Don’t redirect to cart page.
+
+    Show a popup on the parent Shopify store:
+
+        ✅ Confirm item added
+
+        🛍 Show current item count (cart counter)
+
+        🔁 Option to continue chat
+
+        💳 Option to go to checkout directly
+
+How to Implement:
+
+Inside iframe chatbot:
+
+    Post message to parent window:
+
+window.parent.postMessage(
+  { type: "add_to_cart", productId: 123456789, variantId: 987654321, quantity: 1 },
+  "*"
+);
+
+In Shopify theme (parent site):
+
+    Listen for the message:
+
+window.addEventListener("message", async function (event) {
+  const data = event.data;
+  if (data.type === "add_to_cart") {
+    // Add product to Shopify cart via fetch API
+    await fetch("/cart/add.js", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: data.variantId,
+        quantity: data.quantity,
+      }),
+    });
+
+    // Update cart counter + show popup
+    updateCartUI(); // write your own function to fetch and update cart count
+    showCartPopup(); // your own modal logic
+  }
+});
+
+Note: This avoids redirection to /cart and gives the user a better flow.
+🔄 Summary of User Flow:
+
+    User clicks product in chatbot → window.top.location.href = /products/handle
+
+    User adds to cart inside chatbot → uses postMessage() to parent Shopify store
+
+    Popup shows in parent → cart counter updates, chatbot stays open
+
+    User can continue adding more products or go to checkout
