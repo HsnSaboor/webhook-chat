@@ -587,6 +587,7 @@ export default function ChatWidget() {
     // Don't add the message here - let sendMessage handle it completely
     try {
       // Use the sendMessage function to handle both voice and text messages consistently
+      // Send empty message for voice - n8n will transcribe and set the actual message
       await sendMessage(`Voice message (${duration}s)`, "voice", audioBlob);
     } catch (error) {
       console.error("[Chatbot] Error sending voice message:", error);
@@ -697,8 +698,8 @@ export default function ChatWidget() {
           id: crypto.randomUUID(),
           session_id: effectiveSessionId,
           timestamp: new Date().toISOString(),
-          user_message: messageText,
-          message: messageText,
+          user_message: type === "voice" ? "" : messageText, // Empty for voice messages
+          message: type === "voice" ? "" : messageText, // Empty for voice messages - n8n will transcribe
           conversation_id: conversationId,
           source_url: context.source_url || null,
           page_context: context.page_context || null,

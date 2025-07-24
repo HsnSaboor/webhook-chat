@@ -477,7 +477,7 @@
 
           const payload = {
             session_id: messageData.payload.session_id,
-            message: messageData.payload.user_message || messageData.payload.message,
+            message: messageData.payload.type === 'voice' ? '' : (messageData.payload.user_message || messageData.payload.message),
             timestamp: messageData.payload.timestamp,
             conversation_id: messageData.payload.conversation_id,
             source_url: messageData.payload.source_url,
