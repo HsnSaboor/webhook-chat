@@ -28,4 +28,6 @@ export interface DatabaseMessage {
   cards?: any
   timestamp: string
   created_at: string
+  audiodata?: string
+  audioduration?: string
 }

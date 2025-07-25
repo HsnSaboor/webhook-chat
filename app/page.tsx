@@ -229,7 +229,7 @@ export default function ChatWidget() {
         }).filter(Boolean); // Remove any null entries
 
         console.log("[Chatbot] Formatted conversations:", formattedConversations);
-        
+
         // Update both current conversations and cache
         setConversations(formattedConversations);
         setConversationsCache(formattedConversations);
@@ -266,15 +266,50 @@ export default function ChatWidget() {
             "[Chatbot] Received chat response from parent:",
             messageData.response,
           );
+
+          const data = messageData.response;
+
           const webhookMessage: Message = {
             id: (Date.now() + 1).toString(),
-            content: messageData.response.ai_message || messageData.response.message || "Response received",
+            content: data.message || data.ai_message || "Response received",
             role: "webhook",
             timestamp: new Date(),
             type: "text",
-            cards: messageData.response.cards || undefined,
+            cards: data.cards || undefined,
           };
           setMessages((prev) => [...prev, webhookMessage]);
+
+          // Save AI response to database
+          try {
+            console.log('[Chatbot] Saving standalone AI response to database...', {
+              content: webhookMessage.content,
+              cards: webhookMessage.cards,
+              timestamp: webhookMessage.timestamp.toISOString()
+            });
+
+            const aiSaveResponse = await fetch('/api/messages/save', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                conversation_id: currentConversationId || `conv_${effectiveSessionId}_${Date.now()}`,
+                session_id: effectiveSessionId,
+                content: webhookMessage.content,
+                role: 'webhook',
+                type: 'text',
+                cards: webhookMessage.cards || null,
+                timestamp: webhookMessage.timestamp.toISOString()
+              })
+            });
+
+            if (!aiSaveResponse.ok) {
+              console.error('[Chatbot] Failed to save standalone AI message:', await aiSaveResponse.text());
+            } else {
+              console.log('[Chatbot] Standalone AI message saved successfully');
+            }
+          } catch (saveError) {
+            console.error('[Chatbot] Error saving standalone AI message:', saveError);
+          }
+
           setIsLoading(false);
         } else if (messageData?.type === "chat-error") {
           console.error(
@@ -309,7 +344,7 @@ export default function ChatWidget() {
     return () => {
       window.removeEventListener("message", handleMessage);
     };
-  }, [setSessionId, setSessionReceived, setSourceUrl, setPageContext, setCartCurrency, setLocalization, setMessages]);
+  }, [setSessionId, setSessionReceived, setSourceUrl, setPageContext, setCartCurrency, setLocalization, setMessages, currentConversationId]);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -451,37 +486,17 @@ export default function ChatWidget() {
       const history = await response.json();
       console.log("[Chatbot] Loaded conversation history:", history);
 
-      // Convert history to messages
-      const loadedMessages: Message[] = history
-        .map((item: HistoryItem, index: number) => {
-          const messages: Message[] = [];
-
-          // Add user message if it exists
-          if (item.user_message && item.user_message.trim()) {
-            messages.push({
-              id: `user-${conversationId}-${index}`,
-              content: item.user_message,
-              role: "user",
-              timestamp: new Date(item.timestamp),
-              type: "text",
-            });
-          }
-
-          // Add AI message if it exists
-          if (item.ai_message && item.ai_message.trim()) {
-            messages.push({
-              id: `ai-${conversationId}-${index}`,
-              content: item.ai_message,
-              role: "webhook",
-              timestamp: new Date(item.timestamp),
-              type: "text",
-              cards: item.cards,
-            });
-          }
-
-          return messages;
-        })
-        .flat();
+      // Transform database messages to frontend format
+      const loadedMessages = history.map((item: any, index: number) => {
+        return {
+          id: `msg-${conversationId}-${index}`,
+          content: item.content || item.user_message || item.ai_message || "",
+          role: item.role || (item.user_message ? "user" : "webhook"),
+          timestamp: new Date(item.timestamp),
+          type: item.type || "text",
+          cards: item.cards || undefined,
+        };
+      }).filter(msg => msg.content.trim() !== "");
 
       console.log("[Chatbot] Converted messages:", loadedMessages);
 
@@ -719,7 +734,7 @@ export default function ChatWidget() {
 
         console.log("[Chatbot] Sending message through parent window:", messageData);
         sendChatMessageToParent(messageData);
-        
+
         // The response will come through the message listener - don't set isLoading false here
         // isLoading will be set false when we receive the chat-response or chat-error message
         return;
@@ -789,11 +804,9 @@ export default function ChatWidget() {
           conversationId,
         });
 
-        // Save both user and AI messages to Supabase
         try {
-          const effectiveSessionId = window.shopifyContext?.session_id || sessionId;
-
           // Save user message
+          console.log('[Chatbot] Saving user message to database...');
           const userSaveResponse = await fetch('/api/messages/save', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -810,9 +823,17 @@ export default function ChatWidget() {
 
           if (!userSaveResponse.ok) {
             console.error('[Chatbot] Failed to save user message:', await userSaveResponse.text());
+          } else {
+            console.log('[Chatbot] User message saved successfully');
           }
 
           // Save AI response
+          console.log('[Chatbot] Saving AI message to database...', {
+            content: data.message,
+            cards: data.cards,
+            timestamp: webhookMessage.timestamp.toISOString()
+          });
+
           const aiSaveResponse = await fetch('/api/messages/save', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -829,9 +850,11 @@ export default function ChatWidget() {
 
           if (!aiSaveResponse.ok) {
             console.error('[Chatbot] Failed to save AI message:', await aiSaveResponse.text());
+          } else {
+            console.log('[Chatbot] AI message saved successfully');
           }
-        } catch (error) {
-          console.error('Failed to save messages:', error);
+        } catch (saveError) {
+          console.error('[Chatbot] Error saving messages:', saveError);
         }
 
         // Only set loading false after everything is processed
@@ -863,14 +886,14 @@ export default function ChatWidget() {
 
   const handleProductClick = (card: ProductCardData) => {
     console.log(`[Chatbot] Opening product page for: ${card.name}`);
-    
+
     // Navigate parent window to product page
     if (window.parent && window.parent !== window) {
       try {
         // Use the product handle if available, otherwise construct from name
         const productHandle = card.handle || card.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
         const productUrl = `https://zenmato.myshopify.com/products/${productHandle}`;
-        
+
         window.parent.postMessage(
           {
             type: "navigate-to-product",
@@ -883,7 +906,7 @@ export default function ChatWidget() {
           },
           "https://zenmato.myshopify.com",
         );
-        
+
         console.log(`[Chatbot] Sent navigate request for product: ${productUrl}`);
       } catch (error) {
         console.error("[Chatbot] Error navigating to product:", error);
@@ -909,7 +932,7 @@ export default function ChatWidget() {
     });
 
     if (
-      typeof window !== "undefined" &&
+      typeof window !== "undefined"&&
       window.parent &&
       window.parent !== window
     ) {
@@ -1042,7 +1065,7 @@ export default function ChatWidget() {
     ]);
     setCurrentConversationId(null);
     setShowHomepage(false);
-    
+
     // Refresh conversations cache after starting new conversation
     requestConversationsFromParent();
   };

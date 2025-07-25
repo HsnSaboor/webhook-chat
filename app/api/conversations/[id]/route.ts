@@ -62,13 +62,15 @@ export async function GET(
 
     console.log(`[Conversation History API] Found ${messages.length} messages`);
 
-    // Transform database format to frontend format
+    // Return messages in their original format for proper handling
     const history = messages.map(msg => ({
-      event_type: 'message',
-      user_message: msg.role === 'user' ? msg.content : '',
-      ai_message: msg.role === 'webhook' ? msg.content : '',
+      id: msg.id,
+      content: msg.content,
+      role: msg.role,
+      type: msg.type,
       cards: msg.cards,
-      timestamp: msg.timestamp
+      timestamp: msg.timestamp,
+      audio_url: msg.audio_url
     }));
 
     console.log("[Conversation History API] Successfully fetched conversation history");
