@@ -1,0 +1,204 @@
+02:59:43.609 [Shopify Session Manager] Initializing enhanced session manager... shopify-session-manager.js:1:34
+02:59:43.609 [Session Manager] Enhanced session manager loaded successfully shopify-session-manager.js:1:5840
+02:59:43.610 [Shopify API Client] Initializing enhanced API client... shopify-api-client.js:1:34
+02:59:43.610 [API Client] Enhanced API client loaded successfully shopify-api-client.js:1:3943
+02:59:43.610 [Shopify Integration] Initializing enhanced chatbot integration... shopify-chatbot-integration.js:1:34
+02:59:43.610 [Shopify Integration] Starting dependency check... shopify-chatbot-integration.js:116:2981
+02:59:43.611 [Shopify Integration] Dependencies loaded, proceeding with initialization... shopify-chatbot-integration.js:105:6545
+02:59:43.611 [Session Manager] Initializing session... shopify-session-manager.js:1:4957
+02:59:43.611 [Session Manager] Looking for Shopify session cookies... shopify-session-manager.js:1:389
+02:59:43.611 [Session Manager] Available cookies: 
+Array(6) [ "keep_alive", "localization", "cart_currency", "_shopify_y", "_tracking_consent", "_shopify_s" ]
+shopify-session-manager.js:1:491
+02:59:43.611 [Session Manager] Found session cookie: _shopify_y = fb946231-ce4a-4a02-a... shopify-session-manager.js:1:807
+02:59:43.612 [Session Manager] Session initialized: 
+Object { session_id: "fb946231-ce4a-4a02-ae2c-3e6ba3162a74", source_url: "https://zenmato.myshopify.com/", page_context: "Home: home: EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en", shopify_context: {…}, timestamp: "2025-07-25T21:59:43.612Z" }
+shopify-session-manager.js:1:5383
+02:59:43.613 [Shopify Integration] Pre-loading conversations for session: fb946231-ce4a-4a02-ae2c-3e6ba3162a74 shopify-chatbot-integration.js:116:1496
+02:59:43.613 [Shopify Integration] Pre-loading conversations for session: fb946231-ce4a-4a02-ae2c-3e6ba3162a74 shopify-chatbot-integration.js:116:312
+02:59:43.613 [API Client] Fetching all conversations... shopify-api-client.js:1:2571
+02:59:43.613 [API Client] Request URL: https://v0-custom-chat-interface-kappa.vercel.app/api/conversations?session_id=fb946231-ce4a-4a02-ae2c-3e6ba3162a74&t=1753480783613 shopify-api-client.js:1:2961
+02:59:43.613 [API Client] Making request to: https://v0-custom-chat-interface-kappa.vercel.app/api/conversations?session_id=fb946231-ce4a-4a02-ae2c-3e6ba3162a74&t=1753480783613 shopify-api-client.js:1:532
+02:59:43.614 [Shopify Integration] Found existing chatbot iframe shopify-chatbot-integration.js:116:1980
+02:59:43.614 [Shopify Integration] Main initialization complete shopify-chatbot-integration.js:116:2915
+02:59:43.789 Cookie “_shopify_test” has been rejected for invalid domain. 4 zenmato.myshopify.com
+02:59:43.839 Cookie “_shopify_s” has been rejected for invalid domain. zenmato.myshopify.com
+02:59:43.839 Cookie “_shopify_sa_p” has been rejected for invalid domain. zenmato.myshopify.com
+02:59:43.839 Cookie “_shopify_sa_t” has been rejected for invalid domain. zenmato.myshopify.com
+02:59:43.839 Cookie “_shopify_y” has been rejected for invalid domain. zenmato.myshopify.com
+02:59:43.971 [Shopify Integration] Received message from iframe: 
+Array(7) [ "esms", true, false, true, false, false, false ]
+shopify-chatbot-integration.js:105:988
+02:59:44.004 GET
+https://zenmato.myshopify.com/VideoDrop
+NS_BINDING_ABORTED
+
+02:59:44.004 GET
+https://zenmato.myshopify.com/VideoDrop
+NS_BINDING_ABORTED
+
+02:59:44.008 GET
+https://zenmato.myshopify.com/VideoDrop
+NS_BINDING_ABORTED
+
+02:59:45.768 [Shopify Integration] Initializing chatbot... shopify-chatbot-integration.js:105:5555
+02:59:45.768 [Shopify Integration] Chatbot system initialized. shopify-chatbot-integration.js:105:6261
+02:59:46.628 [Shopify Integration] Valid Shopify session detected! shopify-chatbot-integration.js:116:2709
+02:59:46.772 [Shopify Integration] Attempting to send session data to chatbot iframe... shopify-chatbot-integration.js:1:216
+02:59:46.773 [Shopify Integration] Sending session data to chatbot iframe shopify-chatbot-integration.js:1:953
+02:59:46.773 [Shopify Integration] Session data sent successfully: 
+Object { type: "init", session_id: "fb946231-ce4a-4a02-ae2c-3e6ba3162a74", source_url: "https://zenmato.myshopify.com/", page_context: "Home: home: EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en", shopify_context: {…}, timestamp: "2025-07-25T21:59:43.612Z", conversation_id: "conv_fb946231-ce4a-4a02-ae2c-3e6ba3162a74_1753480786773" }
+shopify-chatbot-integration.js:1:1202
+02:59:46.776 [Chatbot] Received message from origin: https://zenmato.myshopify.com Data: 
+Object { type: "init", session_id: "fb946231-ce4a-4a02-ae2c-3e6ba3162a74", source_url: "https://zenmato.myshopify.com/", page_context: "Home: home: EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en", shopify_context: {…}, timestamp: "2025-07-25T21:59:43.612Z", conversation_id: "conv_fb946231-ce4a-4a02-ae2c-3e6ba3162a74_1753480786773" }
+page-51c23cbd40294f17.js:1:16083
+02:59:46.783 [Chatbot] Received session_id from parent: fb946231-ce4a-4a02-ae2c-3e6ba3162a74 page-51c23cbd40294f17.js:1:16355
+02:59:46.783 [Chatbot] Stored complete Shopify context: 
+Object { session_id: "fb946231-ce4a-4a02-ae2c-3e6ba3162a74", source_url: "https://zenmato.myshopify.com/", page_context: "Home: home: EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en", conversation_id: "conv_fb946231-ce4a-4a02-ae2c-3e6ba3162a74_1753480786773", shopify_context: {…} }
+page-51c23cbd40294f17.js:1:16710
+02:59:46.783 [Chatbot] Auto-loading conversations on session init page-51c23cbd40294f17.js:1:16810
+02:59:46.784 [Chatbot] Requesting conversations from parent page-51c23cbd40294f17.js:1:20953
+02:59:46.784 [Chatbot] Received source_url: https://zenmato.myshopify.com/ page-51c23cbd40294f17.js:1:16898
+02:59:46.784 [Chatbot] Received page_context: Home: home: EcomHQ Zenmato Demo – ZENMATO page-51c23cbd40294f17.js:1:16973
+02:59:46.784 [Chatbot] Received cart_currency: USD page-51c23cbd40294f17.js:1:17053
+02:59:46.784 [Chatbot] Received localization: en page-51c23cbd40294f17.js:1:17134
+02:59:46.784 [Shopify Integration] Received message from iframe: 
+Object { type: "get-all-conversations" }
+shopify-chatbot-integration.js:105:988
+02:59:46.785 [Shopify Integration] Handling get-all-conversations request shopify-chatbot-integration.js:105:1441
+02:59:46.785 [API Client] Fetching all conversations... shopify-api-client.js:1:2571
+02:59:46.785 [API Client] Request URL: https://v0-custom-chat-interface-kappa.vercel.app/api/conversations?session_id=fb946231-ce4a-4a02-ae2c-3e6ba3162a74&t=1753480786786 shopify-api-client.js:1:2961
+02:59:46.785 [API Client] Making request to: https://v0-custom-chat-interface-kappa.vercel.app/api/conversations?session_id=fb946231-ce4a-4a02-ae2c-3e6ba3162a74&t=1753480786786 shopify-api-client.js:1:532
+02:59:46.786 [Chatbot] Auto-loading conversations on component mount page-51c23cbd40294f17.js:1:20537
+02:59:46.786 [Chatbot] Requesting conversations from parent page-51c23cbd40294f17.js:1:20953
+02:59:46.787 [Shopify Integration] Received message from iframe: 
+Object { type: "get-all-conversations" }
+shopify-chatbot-integration.js:105:988
+02:59:46.787 [Shopify Integration] Handling get-all-conversations request shopify-chatbot-integration.js:105:1441
+02:59:46.787 [API Client] Fetching all conversations... shopify-api-client.js:1:2571
+02:59:46.787 [API Client] Request URL: https://v0-custom-chat-interface-kappa.vercel.app/api/conversations?session_id=fb946231-ce4a-4a02-ae2c-3e6ba3162a74&t=1753480786787 shopify-api-client.js:1:2961
+02:59:46.787 [API Client] Making request to: https://v0-custom-chat-interface-kappa.vercel.app/api/conversations?session_id=fb946231-ce4a-4a02-ae2c-3e6ba3162a74&t=1753480786787 shopify-api-client.js:1:532
+02:59:47.193 [API Client] Request successful: 
+Array [ {…} ]
+shopify-api-client.js:1:834
+02:59:47.194 [API Client] Successfully fetched conversations: 
+Array [ {…} ]
+shopify-api-client.js:1:3071
+02:59:47.194 [Shopify Integration] Pre-loaded conversations: 1 shopify-chatbot-integration.js:116:475
+02:59:47.194 [API Client] Fetching conversation history: conv_fb946231-ce4a-4a02-ae2c-3e6ba3162a74_1753480347133 shopify-api-client.js:1:3222
+02:59:47.195 [API Client] Request URL: https://v0-custom-chat-interface-kappa.vercel.app/api/conversations/conv_fb946231-ce4a-4a02-ae2c-3e6ba3162a74_1753480347133?session_id=fb946231-ce4a-4a02-ae2c-3e6ba3162a74&t=1753480787195 shopify-api-client.js:1:3650
+02:59:47.195 [API Client] Making request to: https://v0-custom-chat-interface-kappa.vercel.app/api/conversations/conv_fb946231-ce4a-4a02-ae2c-3e6ba3162a74_1753480347133?session_id=fb946231-ce4a-4a02-ae2c-3e6ba3162a74&t=1753480787195 shopify-api-client.js:1:532
+02:59:48.014 [API Client] Request successful: 
+Array [ {…} ]
+shopify-api-client.js:1:834
+02:59:48.015 [API Client] Successfully fetched conversations: 
+Array [ {…} ]
+shopify-api-client.js:1:3071
+02:59:48.015 [Shopify Integration] Sending conversations response: 
+Array [ {…} ]
+shopify-chatbot-integration.js:105:1893
+02:59:48.016 [Chatbot] Received message from origin: https://zenmato.myshopify.com Data: 
+Object { type: "conversations-response", conversations: (1) […] }
+page-51c23cbd40294f17.js:1:16083
+02:59:48.016 [Chatbot] Received conversations from parent: 
+Array [ {…} ]
+page-51c23cbd40294f17.js:1:17329
+02:59:48.017 [Chatbot] Formatted conversations: 
+Array [ {…} ]
+page-51c23cbd40294f17.js:1:17881
+02:59:48.297 [API Client] Request successful: 
+Array [ {…} ]
+shopify-api-client.js:1:834
+02:59:48.298 [API Client] Successfully fetched conversations: 
+Array [ {…} ]
+shopify-api-client.js:1:3071
+02:59:48.298 [Shopify Integration] Sending conversations response: 
+Array [ {…} ]
+shopify-chatbot-integration.js:105:1893
+02:59:48.299 [Chatbot] Received message from origin: https://zenmato.myshopify.com Data: 
+Object { type: "conversations-response", conversations: (1) […] }
+page-51c23cbd40294f17.js:1:16083
+02:59:48.300 [Chatbot] Received conversations from parent: 
+Array [ {…} ]
+page-51c23cbd40294f17.js:1:17329
+02:59:48.300 [Chatbot] Formatted conversations: 
+Array [ {…} ]
+page-51c23cbd40294f17.js:1:17881
+02:59:48.781 [Shopify Integration] Preloading conversations on initialization... shopify-chatbot-integration.js:105:5782
+02:59:48.781 [Shopify Integration] Pre-loading conversations for session: fb946231-ce4a-4a02-ae2c-3e6ba3162a74 shopify-chatbot-integration.js:116:312
+02:59:48.782 [API Client] Fetching all conversations... shopify-api-client.js:1:2571
+02:59:48.782 [API Client] Request URL: https://v0-custom-chat-interface-kappa.vercel.app/api/conversations?session_id=fb946231-ce4a-4a02-ae2c-3e6ba3162a74&t=1753480788782 shopify-api-client.js:1:2961
+02:59:48.782 [API Client] Making request to: https://v0-custom-chat-interface-kappa.vercel.app/api/conversations?session_id=fb946231-ce4a-4a02-ae2c-3e6ba3162a74&t=1753480788782 shopify-api-client.js:1:532
+02:59:49.444 [API Client] Request successful: 
+Array [ {…} ]
+shopify-api-client.js:1:834
+02:59:49.445 [API Client] Successfully fetched conversation history: 
+Array [ {…} ]
+shopify-api-client.js:1:3754
+02:59:49.445 [Shopify Integration] Pre-loaded 1 conversations with content shopify-chatbot-integration.js:116:951
+02:59:49.445 [Shopify Integration] Pre-loaded conversations: 1 shopify-chatbot-integration.js:116:1686
+02:59:49.952 [API Client] Request successful: 
+Array [ {…} ]
+shopify-api-client.js:1:834
+02:59:49.953 [API Client] Successfully fetched conversations: 
+Array [ {…} ]
+shopify-api-client.js:1:3071
+02:59:49.954 [Shopify Integration] Pre-loaded conversations: 1 shopify-chatbot-integration.js:116:475
+02:59:49.954 [API Client] Fetching conversation history: conv_fb946231-ce4a-4a02-ae2c-3e6ba3162a74_1753480347133 shopify-api-client.js:1:3222
+02:59:49.954 [API Client] Request URL: https://v0-custom-chat-interface-kappa.vercel.app/api/conversations/conv_fb946231-ce4a-4a02-ae2c-3e6ba3162a74_1753480347133?session_id=fb946231-ce4a-4a02-ae2c-3e6ba3162a74&t=1753480789955 shopify-api-client.js:1:3650
+02:59:49.954 [API Client] Making request to: https://v0-custom-chat-interface-kappa.vercel.app/api/conversations/conv_fb946231-ce4a-4a02-ae2c-3e6ba3162a74_1753480347133?session_id=fb946231-ce4a-4a02-ae2c-3e6ba3162a74&t=1753480789955 shopify-api-client.js:1:532
+02:59:51.132 [API Client] Request successful: 
+Array [ {…} ]
+shopify-api-client.js:1:834
+02:59:51.132 [API Client] Successfully fetched conversation history: 
+Array [ {…} ]
+shopify-api-client.js:1:3754
+02:59:51.132 [Shopify Integration] Pre-loaded 1 conversations with content shopify-chatbot-integration.js:116:951
+02:59:51.132 [Shopify Integration] Conversations preloaded on init: 1 shopify-chatbot-integration.js:105:5965
+02:59:51.133 [Chatbot] Received message from origin: https://zenmato.myshopify.com Data: 
+Object { type: "conversations-response", conversations: (1) […] }
+page-51c23cbd40294f17.js:1:16083
+02:59:51.134 [Chatbot] Received conversations from parent: 
+Array [ {…} ]
+page-51c23cbd40294f17.js:1:17329
+02:59:51.134 [Chatbot] Formatted conversations: 
+Array [ {…} ]
+page-51c23cbd40294f17.js:1:17881
+02:59:53.952 [Chatbot] Using cached conversations page-51c23cbd40294f17.js:1:20177
+02:59:54.530 [Analytics] Event tracked: chat_opened page-51c23cbd40294f17.js:1:12164
+02:59:55.259 [Chatbot] Loading conversation: conv_fb946231-ce4a-4a02-ae2c-3e6ba3162a74_1753480347133 page-51c23cbd40294f17.js:1:30064
+02:59:55.259 [Chatbot] Loading conversation: conv_fb946231-ce4a-4a02-ae2c-3e6ba3162a74_1753480347133 page-51c23cbd40294f17.js:1:21208
+02:59:56.351 [Chatbot] Loaded conversation history: 
+Array [ {…} ]
+page-51c23cbd40294f17.js:1:21464
+02:59:56.352 [Chatbot] Converted messages: 
+Array [ {…} ]
+page-51c23cbd40294f17.js:1:21902
+03:00:01.059 [Chatbot] Sending text message: hi page-51c23cbd40294f17.js:1:23625
+03:00:01.950 [Chatbot] Using Shopify context for message: 
+Object { session_id: "fb946231-ce4a-4a02-ae2c-3e6ba3162a74", source_url: "https://zenmato.myshopify.com/", page_context: "Home: home: EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en", conversation_id: "conv_fb946231-ce4a-4a02-ae2c-3e6ba3162a74_1753480786773", shopify_context: {…} }
+page-51c23cbd40294f17.js:1:24614
+03:00:01.951 [Chatbot] Sending message through parent window: 
+Object { id: "bf4f162f-c9eb-4e95-8f61-5046c17bac31", session_id: "fb946231-ce4a-4a02-ae2c-3e6ba3162a74", timestamp: "2025-07-25T22:00:01.952Z", user_message: "hi", message: "hi", conversation_id: "conv_fb946231-ce4a-4a02-ae2c-3e6ba3162a74_1753480347133", source_url: "https://zenmato.myshopify.com/", page_context: "Home: home: EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en", … }
+page-51c23cbd40294f17.js:1:25195
+03:00:01.953 [Shopify Integration] Received message from iframe: 
+Object { type: "send-chat-message", payload: {…} }
+shopify-chatbot-integration.js:105:988
+03:00:01.953 [Shopify Integration] Handling chat message from iframe: 
+Object { id: "bf4f162f-c9eb-4e95-8f61-5046c17bac31", session_id: "fb946231-ce4a-4a02-ae2c-3e6ba3162a74", timestamp: "2025-07-25T22:00:01.952Z", user_message: "hi", message: "hi", conversation_id: "conv_fb946231-ce4a-4a02-ae2c-3e6ba3162a74_1753480347133", source_url: "https://zenmato.myshopify.com/", page_context: "Home: home: EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en", … }
+shopify-chatbot-integration.js:105:3695
+03:00:01.954 [Shopify Integration] Sending to webhook proxy from iframe handler: 
+Object { session_id: "fb946231-ce4a-4a02-ae2c-3e6ba3162a74", message: "hi", user_message: "hi", timestamp: "2025-07-25T22:00:01.952Z", conversation_id: "conv_fb946231-ce4a-4a02-ae2c-3e6ba3162a74_1753480347133", source_url: "https://zenmato.myshopify.com/", page_context: "Home: home: EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en", type: "text", … }
+shopify-chatbot-integration.js:105:4562
+03:00:01.979 XHROPTIONS
+https://v0-custom-chat-interface-kappa.vercel.app/api/webhook
+CORS Missing Allow Origin
+
+03:00:02.244 [Analytics] Event tracked: message_sent page-51c23cbd40294f17.js:1:12164
+03:00:02.494 Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at https://v0-custom-chat-interface-kappa.vercel.app/api/webhook. (Reason: CORS header ‘Access-Control-Allow-Origin’ missing). Status code: 500.
+03:00:02.495 Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at https://v0-custom-chat-interface-kappa.vercel.app/api/webhook. (Reason: CORS request did not succeed). Status code: (null).
+03:00:02.496 [Shopify Integration] Iframe webhook error: TypeError: NetworkError when attempting to fetch resource. shopify-chatbot-integration.js:105:5129
+03:00:02.501 [Chatbot] Received message from origin: https://zenmato.myshopify.com Data: 
+Object { type: "chat-error", error: "NetworkError when attempting to fetch resource." }
+page-51c23cbd40294f17.js:1:16083
+03:00:02.502 [Chatbot] Error from parent: NetworkError when attempting to fetch resource. 954-4a74a2281360139c.js:1:17078
