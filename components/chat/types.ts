@@ -1,10 +1,19 @@
+export interface ProductVariant {
+  id: string;
+  color: string;
+  size: string;
+  price: string;
+  available: boolean;
+}
 
 export interface ProductCardData {
-  image: string;
   name: string;
   price: string;
+  image?: string;
+  description?: string;
   variantId: string;
-  productUrl?: string;
+  handle?: string;
+  variants?: ProductVariant[];
 }
 
 export interface Message {

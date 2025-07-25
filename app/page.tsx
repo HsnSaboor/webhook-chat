@@ -279,37 +279,43 @@ export default function ChatWidget() {
           };
           setMessages((prev) => [...prev, webhookMessage]);
 
-          // Save AI response to database
-          try {
-            console.log('[Chatbot] Saving standalone AI response to database...', {
-              content: webhookMessage.content,
-              cards: webhookMessage.cards,
-              timestamp: webhookMessage.timestamp.toISOString()
-            });
-
-            const aiSaveResponse = await fetch('/api/messages/save', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                conversation_id: currentConversationId || `conv_${effectiveSessionId}_${Date.now()}`,
-                session_id: effectiveSessionId,
+          // Save AI response to database (non-blocking)
+          const saveAIMessage = async () => {
+            try {
+              console.log('[Chatbot] Saving standalone AI response to database...', {
                 content: webhookMessage.content,
-                role: 'webhook',
-                type: 'text',
-                cards: webhookMessage.cards || null,
+                cards: webhookMessage.cards,
                 timestamp: webhookMessage.timestamp.toISOString()
-              })
-            });
+              });
 
-            if (!aiSaveResponse.ok) {
-              console.error('[Chatbot] Failed to save standalone AI message:', await aiSaveResponse.text());
-            } else {
-              console.log('[Chatbot] Standalone AI message saved successfully');
+              const contextSessionId = window.shopifyContext?.session_id;
+              const effectiveSessionId = contextSessionId || sessionId;
+
+              const aiSaveResponse = await fetch('/api/messages/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  conversation_id: currentConversationId || `conv_${effectiveSessionId}_${Date.now()}`,
+                  session_id: effectiveSessionId,
+                  content: webhookMessage.content,
+                  role: 'webhook',
+                  type: 'text',
+                  cards: webhookMessage.cards || null,
+                  timestamp: webhookMessage.timestamp.toISOString()
+                })
+              });
+
+              if (!aiSaveResponse.ok) {
+                console.error('[Chatbot] Failed to save standalone AI message:', await aiSaveResponse.text());
+              } else {
+                console.log('[Chatbot] Standalone AI message saved successfully');
+              }
+            } catch (saveError) {
+              console.error('[Chatbot] Error saving standalone AI message:', saveError);
             }
-          } catch (saveError) {
-            console.error('[Chatbot] Error saving standalone AI message:', saveError);
-          }
+          };
 
+          saveAIMessage();
           setIsLoading(false);
         } else if (messageData?.type === "chat-error") {
           console.error(
@@ -914,20 +920,26 @@ export default function ChatWidget() {
     }
   };
 
-  const handleAddToCart = (card: ProductCardData) => {
+  const handleAddToCart = (card: ProductCardData, selectedVariant?: any, quantity: number = 1) => {
+    const variantId = selectedVariant?.id || card.variantId;
+    const price = selectedVariant?.price || card.price;
+    
     console.log(
-      `[Chatbot] Attempting to send 'add-to-cart' message for variantId: ${card.variantId}`,
+      `[Chatbot] Attempting to send 'add-to-cart' message for variantId: ${variantId}, quantity: ${quantity}`,
     );
-    setAddedProductVariantId(card.variantId);
+    setAddedProductVariantId(variantId);
 
     setTimeout(() => {
       setAddedProductVariantId(null);
     }, 1500);
 
     trackEvent("add_to_cart", {
-      variantId: card.variantId,
+      variantId: variantId,
       productName: card.name,
-      productPrice: card.price,
+      productPrice: price,
+      quantity: quantity,
+      selectedColor: selectedVariant?.color,
+      selectedSize: selectedVariant?.size,
       source: "chatbot",
     });
 
@@ -942,18 +954,19 @@ export default function ChatWidget() {
         {
           type: "add-to-cart",
           payload: {
-            variantId: card.variantId,
-            quantity: 1,
+            variantId: variantId,
+            quantity: quantity,
             redirect: false, // Don't redirect to cart - show popup instead
             productName: card.name,
-            productPrice: card.price,
+            productPrice: price,
+            selectedVariant: selectedVariant,
           },
         },
         shopifyStoreDomain,
       );
 
       console.log(
-        `[Chatbot] Sent postMessage to parent: type='add-to-cart', variantId=${card.variantId}, redirect=false, targetOrigin=${shopifyStoreDomain}`,
+        `[Chatbot] Sent postMessage to parent: type='add-to-cart', variantId=${variantId}, quantity=${quantity}, redirect=false, targetOrigin=${shopifyStoreDomain}`,
       );
     } else {
       console.warn(

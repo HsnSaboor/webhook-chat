@@ -1,4 +1,3 @@
-
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
@@ -20,7 +19,9 @@ CREATE TABLE messages (
   conversation_id TEXT NOT NULL REFERENCES conversations(conversation_id) ON DELETE CASCADE,
   session_id TEXT NOT NULL,
   content TEXT NOT NULL,
-  role TEXT NOT NULL CHECK (role IN ('user', 'webhook')),
+  role TEXT NOT NULL constraint messages_role_check check (
+    (role = any (array['user'::text, 'webhook'::text, 'ai'::text, 'assistant'::text]))
+  ),
   type TEXT NOT NULL DEFAULT 'text' CHECK (type IN ('text', 'voice')),
   audio_url TEXT,
   cards JSONB,
