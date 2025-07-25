@@ -1,0 +1,12 @@
+BuildError@webpack-internal:///(pages-dir-browser)/./node_modules/.pnpm/next@15.2.4_react-dom@19.1.0_react@19.1.0__react@19.1.0/node_modules/next/dist/client/components/react-dev-overlay/ui/container/build-error.js:43:41
+react-stack-bottom-frame@webpack-internal:///(pages-dir-browser)/./node_modules/.pnpm/react-dom@19.1.0_react@19.1.0/node_modules/react-dom/cjs/react-dom-client.development.js:23864:20
+renderWithHooks@webpack-internal:///(pages-dir-browser)/./node_modules/.pnpm/react-dom@19.1.0_react@19.1.0/node_modules/react-dom/cjs/react-dom-client.development.js:5530:40
+updateFunctionComponent@webpack-internal:///(pages-dir-browser)/./node_modules/.pnpm/react-dom@19.1.0_react@19.1.0/node_modules/react-dom/cjs/react-dom-client.development.js:8898:19
+beginWork@webpack-internal:///(pages-dir-browser)/./node_modules/.pnpm/react-dom@19.1.0_react@19.1.0/node_modules/react-dom/cjs/react-dom-client.development.js:10523:18
+runWithFiberInDEV@webpack-internal:///(pages-dir-browser)/./node_modules/.pnpm/react-dom@19.1.0_react@19.1.0/node_modules/react-dom/cjs/react-dom-client.development.js:1523:13
+performUnitOfWork@webpack-internal:///(pages-dir-browser)/./node_modules/.pnpm/react-dom@19.1.0_react@19.1.0/node_modules/react-dom/cjs/react-dom-client.development.js:15133:22
+workLoopSync@webpack-internal:///(pages-dir-browser)/./node_modules/.pnpm/react-dom@19.1.0_react@19.1.0/node_modules/react-dom/cjs/react-dom-client.development.js:14957:58
+renderRootSync@webpack-internal:///(pages-dir-browser)/./node_modules/.pnpm/react-dom@19.1.0_react@19.1.0/node_modules/react-dom/cjs/react-dom-client.development.js:14937:11
+performWorkOnRoot@webpack-internal:///(pages-dir-browser)/./node_modules/.pnpm/react-dom@19.1.0_react@19.1.0/node_modules/react-dom/cjs/react-dom-client.development.js:14420:13
+performWorkOnRootViaSchedulerTask@webpack-internal:///(pages-dir-browser)/./node_modules/.pnpm/react-dom@19.1.0_react@19.1.0/node_modules/react-dom/cjs/react-dom-client.development.js:16217:24
+performWorkUntilDeadline@webpack-internal:///(pages-dir-browser)/./node_modules/.pnpm/scheduler@0.26.0/node_modules/scheduler/cjs/scheduler.development.js:45:56
