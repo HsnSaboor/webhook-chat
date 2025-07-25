@@ -1,4 +1,14 @@
+
 import { type NextRequest, NextResponse } from "next/server";
+
+// Define CORS headers consistently
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, User-Agent, Cache-Control",
+  "Access-Control-Allow-Credentials": "false",
+  "Access-Control-Max-Age": "86400",
+};
 
 /**
  * This route acts as a secure server-side proxy.
@@ -7,17 +17,11 @@ import { type NextRequest, NextResponse } from "next/server";
  * It then waits for the n8n response and relays it back to the client.
  */
 export async function POST(request: NextRequest) {
-  const corsHeaders = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS", 
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    "Access-Control-Allow-Credentials": "false",
-  };
+  console.log("[Webhook Proxy] POST request received");
+  console.log("[Webhook Proxy] Request method:", request.method);
+  console.log("[Webhook Proxy] Request headers:", Object.fromEntries(request.headers.entries()));
 
   try {
-    console.log("[Webhook Proxy] Incoming request method:", request.method);
-    console.log("[Webhook Proxy] Request headers:", Object.fromEntries(request.headers.entries()));
-
     let body;
     try {
       body = await request.json();
@@ -31,7 +35,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate required fields
+    if (!body || typeof body !== 'object') {
+      console.error("[Webhook Proxy] Invalid body structure");
+      return NextResponse.json(
+        { error: "Invalid request body structure" },
+        { status: 400, headers: corsHeaders }
+      );
+    }
+
     if (!body.session_id) {
+      console.error("[Webhook Proxy] Missing session_id");
       return NextResponse.json(
         { error: "Session ID is required" },
         { status: 400, headers: corsHeaders }
@@ -60,87 +73,114 @@ export async function POST(request: NextRequest) {
 
       console.log("[Webhook Proxy] Save conversation payload:", savePayload);
 
-      // Forward the request to the n8n webhook
-      const response = await fetch(webhookUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "User-Agent": "Shopify-Chat-Proxy/1.0",
-          "ngrok-skip-browser-warning": "true",
-        },
-        body: JSON.stringify(savePayload),
-      });
+      try {
+        // Forward the request to the n8n webhook
+        const response = await fetch(webhookUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "User-Agent": "Shopify-Chat-Proxy/1.0",
+            "ngrok-skip-browser-warning": "true",
+          },
+          body: JSON.stringify(savePayload),
+        });
 
-      console.log(`[Webhook Proxy] Save conversation response status: ${response.status}`);
+        console.log(`[Webhook Proxy] Save conversation response status: ${response.status}`);
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`[Webhook Proxy] Save conversation error (${response.status}):`, errorText);
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`[Webhook Proxy] Save conversation error (${response.status}):`, errorText);
 
+          return NextResponse.json(
+            { 
+              error: "Failed to save conversation",
+              details: errorText,
+              status: response.status
+            },
+            { status: 502, headers: corsHeaders }
+          );
+        }
+
+        const data = await response.json();
+        console.log("[Webhook Proxy] Save conversation success:", data);
+
+        return NextResponse.json({ success: true, data }, { 
+          status: 200,
+          headers: corsHeaders
+        });
+      } catch (fetchError) {
+        console.error("[Webhook Proxy] Network error during save conversation:", fetchError);
         return NextResponse.json(
           { 
-            error: "Failed to save conversation",
-            details: errorText 
+            error: "Network error while saving conversation",
+            details: fetchError instanceof Error ? fetchError.message : "Unknown network error"
           },
-          { status: 502, headers: corsHeaders }
+          { status: 503, headers: corsHeaders }
         );
       }
-
-      const data = await response.json();
-      console.log("[Webhook Proxy] Save conversation success:", data);
-
-      return NextResponse.json({ success: true, data }, { 
-        status: 200,
-        headers: corsHeaders
-      });
     }
 
     // For regular chat messages, validate webhook URL
     if (!body.webhookUrl) {
+      console.error("[Webhook Proxy] Missing webhookUrl");
       return NextResponse.json(
         { error: "Webhook URL is required" },
         { status: 400, headers: corsHeaders }
       );
     }
 
-    // Forward the request to the n8n webhook
-    const response = await fetch(body.webhookUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "User-Agent": "Shopify-Chat-Proxy/1.0",
-        "ngrok-skip-browser-warning": "true",
-      },
-      body: JSON.stringify(body),
-    });
+    console.log("[Webhook Proxy] Forwarding to webhook URL:", body.webhookUrl);
 
-    console.log(`[Webhook Proxy] n8n response status: ${response.status}`);
+    try {
+      // Forward the request to the n8n webhook
+      const response = await fetch(body.webhookUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "User-Agent": "Shopify-Chat-Proxy/1.0",
+          "ngrok-skip-browser-warning": "true",
+        },
+        body: JSON.stringify(body),
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`[Webhook Proxy] n8n webhook error (${response.status}):`, errorText);
+      console.log(`[Webhook Proxy] n8n response status: ${response.status}`);
 
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[Webhook Proxy] n8n webhook error (${response.status}):`, errorText);
+
+        return NextResponse.json(
+          { 
+            error: response.status === 404 
+              ? "The AI service failed with status: 404" 
+              : "Could not connect to the AI service. Please try again later.",
+            details: errorText,
+            status: response.status
+          },
+          { status: 502, headers: corsHeaders }
+        );
+      }
+
+      const data = await response.json();
+      console.log("[Webhook Proxy] n8n response data:", data);
+
+      return NextResponse.json(data, { 
+        status: 200,
+        headers: corsHeaders
+      });
+    } catch (fetchError) {
+      console.error("[Webhook Proxy] Network error during webhook call:", fetchError);
       return NextResponse.json(
         { 
-          error: response.status === 404 
-            ? "The AI service failed with status: 404" 
-            : "Could not connect to the AI service. Please try again later.",
-          details: errorText 
+          error: "Network error while contacting AI service",
+          details: fetchError instanceof Error ? fetchError.message : "Unknown network error"
         },
-        { status: 502, headers: corsHeaders }
+        { status: 503, headers: corsHeaders }
       );
     }
 
-    const data = await response.json();
-    console.log("[Webhook Proxy] n8n response data:", data);
-
-    return NextResponse.json(data, { 
-      status: 200,
-      headers: corsHeaders
-    });
-
   } catch (error) {
-    console.error("[Webhook Proxy] Error:", error);
+    console.error("[Webhook Proxy] Unexpected error:", error);
 
     // Log more details about the error
     if (error instanceof Error) {
@@ -161,11 +201,11 @@ export async function POST(request: NextRequest) {
 }
 
 export async function OPTIONS(request: NextRequest) {
-  const corsHeaders = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-  };
+  console.log("[Webhook Proxy] OPTIONS request received");
+  console.log("[Webhook Proxy] OPTIONS headers:", Object.fromEntries(request.headers.entries()));
 
-  return NextResponse.json({}, { status: 204, headers: corsHeaders });
+  return new Response(null, {
+    status: 200,
+    headers: corsHeaders,
+  });
 }
