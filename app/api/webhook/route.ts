@@ -15,8 +15,20 @@ export async function POST(request: NextRequest) {
   };
 
   try {
-    const body = await request.json();
-    console.log("[Webhook Proxy] Received payload:", body);
+    console.log("[Webhook Proxy] Incoming request method:", request.method);
+    console.log("[Webhook Proxy] Request headers:", Object.fromEntries(request.headers.entries()));
+
+    let body;
+    try {
+      body = await request.json();
+      console.log("[Webhook Proxy] Received payload:", body);
+    } catch (parseError) {
+      console.error("[Webhook Proxy] Failed to parse request body:", parseError);
+      return NextResponse.json(
+        { error: "Invalid JSON in request body" },
+        { status: 400, headers: corsHeaders }
+      );
+    }
 
     // Validate required fields
     if (!body.session_id) {
@@ -129,8 +141,20 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error("[Webhook Proxy] Error:", error);
+
+    // Log more details about the error
+    if (error instanceof Error) {
+      console.error("[Webhook Proxy] Error message:", error.message);
+      console.error("[Webhook Proxy] Error stack:", error.stack);
+    }
+
+    // Ensure we always return CORS headers even on error
     return NextResponse.json(
-      { error: "Internal server error" },
+      { 
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : "Unknown error",
+        timestamp: new Date().toISOString()
+      },
       { status: 500, headers: corsHeaders }
     );
   }
