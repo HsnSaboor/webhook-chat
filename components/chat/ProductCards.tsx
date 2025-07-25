@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, Check, ExternalLink, Minus, Plus } from "lucide-react";
@@ -109,7 +108,7 @@ export function ProductCards({ cards, addedProductVariantId, onAddToCart, onProd
 
         return (
           <div key={index} className="border border-gray-200 rounded-lg p-4 bg-white hover:shadow-md transition-all duration-200 group">
-            <div className="flex gap-3">
+            <div className="flex gap-4">
               {card.image && (
                 <div 
                   className="flex-shrink-0 cursor-pointer" 
@@ -119,13 +118,13 @@ export function ProductCards({ cards, addedProductVariantId, onAddToCart, onProd
                   <img
                     src={card.image}
                     alt={card.name}
-                    className="w-16 h-16 object-cover rounded-md border border-gray-100 group-hover:border-gray-300 transition-colors"
+                    className="w-20 h-20 object-cover rounded-md border border-gray-100 group-hover:border-gray-300 transition-colors"
                   />
                 </div>
               )}
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 flex flex-col">
                 <div 
-                  className="cursor-pointer" 
+                  className="cursor-pointer flex-1" 
                   onClick={() => onProductClick?.(card)}
                   title="Click to view product"
                 >
@@ -141,7 +140,7 @@ export function ProductCards({ cards, addedProductVariantId, onAddToCart, onProd
 
                 {/* Variants Selection */}
                 {hasVariants && (
-                  <div className="space-y-3 mb-3">
+                  <div className="space-y-2 mb-2">
                     {/* Color Selection */}
                     <div>
                       <label className="text-xs font-medium text-gray-700 mb-1 block">
@@ -152,7 +151,7 @@ export function ProductCards({ cards, addedProductVariantId, onAddToCart, onProd
                           <button
                             key={color}
                             onClick={() => handleColorSelect(index, color, card.variants!)}
-                            className={`w-6 h-6 rounded-full border-2 transition-all duration-200 ${
+                            className={`w-5 h-5 rounded-full border-2 transition-all duration-200 ${
                               selectedColor === color 
                                 ? 'border-black scale-110 shadow-md' 
                                 : 'border-gray-300 hover:border-gray-500'
@@ -190,13 +189,13 @@ export function ProductCards({ cards, addedProductVariantId, onAddToCart, onProd
                   </div>
                 )}
 
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-green-600 text-sm">
-                    {selection.selectedVariant?.price || card.price}
-                  </span>
-                  <div className="flex items-center space-x-2">
-                    {/* Quantity Selector */}
-                    <div className="flex items-center border border-gray-300 rounded">
+                {/* Price and Actions Section */}
+                <div className="mt-auto">
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="font-semibold text-green-600 text-sm">
+                      ${selection.selectedVariant?.price || card.price}
+                    </span>
+                    <div className="flex items-center space-x-2">
                       <button
                         onClick={() => handleQuantityChange(index, -1)}
                         className="p-1 hover:bg-gray-100 transition-colors"
@@ -214,12 +213,15 @@ export function ProductCards({ cards, addedProductVariantId, onAddToCart, onProd
                         <Plus className="h-3 w-3" />
                       </button>
                     </div>
+                  </div>
 
+                  {/* Action Buttons */}
+                  <div className="flex items-center gap-2">
                     {onProductClick && (
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-8 px-3 text-xs font-medium border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-gray-700"
+                        className="h-8 px-2 text-xs font-medium border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-gray-700 flex-shrink-0"
                         onClick={() => onProductClick(card)}
                       >
                         <ExternalLink className="h-3 w-3 mr-1" />
@@ -228,7 +230,7 @@ export function ProductCards({ cards, addedProductVariantId, onAddToCart, onProd
                     )}
                     <Button
                       size="sm"
-                      className={`h-8 px-3 text-xs font-medium transition-all duration-200 ${
+                      className={`h-8 px-2 text-xs font-medium transition-all duration-200 flex-shrink-0 ${
                         addedProductVariantId === currentVariantId
                           ? "bg-green-600 hover:bg-green-700 text-white"
                           : "bg-black hover:bg-gray-800 text-white"
@@ -244,7 +246,7 @@ export function ProductCards({ cards, addedProductVariantId, onAddToCart, onProd
                       ) : (
                         <>
                           <ShoppingCart className="h-3 w-3 mr-1" />
-                          Add to Cart
+                          Add
                         </>
                       )}
                     </Button>
