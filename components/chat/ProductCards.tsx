@@ -87,7 +87,7 @@ export function ProductCards({ cards, addedProductVariantId, onAddToCart, onProd
                 <img
                   src={card.image}
                   alt={card.name}
-                  className="w-full h-40 sm:w-28 sm:h-28 object-cover rounded-md border border-gray-100 group-hover/card:border-gray-300 transition-colors"
+                  className="w-40 h-40 sm:w-28 sm:h-28 object-cover rounded-md border border-gray-100 group-hover/card:border-gray-300 transition-colors"
                 />
               </div>
             )}
