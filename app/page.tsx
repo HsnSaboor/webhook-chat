@@ -21,8 +21,6 @@ import {
   Sparkles,
   User,
   Plus,
-  Volume2,
-  VolumeX,
 } from "lucide-react";
 
 // Import modularized components
@@ -32,7 +30,22 @@ import { TypingIndicator } from "@/components/chat/TypingIndicator";
 import { ProductCards } from "@/components/chat/ProductCards";
 import { useChat } from "@/components/chat/hooks/useChat";
 import { useAudio } from "@/components/chat/hooks/useAudio";
-import type { Message, ProductCardData, HistoryItem } from "@/components/chat/types";
+import type { Message, ProductCardData } from "@/components/chat/types";
+
+// Define custom properties on the window object
+declare global {
+  interface Window {
+    shopifyContext?: {
+      session_id: string;
+      source_url?: string;
+      page_context?: any;
+      cart_currency?: string;
+      localization?: any;
+      conversation_id?: string;
+      shopify_context?: any;
+    };
+  }
+}
 
 export default function ChatWidget() {
   // Session data from parent window (Shopify)
@@ -43,8 +56,13 @@ export default function ChatWidget() {
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (!sessionReceived && !sessionId) {
-        const fallbackSessionId = `fallback-${Date.now()}-${Math.random().toString(36).substring(7)}`;
-        console.log('[Chatbot] No session_id received from parent, using fallback:', fallbackSessionId);
+        const fallbackSessionId = `fallback-${Date.now()}-${Math.random()
+          .toString(36)
+          .substring(7)}`;
+        console.log(
+          "[Chatbot] No session_id received from parent, using fallback:",
+          fallbackSessionId,
+        );
         setSessionId(fallbackSessionId);
         setSessionReceived(true);
       }
@@ -54,23 +72,15 @@ export default function ChatWidget() {
   }, [sessionReceived, sessionId]);
 
   const {
-    sessionId: chatSessionId,
-    setSessionId: setChatSessionId,
-    sessionReceived: chatSessionReceived,
-    setSessionReceived: setChatSessionReceived,
-    sourceUrl,
-    setSourceUrl,
-    pageContext,
-    setPageContext,
-    cartCurrency,
-    setCartCurrency,
-    localization,
-    setLocalization,
     messages,
     setMessages,
     isLoading,
     setIsLoading,
     trackEvent,
+    setSourceUrl,
+    setPageContext,
+    setCartCurrency,
+    setLocalization,
   } = useChat();
 
   const {
@@ -103,10 +113,13 @@ export default function ChatWidget() {
   const [voiceSupported, setVoiceSupported] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
-  const [addedProductVariantId, setAddedProductVariantId] = useState<string | null>(null);
+  const [addedProductVariantId, setAddedProductVariantId] = useState<
+    string | null
+  >(null);
   const [conversations, setConversations] = useState<any[]>([]);
-  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
-  const [isSoundEnabled, setIsSoundEnabled] = useState(true);
+  const [currentConversationId, setCurrentConversationId] = useState<
+    string | null
+  >(null);
   const [showHomepage, setShowHomepage] = useState(true);
   const [loadingConversations, setLoadingConversations] = useState(false);
   const [conversationsLoaded, setConversationsLoaded] = useState(false);
@@ -162,7 +175,10 @@ export default function ChatWidget() {
       if (trustedOrigins.includes(event.origin)) {
         if (messageData?.type === "init") {
           if (messageData.session_id) {
-            console.log("[Chatbot] Received session_id from parent:", messageData.session_id);
+            console.log(
+              "[Chatbot] Received session_id from parent:",
+              messageData.session_id,
+            );
 
             // Set the actual session ID from Shopify
             setSessionId(messageData.session_id);
@@ -176,81 +192,121 @@ export default function ChatWidget() {
               cart_currency: messageData.cart_currency || null,
               localization: messageData.localization || null,
               conversation_id: messageData.conversation_id || null,
-              shopify_context: messageData.shopify_context || null
+              shopify_context: messageData.shopify_context || null,
             };
 
-            console.log("[Chatbot] Stored complete Shopify context:", window.shopifyContext);
+            console.log(
+              "[Chatbot] Stored complete Shopify context:",
+              window.shopifyContext,
+            );
 
             // Auto-load conversations immediately when session is received
             if (!conversationsLoaded && conversationsCache.length === 0) {
-              console.log("[Chatbot] Auto-loading conversations on session init");
+              console.log(
+                "[Chatbot] Auto-loading conversations on session init",
+              );
               requestConversationsFromParent();
             }
 
             // Log individual received values
             if (messageData.source_url) {
-              console.log("[Chatbot] Received source_url:", messageData.source_url);
+              console.log(
+                "[Chatbot] Received source_url:",
+                messageData.source_url,
+              );
             }
             if (messageData.page_context) {
-              console.log("[Chatbot] Received page_context:", messageData.page_context);
+              console.log(
+                "[Chatbot] Received page_context:",
+                messageData.page_context,
+              );
             }
             if (messageData.cart_currency) {
-              console.log("[Chatbot] Received cart_currency:", messageData.cart_currency);
+              console.log(
+                "[Chatbot] Received cart_currency:",
+                messageData.cart_currency,
+              );
             }
             if (messageData.localization) {
-              console.log("[Chatbot] Received localization:", messageData.localization);
+              console.log(
+                "[Chatbot] Received localization:",
+                messageData.localization,
+              );
             }
           } else {
             console.warn("[Chatbot] Received init message without session_id");
           }
         } else if (messageData?.type === "conversations-response") {
           const handleConversationsReceived = (conversationsData: any[]) => {
-    console.log("[Chatbot] Received conversations from parent:", conversationsData);
-    try {
-      if (Array.isArray(conversationsData)) {
-        const formattedConversations = conversationsData.map((conv, index) => {
-          // Ensure we have a valid conversation object
-          if (!conv || typeof conv !== 'object') {
-            console.warn(`[Chatbot] Invalid conversation at index ${index}:`, conv);
-            return null;
-          }
+            console.log(
+              "[Chatbot] Received conversations from parent:",
+              conversationsData,
+            );
+            try {
+              if (Array.isArray(conversationsData)) {
+                const formattedConversations = conversationsData
+                  .map((conv, index) => {
+                    // Ensure we have a valid conversation object
+                    if (!conv || typeof conv !== "object") {
+                      console.warn(
+                        `[Chatbot] Invalid conversation at index ${index}:`,
+                        conv,
+                      );
+                      return null;
+                    }
 
-          // Extract ID from either conversation_id or id field
-          const conversationId = conv.conversation_id || conv.id || `fallback-${index}-${Date.now()}`;
+                    // Extract ID from either conversation_id or id field
+                    const conversationId =
+                      conv.conversation_id ||
+                      conv.id ||
+                      `fallback-${index}-${Date.now()}`;
 
-          return {
-            id: conversationId,
-            conversation_id: conversationId,
-            title: conv.name || `Chat ${conversationId.slice(-4)}`,
-            name: conv.name || `Chat ${conversationId.slice(-4)}`,
-            started_at: conv.started_at || conv.timestamp || new Date().toISOString(),
-            timestamp: conv.started_at || conv.timestamp || new Date().toISOString()
+                    return {
+                      id: conversationId,
+                      conversation_id: conversationId,
+                      title: conv.name || `Chat ${conversationId.slice(-4)}`,
+                      name: conv.name || `Chat ${conversationId.slice(-4)}`,
+                      started_at:
+                        conv.started_at ||
+                        conv.timestamp ||
+                        new Date().toISOString(),
+                      timestamp:
+                        conv.started_at ||
+                        conv.timestamp ||
+                        new Date().toISOString(),
+                    };
+                  })
+                  .filter(Boolean); // Remove any null entries
+
+                console.log(
+                  "[Chatbot] Formatted conversations:",
+                  formattedConversations,
+                );
+
+                // Update both current conversations and cache
+                setConversations(formattedConversations);
+                setConversationsCache(formattedConversations);
+                setCacheTimestamp(Date.now());
+                setConversationsLoaded(true);
+                setLoadingConversations(false);
+              } else {
+                console.warn(
+                  "[Chatbot] Conversations data is not an array:",
+                  conversationsData,
+                );
+                setConversations([]);
+                setConversationsCache([]);
+                setConversationsLoaded(true);
+                setLoadingConversations(false);
+              }
+            } catch (error) {
+              console.error("[Chatbot] Error processing conversations:", error);
+              setConversations([]);
+              setConversationsCache([]);
+              setConversationsLoaded(true);
+              setLoadingConversations(false);
+            }
           };
-        }).filter(Boolean); // Remove any null entries
-
-        console.log("[Chatbot] Formatted conversations:", formattedConversations);
-
-        // Update both current conversations and cache
-        setConversations(formattedConversations);
-        setConversationsCache(formattedConversations);
-        setCacheTimestamp(Date.now());
-        setConversationsLoaded(true);
-        setLoadingConversations(false);
-      } else {
-        console.warn("[Chatbot] Conversations data is not an array:", conversationsData);
-        setConversations([]);
-        setConversationsCache([]);
-        setConversationsLoaded(true);
-        setLoadingConversations(false);
-      }
-    } catch (error) {
-      console.error("[Chatbot] Error processing conversations:", error);
-      setConversations([]);
-      setConversationsCache([]);
-      setConversationsLoaded(true);
-      setLoadingConversations(false);
-    }
-  };
           handleConversationsReceived(messageData.conversations);
         } else if (messageData?.type === "conversation-response") {
           console.log(
@@ -282,49 +338,58 @@ export default function ChatWidget() {
           // Save AI response to database (non-blocking)
           const saveAIMessage = async () => {
             try {
-              console.log('[Chatbot] Saving standalone AI response to database...', {
-                content: webhookMessage.content,
-                cards: webhookMessage.cards,
-                timestamp: webhookMessage.timestamp.toISOString()
-              });
+              console.log(
+                "[Chatbot] Saving standalone AI response to database...",
+                {
+                  content: webhookMessage.content,
+                  cards: webhookMessage.cards,
+                  timestamp: webhookMessage.timestamp.toISOString(),
+                },
+              );
 
               const contextSessionId = window.shopifyContext?.session_id;
               const effectiveSessionId = contextSessionId || sessionId;
 
-              const aiSaveResponse = await fetch('/api/messages/save', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+              const aiSaveResponse = await fetch("/api/messages/save", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                  conversation_id: currentConversationId || `conv_${effectiveSessionId}_${Date.now()}`,
+                  conversation_id:
+                    currentConversationId ||
+                    `conv_${effectiveSessionId}_${Date.now()}`,
                   session_id: effectiveSessionId,
                   content: webhookMessage.content,
-                  role: 'webhook',
-                  type: 'text',
+                  role: "webhook",
+                  type: "text",
                   cards: webhookMessage.cards || null,
-                  timestamp: webhookMessage.timestamp.toISOString()
-                })
+                  timestamp: webhookMessage.timestamp.toISOString(),
+                }),
               });
 
               if (!aiSaveResponse.ok) {
-                console.error('[Chatbot] Failed to save standalone AI message:', await aiSaveResponse.text());
+                console.error(
+                  "[Chatbot] Failed to save standalone AI message:",
+                  await aiSaveResponse.text(),
+                );
               } else {
-                console.log('[Chatbot] Standalone AI message saved successfully');
+                console.log("[Chatbot] Standalone AI message saved successfully");
               }
             } catch (saveError) {
-              console.error('[Chatbot] Error saving standalone AI message:', saveError);
+              console.error(
+                "[Chatbot] Error saving standalone AI message:",
+                saveError,
+              );
             }
           };
 
           saveAIMessage();
           setIsLoading(false);
         } else if (messageData?.type === "chat-error") {
-          console.error(
-            "[Chatbot] Error from parent:",
-            messageData.error,
-          );
+          console.error("[Chatbot] Error from parent:", messageData.error);
           const errorMessage: Message = {
             id: (Date.now() + 1).toString(),
-            content: "Sorry, I'm having trouble responding right now. Please try again.",
+            content:
+              "Sorry, I'm having trouble responding right now. Please try again.",
             role: "webhook",
             timestamp: new Date(),
             type: "text",
@@ -350,14 +415,28 @@ export default function ChatWidget() {
     return () => {
       window.removeEventListener("message", handleMessage);
     };
-  }, [setSessionId, setSessionReceived, setSourceUrl, setPageContext, setCartCurrency, setLocalization, setMessages, currentConversationId]);
+  }, [
+    setSessionId,
+    setSessionReceived,
+    setSourceUrl,
+    setPageContext,
+    setCartCurrency,
+    setLocalization,
+    setMessages,
+    currentConversationId,
+    sessionId,
+    conversationsCache.length,
+    conversationsLoaded,
+  ]);
 
   useEffect(() => {
     const checkMobile = () => {
       const mobile = window.innerWidth <= 768;
       setIsMobile(mobile);
       if (mobile) {
-        setChatHeight(Math.min(window.innerHeight * 0.75, window.innerHeight - 100));
+        setChatHeight(
+          Math.min(window.innerHeight * 0.75, window.innerHeight - 100),
+        );
       }
     };
 
@@ -407,25 +486,43 @@ export default function ChatWidget() {
           setConversationsLoaded(true);
           setLoadingConversations(false);
         } else if (!conversationsLoaded || cacheExpired) {
-          console.log("[Chatbot] Cache expired or no conversations loaded, requesting fresh data");
+          console.log(
+            "[Chatbot] Cache expired or no conversations loaded, requesting fresh data",
+          );
           requestConversationsFromParent();
         }
 
         // Always show homepage first when opening chat
         setShowHomepage(true);
       } else {
-        console.error("[Chatbot] Cannot open chat without proper Shopify session");
+        console.error(
+          "[Chatbot] Cannot open chat without proper Shopify session",
+        );
         setIsOpen(false); // Close chat if no proper session
       }
     } else if (!isOpen) {
       // Don't clear messages when closing - they will be preserved
       setShowHomepage(true);
     }
-  }, [isOpen, sessionId, sessionReceived, trackEvent, conversationsCache, cacheTimestamp, conversationsLoaded]);
+  }, [
+    isOpen,
+    sessionId,
+    sessionReceived,
+    trackEvent,
+    conversationsCache,
+    cacheTimestamp,
+    conversationsLoaded,
+    messages.length,
+  ]);
 
   // Auto-load conversations when the component mounts and session is available
   useEffect(() => {
-    if (sessionId && sessionReceived && !conversationsLoaded && conversationsCache.length === 0) {
+    if (
+      sessionId &&
+      sessionReceived &&
+      !conversationsLoaded &&
+      conversationsCache.length === 0
+    ) {
       console.log("[Chatbot] Auto-loading conversations on component mount");
       setLoadingConversations(true);
       requestConversationsFromParent();
@@ -493,16 +590,18 @@ export default function ChatWidget() {
       console.log("[Chatbot] Loaded conversation history:", history);
 
       // Transform database messages to frontend format
-      const loadedMessages = history.map((item: any, index: number) => {
-        return {
-          id: `msg-${conversationId}-${index}`,
-          content: item.content || item.user_message || item.ai_message || "",
-          role: item.role || (item.user_message ? "user" : "webhook"),
-          timestamp: new Date(item.timestamp),
-          type: item.type || "text",
-          cards: item.cards || undefined,
-        };
-      }).filter(msg => msg.content.trim() !== "");
+      const loadedMessages = history
+        .map((item: any) => {
+          return {
+            id: `msg-${conversationId}-${item.id}`,
+            content: item.content || item.user_message || item.ai_message || "",
+            role: item.role || (item.user_message ? "user" : "webhook"),
+            timestamp: new Date(item.timestamp),
+            type: item.type || "text",
+            cards: item.cards || undefined,
+          };
+        })
+        .filter((msg: Message) => msg.content.trim() !== "");
 
       console.log("[Chatbot] Converted messages:", loadedMessages);
 
@@ -560,7 +659,7 @@ export default function ChatWidget() {
         cleanup();
       };
 
-      mediaRecorderRef.current.onerror = (event: any) => {
+      mediaRecorderRef.current.onerror = (_event: Event) => {
         setVoiceError("Recording failed. Please try again.");
         setIsRecording(false);
         stopRecordingTimer();
@@ -624,7 +723,11 @@ export default function ChatWidget() {
     }
   };
 
-  const sendMessage = async (messageText: string, type: "text" | "voice" = "text", audioBlob?: Blob) => {
+  const sendMessage = async (
+    messageText: string,
+    type: "text" | "voice" = "text",
+    audioBlob?: Blob,
+  ) => {
     if (!sessionId) {
       console.error("[Chatbot] Cannot send message: No session ID");
       return;
@@ -715,7 +818,7 @@ export default function ChatWidget() {
 
       if (isInShopify) {
         // Send through parent window (Shopify integration)
-        const messageData = {
+        const messageData: any = {
           id: crypto.randomUUID(),
           session_id: effectiveSessionId,
           timestamp: new Date().toISOString(),
@@ -732,13 +835,18 @@ export default function ChatWidget() {
         // Add audio data for voice messages
         if (type === "voice" && audioBlob) {
           const arrayBuffer = await audioBlob.arrayBuffer();
-          const base64Audio = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+          const base64Audio = btoa(
+            String.fromCharCode(...new Uint8Array(arrayBuffer)),
+          );
           messageData.audioData = base64Audio;
           messageData.mimeType = audioBlob.type;
-          messageData.duration = Math.floor((audioBlob.size / 16000) / 2); // Rough estimate
+          messageData.duration = Math.floor(audioBlob.size / 16000 / 2); // Rough estimate
         }
 
-        console.log("[Chatbot] Sending message through parent window:", messageData);
+        console.log(
+          "[Chatbot] Sending message through parent window:",
+          messageData,
+        );
         sendChatMessageToParent(messageData);
 
         // The response will come through the message listener - don't set isLoading false here
@@ -746,7 +854,8 @@ export default function ChatWidget() {
         return;
       } else {
         // Direct webhook call (fallback when not in Shopify)
-        const chatWebhookUrl = process.env.NEXT_PUBLIC_N8N_CHAT_WEBHOOK || 
+        const chatWebhookUrl =
+          process.env.NEXT_PUBLIC_N8N_CHAT_WEBHOOK ||
           "https://similarly-secure-mayfly.ngrok-free.app/webhook/chat";
 
         const webhookPayload = {
@@ -761,7 +870,10 @@ export default function ChatWidget() {
           type,
         };
 
-        console.log("[Chatbot] Sending directly to n8n chat webhook:", webhookPayload);
+        console.log(
+          "[Chatbot] Sending directly to n8n chat webhook:",
+          webhookPayload,
+        );
 
         const response = await fetch(chatWebhookUrl, {
           method: "POST",
@@ -783,10 +895,18 @@ export default function ChatWidget() {
         try {
           const parsedResponse = JSON.parse(responseText);
           // Handle array responses from webhook
-          data = Array.isArray(parsedResponse) ? parsedResponse[0] : parsedResponse;
+          data = Array.isArray(parsedResponse)
+            ? parsedResponse[0]
+            : parsedResponse;
         } catch (e) {
-          console.error("[Chatbot] Failed to parse webhook response as JSON:", e);
-          data = { message: "I received your message but had trouble processing the response. Please try again." };
+          console.error(
+            "[Chatbot] Failed to parse webhook response as JSON:",
+            e,
+          );
+          data = {
+            message:
+              "I received your message but had trouble processing the response. Please try again.",
+          };
         }
 
         console.log("[Chatbot] Parsed chat webhook response:", data);
@@ -794,7 +914,9 @@ export default function ChatWidget() {
         // Create the webhook response message
         const webhookMessage: Message = {
           id: `webhook-${Date.now()}`,
-          content: data.message || "I'm sorry, I couldn't process your request right now.",
+          content:
+            data.message ||
+            "I'm sorry, I couldn't process your request right now.",
           role: "webhook",
           timestamp: new Date(),
           type: "text",
@@ -812,55 +934,61 @@ export default function ChatWidget() {
 
         try {
           // Save user message
-          console.log('[Chatbot] Saving user message to database...');
-          const userSaveResponse = await fetch('/api/messages/save', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+          console.log("[Chatbot] Saving user message to database...");
+          const userSaveResponse = await fetch("/api/messages/save", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               conversation_id: conversationId,
               session_id: effectiveSessionId,
               content: messageText,
-              role: 'user',
+              role: "user",
               type: type,
               audio_url: audioBlob ? URL.createObjectURL(audioBlob) : null,
-              timestamp: userMessage.timestamp.toISOString()
-            })
+              timestamp: userMessage.timestamp.toISOString(),
+            }),
           });
 
           if (!userSaveResponse.ok) {
-            console.error('[Chatbot] Failed to save user message:', await userSaveResponse.text());
+            console.error(
+              "[Chatbot] Failed to save user message:",
+              await userSaveResponse.text(),
+            );
           } else {
-            console.log('[Chatbot] User message saved successfully');
+            console.log("[Chatbot] User message saved successfully");
           }
 
           // Save AI response
-          console.log('[Chatbot] Saving AI message to database...', {
+          console.log("[Chatbot] Saving AI message to database...", {
             content: data.message,
             cards: data.cards,
-            timestamp: webhookMessage.timestamp.toISOString()
+            timestamp: webhookMessage.timestamp.toISOString(),
           });
 
-          const aiSaveResponse = await fetch('/api/messages/save', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+          const aiSaveResponse = await fetch("/api/messages/save", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               conversation_id: conversationId,
               session_id: effectiveSessionId,
               content: data.message || "No response content",
-              role: 'webhook',
-              type: 'text',
+              role: "webhook",
+              type: "text",
               cards: data.cards || null,
-              timestamp: webhookMessage.timestamp.toISOString()
-            })
+              timestamp: webhookMessage.timestamp.toISOString(),
+            }),
           });
 
           if (!aiSaveResponse.ok) {
-            console.error('[Chatbot] Failed to save AI message:', await aiSaveResponse.text());
+            console.error(
+              "[Chatbot] Failed to save AI message:",
+              await aiSaveResponse.text(),
+            );
           } else {
-            console.log('[Chatbot] AI message saved successfully');
+            console.log("[Chatbot] AI message saved successfully");
           }
         } catch (saveError) {
-          console.error('[Chatbot] Error saving messages:', saveError);
+          console.error("[Chatbot] Error saving messages:", saveError);
         }
 
         // Only set loading false after everything is processed
@@ -872,7 +1000,8 @@ export default function ChatWidget() {
       // Add error message
       const errorMessage: Message = {
         id: `error-${Date.now()}`,
-        content: "I'm sorry, there was an error processing your message. Please try again.",
+        content:
+          "I'm sorry, there was an error processing your message. Please try again.",
         role: "webhook",
         timestamp: new Date(),
         type: "text",
@@ -897,7 +1026,12 @@ export default function ChatWidget() {
     if (window.parent && window.parent !== window) {
       try {
         // Use the product handle if available, otherwise construct from name
-        const productHandle = card.handle || card.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        const productHandle =
+          card.handle ||
+          card.name
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-|-$/g, "");
         const productUrl = `https://zenmato.myshopify.com/products/${productHandle}`;
 
         window.parent.postMessage(
@@ -907,23 +1041,29 @@ export default function ChatWidget() {
               productUrl: productUrl,
               productHandle: productHandle,
               variantId: card.variantId,
-              productName: card.name
+              productName: card.name,
             },
           },
           "https://zenmato.myshopify.com",
         );
 
-        console.log(`[Chatbot] Sent navigate request for product: ${productUrl}`);
+        console.log(
+          `[Chatbot] Sent navigate request for product: ${productUrl}`,
+        );
       } catch (error) {
         console.error("[Chatbot] Error navigating to product:", error);
       }
     }
   };
 
-  const handleAddToCart = (card: ProductCardData, selectedVariant?: any, quantity: number = 1) => {
+  const handleAddToCart = (
+    card: ProductCardData,
+    selectedVariant?: any,
+    quantity: number = 1,
+  ) => {
     const variantId = selectedVariant?.id || card.variantId;
     const price = selectedVariant?.price || card.price;
-    
+
     console.log(
       `[Chatbot] Attempting to send 'add-to-cart' message for variantId: ${variantId}, quantity: ${quantity}`,
     );
@@ -944,7 +1084,7 @@ export default function ChatWidget() {
     });
 
     if (
-      typeof window !== "undefined"&&
+      typeof window !== "undefined" &&
       window.parent &&
       window.parent !== window
     ) {
@@ -1104,7 +1244,7 @@ export default function ChatWidget() {
       console.log(`[Chatbot] Loading conversation: ${conversationId}`);
 
       // Validate conversation ID
-      if (!conversationId || typeof conversationId !== 'string') {
+      if (!conversationId || typeof conversationId !== "string") {
         console.error("[Chatbot] Invalid conversation ID:", conversationId);
         return;
       }
@@ -1115,7 +1255,8 @@ export default function ChatWidget() {
     } catch (error) {
       console.error("[Chatbot] Error loading conversation:", error);
       // Reset state on error
-      setCurrentConversationId(null);      setIsLoading(false);
+      setCurrentConversationId(null);
+      setIsLoading(false);
     }
   };
 
@@ -1123,7 +1264,7 @@ export default function ChatWidget() {
     const contextSessionId = window.shopifyContext?.session_id;
     const effectiveSessionId = contextSessionId || sessionId;
 
-    if (!effectiveSessionId || effectiveSessionId.startsWith('fallback-')) {
+    if (!effectiveSessionId || effectiveSessionId.startsWith("fallback-")) {
       console.warn("Analytics event skipped: No valid session ID available.");
       return;
     }
@@ -1143,7 +1284,11 @@ export default function ChatWidget() {
             onMouseLeave={() => setIsHovered(false)}
             className="relative h-14 w-14 rounded-full bg-black text-white hover:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 border-0"
           >
-            <MessageCircle className={`h-6 w-6 transition-all duration-300 ${isHovered ? "scale-110" : ""}`} />
+            <MessageCircle
+              className={`h-6 w-6 transition-all duration-300 ${
+                isHovered ? "scale-110" : ""
+              }`}
+            />
 
             {/* Online indicator */}
             <div className="absolute -top-1 -right-1 h-4 w-4 bg-green-500 rounded-full border-2 border-white">
@@ -1174,7 +1319,6 @@ export default function ChatWidget() {
           }}
         >
           <Card className="h-full flex flex-col shadow-2xl bg-white border border-gray-200 rounded-2xl overflow-hidden">
-
             {/* Mobile Drag Handle */}
             {isMobile && (
               <div
@@ -1187,7 +1331,11 @@ export default function ChatWidget() {
             )}
 
             {/* Header - Only sticky in chat interface */}
-            <CardHeader className={`flex flex-row items-center justify-between p-4 bg-white/95 backdrop-blur-sm border-b border-gray-100 ${!showHomepage ? 'sticky top-0 z-10 shadow-sm' : ''}`}>
+            <CardHeader
+              className={`flex flex-row items-center justify-between p-4 bg-white/95 backdrop-blur-sm border-b border-gray-100 ${
+                !showHomepage ? "sticky top-0 z-10 shadow-sm" : ""
+              }`}
+            >
               <div className="flex items-center space-x-3">
                 {!showHomepage && (
                   <Button
@@ -1203,7 +1351,9 @@ export default function ChatWidget() {
                   <MessageCircle className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 text-lg">Support</h3>
+                  <h3 className="font-semibold text-gray-900 text-lg">
+                    Support
+                  </h3>
                   <p className="text-sm text-gray-500 flex items-center space-x-2">
                     <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
                     <span>{isLoading ? "Typing..." : "Online"}</span>
@@ -1246,9 +1396,12 @@ export default function ChatWidget() {
                         <MessageCircle className="h-10 w-10 text-white" />
                       </div>
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome to Support</h2>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                      Welcome to Support
+                    </h2>
                     <p className="text-gray-600 leading-relaxed text-sm max-w-xs mx-auto">
-                      Get instant help, find products, and receive personalized recommendations
+                      Get instant help, find products, and receive personalized
+                      recommendations
                     </p>
                   </div>
 
@@ -1260,7 +1413,9 @@ export default function ChatWidget() {
                         className="p-4 bg-white rounded-xl border border-gray-200 hover:border-black hover:shadow-md transition-all duration-200 group"
                       >
                         <MessageCircle className="h-6 w-6 text-black mb-2 mx-auto group-hover:scale-110 transition-transform" />
-                        <span className="text-xs font-medium text-gray-900">New Chat</span>
+                        <span className="text-xs font-medium text-gray-900">
+                          New Chat
+                        </span>
                       </button>
                       {voiceSupported && (
                         <button
@@ -1271,7 +1426,9 @@ export default function ChatWidget() {
                           className="p-4 bg-white rounded-xl border border-gray-200 hover:border-red-500 hover:shadow-md transition-all duration-200 group"
                         >
                           <Mic className="h-6 w-6 text-red-500 mb-2 mx-auto group-hover:scale-110 transition-transform" />
-                          <span className="text-xs font-medium text-gray-900">Voice Chat</span>
+                          <span className="text-xs font-medium text-gray-900">
+                            Voice Chat
+                          </span>
                         </button>
                       )}
                     </div>
@@ -1280,16 +1437,23 @@ export default function ChatWidget() {
                   {/* Recent Conversations */}
                   <div className="flex-1 px-6">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-gray-900">Recent Chats</h3>
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        Recent Chats
+                      </h3>
                       {conversations.length > 3 && (
-                        <button className="text-xs text-gray-500 hover:text-gray-700">View All</button>
+                        <button className="text-xs text-gray-500 hover:text-gray-700">
+                          View All
+                        </button>
                       )}
                     </div>
 
                     {loadingConversations && !conversationsLoaded ? (
                       <div className="space-y-3">
                         {[1, 2, 3].map((i) => (
-                          <div key={i} className="bg-white rounded-xl border border-gray-200 p-4 animate-pulse">
+                          <div
+                            key={i}
+                            className="bg-white rounded-xl border border-gray-200 p-4 animate-pulse"
+                          >
                             <div className="flex items-center space-x-3">
                               <div className="h-10 w-10 bg-gray-200 rounded-full"></div>
                               <div className="flex-1">
@@ -1302,8 +1466,11 @@ export default function ChatWidget() {
                       </div>
                     ) : conversations.length > 0 ? (
                       <div className="space-y-3 mb-6">
-                        {conversations.slice(0, 3).map((conv, index) => (
-                          <div key={conv.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200 transform hover:-translate-y-1">
+                        {conversations.slice(0, 3).map((conv) => (
+                          <div
+                            key={conv.id}
+                            className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200 transform hover:-translate-y-1"
+                          >
                             <button
                               onClick={() => loadConversationAndStartChat(conv.id)}
                               className="w-full text-left p-4 flex items-center justify-between group"
@@ -1317,9 +1484,20 @@ export default function ChatWidget() {
                                     {conv.title}
                                   </p>
                                   <p className="text-xs text-gray-500 flex items-center space-x-1">
-                                    <span>{new Date(conv.started_at || conv.timestamp).toLocaleDateString()}</span>
+                                    <span>
+                                      {new Date(
+                                        conv.started_at || conv.timestamp,
+                                      ).toLocaleDateString()}
+                                    </span>
                                     <span>•</span>
-                                    <span>{new Date(conv.started_at || conv.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                    <span>
+                                      {new Date(
+                                        conv.started_at || conv.timestamp,
+                                      ).toLocaleTimeString([], {
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      })}
+                                    </span>
                                   </p>
                                 </div>
                               </div>
@@ -1333,7 +1511,9 @@ export default function ChatWidget() {
                         <div className="h-12 w-12 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-3">
                           <MessageCircle className="h-6 w-6 text-gray-400" />
                         </div>
-                        <p className="text-sm text-gray-500">No conversations yet</p>
+                        <p className="text-sm text-gray-500">
+                          No conversations yet
+                        </p>
                       </div>
                     ) : null}
                   </div>
@@ -1371,17 +1551,25 @@ export default function ChatWidget() {
             ) : (
               /* Chat Interface */
               <CardContent className="flex-1 flex flex-col p-0 bg-gray-50 overflow-hidden">
-                <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 bg-gray-50 chat-messages"
-                     ref={messagesContainerRef}
-                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                  {messages.length === 1 && messages[0].id === "welcome" && !isLoading ? (
+                <div
+                  className="flex-1 overflow-y-auto px-4 py-4 space-y-4 bg-gray-50 chat-messages"
+                  ref={messagesContainerRef}
+                  style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+                >
+                  {messages.length === 1 &&
+                  messages[0].id === "welcome" &&
+                  !isLoading ? (
                     <div className="flex items-center justify-center h-full">
                       <div className="text-center">
                         <div className="h-16 w-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
                           <MessageCircle className="h-8 w-8 text-gray-600" />
                         </div>
-                        <h3 className="text-xl font-semibold text-gray-900 mb-2">Welcome!</h3>
-                        <p className="text-gray-600 mb-6">How can we help you today?</p>
+                        <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                          Welcome!
+                        </h3>
+                        <p className="text-gray-600 mb-6">
+                          How can we help you today?
+                        </p>
                         <div className="flex items-center justify-center space-x-4 text-sm text-gray-500">
                           <div className="flex items-center space-x-2">
                             <MessageCircle className="h-4 w-4" />
@@ -1398,10 +1586,14 @@ export default function ChatWidget() {
                     </div>
                   ) : (
                     <>
-                      {messages.map((message, index) => (
+                      {messages.map((message) => (
                         <div
                           key={message.id}
-                          className={`flex ${message.role === "user" ? "justify-end" : "justify-start"} mb-3`}
+                          className={`flex ${
+                            message.role === "user"
+                              ? "justify-end"
+                              : "justify-start"
+                          } mb-3`}
                         >
                           <div className="flex items-start space-x-2 max-w-[85%]">
                             {message.role === "webhook" && (
@@ -1420,12 +1612,18 @@ export default function ChatWidget() {
                                 <div className="mb-2">
                                   <div className="flex items-center space-x-2 mb-2">
                                     <Mic className="h-4 w-4 opacity-75" />
-                                    <span className="text-xs opacity-75 font-medium">VOICE MESSAGE</span>
+                                    <span className="text-xs opacity-75 font-medium">
+                                      VOICE MESSAGE
+                                    </span>
                                   </div>
-                                  <StaticWaveform audioUrl={message.audioUrl} />
+                                  <StaticWaveform
+                                    audioUrl={message.audioUrl}
+                                  />
                                 </div>
                               )}
-                              <p className="text-sm leading-relaxed">{message.content}</p>
+                              <p className="text-sm leading-relaxed">
+                                {message.content}
+                              </p>
                               <p className={`text-xs mt-2 opacity-60`}>
                                 {formatTime(message.timestamp)}
                               </p>
@@ -1433,7 +1631,9 @@ export default function ChatWidget() {
                               {message.cards && message.cards.length > 0 && (
                                 <ProductCards
                                   cards={message.cards}
-                                  addedProductVariantId={addedProductVariantId}
+                                  addedProductVariantId={
+                                    addedProductVariantId
+                                  }
                                   onAddToCart={handleAddToCart}
                                   onProductClick={handleProductClick}
                                 />
@@ -1476,11 +1676,18 @@ export default function ChatWidget() {
                       <div className="absolute inset-0 w-4 h-4 bg-red-400 rounded-full animate-ping opacity-75"></div>
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-red-700 text-sm font-semibold">Recording Voice Message</span>
-                      <span className="text-red-600 text-xs">Release to send, tap again to cancel</span>
+                      <span className="text-red-700 text-sm font-semibold">
+                        Recording Voice Message
+                      </span>
+                      <span className="text-red-600 text-xs">
+                        Release to send, tap again to cancel
+                      </span>
                     </div>
                     <div className="ml-4">
-                      <AnimatedWaveform isRecording={isRecording} audioLevel={audioLevel} />
+                      <AnimatedWaveform
+                        isRecording={isRecording}
+                        audioLevel={audioLevel}
+                      />
                     </div>
                   </div>
                   <div className="flex flex-col items-end">
@@ -1510,8 +1717,6 @@ export default function ChatWidget() {
               </div>
             )}
 
-
-
             {/* Scroll to bottom button */}
             {showScrollToBottom && !showHomepage && (
               <Button
@@ -1519,9 +1724,7 @@ export default function ChatWidget() {
                 size="icon"
                 onClick={scrollToBottom}
                 className={`absolute right-4 h-9 w-9 rounded-full shadow-lg bg-white border border-gray-200 hover:bg-gray-50 hover:shadow-xl transition-all duration-200 z-20 ${
-                  isRecording 
-                    ? 'bottom-36'
-                    : 'bottom-20'
+                  isRecording ? "bottom-36" : "bottom-20"
                 }`}
                 aria-label="Scroll to bottom"
               >
@@ -1531,25 +1734,34 @@ export default function ChatWidget() {
 
             {/* Input - Modern Minimalist - Only show in chat interface */}
             {!showHomepage && (
-              <CardFooter className={`p-3 border-t border-gray-100 bg-white transition-all duration-200 ${
-                isRecording ? 'bg-red-50/30' : ''
-              }`}>
-                <form onSubmit={(e) => {
+              <CardFooter
+                className={`p-3 border-t border-gray-100 bg-white transition-all duration-200 ${
+                  isRecording ? "bg-red-50/30" : ""
+                }`}
+              >
+                <form
+                  onSubmit={(e) => {
                     e.preventDefault();
                     if (input.trim()) {
                       sendMessage(input, "text");
                       setInput("");
                     }
-                  }} className="flex w-full space-x-2">
+                  }}
+                  className="flex w-full space-x-2"
+                >
                   <div className="flex-1 relative">
                     <Input
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
-                      placeholder={isRecording ? "🎤 Recording voice message..." : "Type your message..."}
+                      placeholder={
+                        isRecording
+                          ? "🎤 Recording voice message..."
+                          : "Type your message..."
+                      }
                       disabled={isLoading || isRecording}
                       className={`h-11 rounded-xl border-gray-200 focus:border-black focus:ring-1 focus:ring-black transition-all duration-200 text-sm ${
-                        isRecording 
-                          ? "bg-red-50 border-red-200 text-red-700 placeholder:text-red-500" 
+                        isRecording
+                          ? "bg-red-50 border-red-200 text-red-700 placeholder:text-red-500"
                           : "bg-gray-50 focus:bg-white hover:bg-white"
                       }`}
                     />
@@ -1572,7 +1784,11 @@ export default function ChatWidget() {
                           ? "bg-red-500 hover:bg-red-600 border-0 shadow-lg scale-105"
                           : "border-gray-200 hover:border-black hover:bg-gray-50"
                       }`}
-                      title={isRecording ? "Stop recording" : "Start voice recording"}
+                      title={
+                        isRecording
+                          ? "Stop recording"
+                          : "Start voice recording"
+                      }
                     >
                       {isRecording ? (
                         <div className="relative">
