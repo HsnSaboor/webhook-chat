@@ -307,7 +307,7 @@
               ${productName || 'Product'} has been added to your cart
             </p>
           </div>
-          
+
           <div style="
             background: #f9fafb;
             border-radius: 8px;
@@ -431,17 +431,17 @@
         case 'CONVERSATION_ACTION':
           const { action, conversationId, name } = event.data.data;
           handleConversationAction(event, action, conversationId, name);
-          break;
+          return;
 
         case 'CHAT_MESSAGE':
           const { message } = event.data.data;
           handleChatMessage(event, message);
-          break;
+          return;
 
         case 'REQUEST_SESSION_DATA':
           // Re-send session data when requested
           sendSessionDataToChatbot();
-          break;
+          return;
 
         case 'get-all-conversations':
           // Handle conversation list request
@@ -454,6 +454,7 @@
               type: 'conversations-response',
               conversations: window.preloadedConversations
             }, '*');
+            return;
           } else if (window.ShopifyAPIClient) {
             // Fallback to API call
             window.ShopifyAPIClient.fetchAllConversations()
@@ -465,6 +466,7 @@
                   type: 'conversations-response',
                   conversations: conversations
                 }, '*');
+                return;
               })
               .catch(error => {
                 console.error('[Shopify Integration] Error fetching conversations:', error);
@@ -472,6 +474,7 @@
                   type: 'conversations-response',
                   conversations: []
                 }, '*');
+                return;
               });
           } else {
             console.error('[Shopify Integration] ShopifyAPIClient not available for conversations request');
@@ -479,6 +482,7 @@
               type: 'conversations-response',
               conversations: []
             }, '*');
+            return;
           }
           break;
 
@@ -486,13 +490,13 @@
           // Handle add to cart request
           console.log('[Shopify Integration] Handling add-to-cart request:', event.data.payload);
           handleAddToCart(event, event.data.payload);
-          break;
+          return;
 
         case 'navigate-to-product':
           // Handle product navigation request
           console.log('[Shopify Integration] Handling navigate-to-product request:', event.data.payload);
           handleProductNavigation(event, event.data.payload);
-          break;
+          return;
 
         default:
           console.log('[Shopify Integration] Unknown message type:', event.data.type);
@@ -550,11 +554,11 @@
     try {
       const isOpen = localStorage.getItem('chatbotOpen') === 'true';
       const timestamp = localStorage.getItem('chatbotStateTimestamp');
-      
+
       // Only restore state if it's recent (within 1 hour)
       const oneHour = 60 * 60 * 1000;
       const isRecent = timestamp && (Date.now() - parseInt(timestamp)) < oneHour;
-      
+
       if (isOpen && isRecent) {
         console.log('[Shopify Integration] Restoring chatbot open state');
         // Let the iframe be created and then show it
@@ -717,6 +721,7 @@
           type: 'chat-response',
           response: messageData.response
         });
+        return;
       } else if (messageData.type === 'conversations-response') {
         try {
           const conversations = JSON.parse(messageData.conversations);
@@ -725,12 +730,14 @@
             type: 'conversations-response',
             conversations: conversations
           });
+          return;
         } catch (error) {
           console.error('[Shopify Integration] Error fetching conversations:', error);
           sendMessageToChatbot({
             type: 'conversations-response',
             conversations: []
           });
+          return;
         }
       } else if (messageData.type === 'send-chat-message') {
         console.log('[Shopify Integration] Handling chat message:', messageData.payload);
@@ -806,6 +813,7 @@
             error: error.message
           });
         }
+        return;
       } else if (messageData.type !== 'send-chat-message') {
           console.log('[Shopify Integration] Unknown message type:', messageData.type);
         }

@@ -1,4 +1,3 @@
-
 import { type NextRequest, NextResponse } from "next/server";
 import { createMessage } from "../../../../lib/database/messages";
 
@@ -27,7 +26,7 @@ export async function POST(request: NextRequest) {
     }
 
     console.log(`[Save Message API] Creating message in Supabase`);
-    
+
     const message = await createMessage({
       conversation_id,
       session_id,

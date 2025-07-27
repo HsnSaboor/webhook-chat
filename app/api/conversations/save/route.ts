@@ -1,4 +1,3 @@
-
 import { type NextRequest, NextResponse } from "next/server";
 import { createConversation } from "../../../../lib/database/conversations";
 
@@ -18,21 +17,26 @@ export async function POST(request: NextRequest) {
 
     const { session_id, conversation_id, name } = body;
 
-    if (!session_id || !conversation_id) {
-      console.error("[Save Conversation API] Missing required fields");
+    // Validate required fields - make conversation_id optional as it can be generated
+    if (!session_id) {
       return NextResponse.json(
-        { error: "session_id and conversation_id are required" },
+        { error: 'Missing required field: session_id' },
         { status: 400, headers: corsHeaders }
       );
     }
 
+    // Generate conversation_id if not provided
+    if (!conversation_id) {
+      body.conversation_id = `conv_${session_id}_${Date.now()}`;
+    }
+
     const conversationName = name || `Conversation ${new Date().toLocaleString()}`;
-    
+
     console.log(`[Save Conversation API] Creating conversation in Supabase`);
-    
+
     const conversation = await createConversation({
-      session_id,
-      conversation_id,
+      session_id: body.session_id,
+      conversation_id: body.conversation_id,
       name: conversationName,
       started_at: new Date().toISOString()
     });
