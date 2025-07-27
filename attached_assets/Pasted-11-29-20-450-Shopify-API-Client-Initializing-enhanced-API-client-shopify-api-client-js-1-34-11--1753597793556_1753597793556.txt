@@ -1,0 +1,46 @@
+11:29:20.450 [Shopify API Client] Initializing enhanced API client... shopify-api-client.js:1:34
+11:29:20.455 [API Client] Enhanced API client loaded successfully shopify-api-client.js:1:4058
+11:29:20.496 [Shopify Session Manager] Initializing enhanced session manager... shopify-session-manager.js:1:34
+11:29:20.496 [Session Manager] Enhanced session manager loaded successfully shopify-session-manager.js:1:5840
+11:29:20.520 Uncaught SyntaxError: unlabeled break must be inside loop or switch shopify-chatbot-integration.js:902:11
+11:29:20.572 Cookie “_shopify_s” has been rejected for invalid domain. zenmato.myshopify.com
+11:29:20.572 Cookie “_shopify_sa_p” has been rejected for invalid domain. zenmato.myshopify.com
+11:29:20.572 Cookie “_shopify_sa_t” has been rejected for invalid domain. zenmato.myshopify.com
+11:29:20.572 Cookie “_shopify_y” has been rejected for invalid domain. zenmato.myshopify.com
+11:29:20.582 Cookie “_shopify_test” has been rejected for invalid domain. 4 zenmato.myshopify.com
+11:29:20.729 GET
+https://zenmato.myshopify.com/VideoDrop
+NS_BINDING_ABORTED
+
+11:29:20.730 GET
+https://zenmato.myshopify.com/VideoDrop
+NS_BINDING_ABORTED
+
+11:29:20.730 GET
+https://zenmato.myshopify.com/VideoDrop
+NS_BINDING_ABORTED
+
+11:29:21.926 GET
+https://zenmato.myshopify.com/favicon.ico
+[HTTP/2 404  0ms]
+
+11:29:24.711 [Chatbot] Cannot open chat without proper Shopify session 954-4a74a2281360139c.js:1:17078
+11:29:25.134 [Chatbot] No session_id received from parent, using fallback: fallback-1753597765135-hhh5o page-a96f925ac071d4fb.js:1:41669
+11:29:25.137 [Chatbot] Auto-loading conversations on component mount page-a96f925ac071d4fb.js:1:52112
+11:29:25.137 [Chatbot] Requesting conversations from parent page-a96f925ac071d4fb.js:1:44235
+11:29:25.605 [Chatbot] Cache expired or no conversations loaded, requesting fresh data page-a96f925ac071d4fb.js:1:51840
+11:29:25.605 [Chatbot] Requesting conversations from parent page-a96f925ac071d4fb.js:1:44235
+11:29:25.970 Error: Promised response from onMessage listener went out of scope background.js:505:27
+11:29:29.591 [Chatbot] Sending text message: hi page-a96f925ac071d4fb.js:1:36999
+11:29:29.591 [Chatbot] Created new conversation ID: conv_fallback-1753597765135-hhh5o_1753597769592 page-a96f925ac071d4fb.js:1:37079
+11:29:29.609 XHRPOST
+https://v0-custom-chat-interface-kappa.vercel.app/api/conversations/save
+[HTTP/2 400  1010ms]
+
+11:29:30.929 [Chatbot] Message saved successfully page-a96f925ac071d4fb.js:1:10460
+11:29:30.930 [Chatbot] Using Shopify context for message: 
+Object {  }
+page-a96f925ac071d4fb.js:1:37434
+11:29:30.940 [Chatbot] Sending message through parent window: 
+Object { id: "e54055c3-d2b4-428b-a154-41d935d66f80", session_id: "fallback-1753597765135-hhh5o", timestamp: "2025-07-27T06:29:30.940Z", user_message: "hi", message: "hi", conversation_id: "conv_fallback-1753597765135-hhh5o_1753597769592", source_url: null, page_context: null, cart_currency: null, localization: null, … }
+page-a96f925ac071d4fb.js:1:38017
