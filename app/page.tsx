@@ -921,13 +921,20 @@ export default function ChatWidget() {
   };
 
   const handleProductClick = (card: ProductCardData) => {
-    console.log(`[Chatbot] Opening product page for: ${card.name}`);
+    // Add robust null/undefined checks
+    if (!card) {
+      console.error("[Chatbot] Attempted to open product page for a null card");
+      return;
+    }
+    
+    const productName = card.name || 'product';
+    console.log(`[Chatbot] Opening product page for: ${productName}`);
 
     // Navigate parent window to product page
     if (window.parent && window.parent !== window) {
       try {
         // Use the product handle if available, otherwise construct from name
-        const productHandle = card.handle || (card.name || 'product').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        const productHandle = card.handle || productName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
         const productUrl = `https://zenmato.myshopify.com/products/${productHandle}`;
 
         window.parent.postMessage(
@@ -937,7 +944,7 @@ export default function ChatWidget() {
               productUrl: productUrl,
               productHandle: productHandle,
               variantId: card.variantId,
-              productName: card.name
+              productName: productName
             },
           },
           "https://zenmato.myshopify.com",
