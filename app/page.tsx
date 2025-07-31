@@ -1122,6 +1122,8 @@ export default function ChatWidget() {
 
   const startNewConversation = () => {
     console.log("[Chatbot] Starting new conversation");
+    // Clear current conversation ID first
+    setCurrentConversationId(null);
     setMessages([
       {
         id: "welcome",
@@ -1132,7 +1134,6 @@ export default function ChatWidget() {
         type: "text",
       },
     ]);
-    setCurrentConversationId(null);
     setShowHomepage(false);
 
     // Refresh conversations cache after starting new conversation
@@ -1141,18 +1142,19 @@ export default function ChatWidget() {
 
   const startChatInterface = () => {
     setShowHomepage(false);
-    if (messages.length === 0) {
-      setMessages([
-        {
-          id: "welcome",
-          content:
-            "Hello! How can I assist you today? Feel free to ask me anything about our products or services.",
-          role: "webhook",
-          timestamp: new Date(),
-          type: "text",
-        },
-      ]);
-    }
+    // Clear current conversation ID to start fresh
+    setCurrentConversationId(null);
+    // Always show welcome message when starting new chat interface
+    setMessages([
+      {
+        id: "welcome",
+        content:
+          "Hello! How can I assist you today? Feel free to ask me anything about our products or services.",
+        role: "webhook",
+        timestamp: new Date(),
+        type: "text",
+      },
+    ]);
   };
 
   const loadConversationAndStartChat = async (conversationId: string) => {
