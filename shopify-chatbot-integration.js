@@ -129,8 +129,9 @@
       });
   }
 
-  function handleChatMessage(event, message) {
+  async function handleChatMessage(event, message) {
     console.log('[Shopify Integration] Handling chat message:', message);
+    let retryCount = 0;
 
     if (!window.ShopifyAPIClient) {
       console.error('[Shopify Integration] ShopifyAPIClient not available');
@@ -145,28 +146,59 @@
       return;
     }
 
-    window.ShopifyAPIClient.sendMessage(message)
-      .then(result => {
-        event.source.postMessage({
-          type: 'CHAT_RESULT',
-          data: {
-            message,
-            result,
-            success: true
-          }
-        }, '*');
-      })
-      .catch(error => {
-        console.error('[Shopify Integration] Error sending chat message:', error);
-        event.source.postMessage({
-          type: 'CHAT_RESULT',
-          data: {
-            message,
-            error: error.message,
-            success: false
-          }
-        }, '*');
-      });
+    try {
+      // Create new conversation record if this is the first message
+      const conversationId = window.ShopifySessionManager.getConversationId();
+      if (!window.preloadedConversations.some(c => c.id === conversationId)) {
+        console.log('[Shopify Integration] Creating new conversation record:', conversationId);
+        await window.ShopifyAPIClient.createConversation(conversationId);
+        
+        // Add to cache
+        window.preloadedConversations.push({
+          id: conversationId,
+          name: 'New Conversation',
+          createdAt: new Date().toISOString()
+        });
+      }
+
+      // Send message
+      const result = await window.ShopifyAPIClient.sendMessage(message);
+      
+      // Update cache with new message
+      const conversation = window.preloadedConversations.find(c => c.id === conversationId);
+      if (conversation) {
+        conversation.lastMessageAt = new Date().toISOString();
+        conversation.messageCount = (conversation.messageCount || 0) + 1;
+      }
+
+      event.source.postMessage({
+        type: 'CHAT_RESULT',
+        data: {
+          message,
+          result,
+          success: true
+        }
+      }, '*');
+    } catch (error) {
+      console.error('[Shopify Integration] Error handling chat message:', error);
+      
+      // Retry webhook on failure
+      if (retryCount < 1) {
+        retryCount++;
+        console.log(`[Shopify Integration] Retrying webhook (${retryCount}/1)...`);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return handleChatMessage(event, message);
+      }
+      
+      event.source.postMessage({
+        type: 'CHAT_RESULT',
+        data: {
+          message,
+          error: 'Failed to process message after retry. Please try again later.',
+          success: false
+        }
+      }, '*');
+    }
   }
 
   function handleAddToCart(event, payload) {
@@ -396,6 +428,13 @@
           });
           totalElement.textContent = formatter.format(cart.total_price / 100);
         }
+        
+        function sendConversationsResponse(target, conversations) {
+          target.postMessage({
+            type: 'conversations-response',
+            conversations: conversations
+          }, '*');
+        }
       })
       .catch(error => {
         console.error('[Shopify Integration] Error fetching cart total:', error);
@@ -447,44 +486,27 @@
           // Handle conversation list request
           console.log('[Shopify Integration] Handling get-all-conversations request');
 
-          // First try to use preloaded conversations if available
-          if (window.preloadedConversations && window.preloadedConversations.length > 0) {
-            console.log('[Shopify Integration] Using preloaded conversations:', window.preloadedConversations.length);
-            event.source.postMessage({
-              type: 'conversations-response',
-              conversations: window.preloadedConversations
-            }, '*');
-            return;
-          } else if (window.ShopifyAPIClient) {
-            // Fallback to API call
+          // Refresh cache if older than 5 minutes
+          const shouldRefresh = !window.preloadedConversationsTimestamp ||
+                               (Date.now() - window.preloadedConversationsTimestamp) > 300000;
+                               
+          if (shouldRefresh && window.ShopifyAPIClient) {
+            console.log('[Shopify Integration] Refreshing conversation cache');
             window.ShopifyAPIClient.fetchAllConversations()
               .then(conversations => {
-                console.log('[Shopify Integration] Sending conversations response:', conversations);
-                // Update preloaded cache
                 window.preloadedConversations = conversations;
-                event.source.postMessage({
-                  type: 'conversations-response',
-                  conversations: conversations
-                }, '*');
-                return;
+                window.preloadedConversationsTimestamp = Date.now();
+                sendConversationsResponse(event.source, conversations);
               })
               .catch(error => {
-                console.error('[Shopify Integration] Error fetching conversations:', error);
-                event.source.postMessage({
-                  type: 'conversations-response',
-                  conversations: []
-                }, '*');
-                return;
+                console.error('[Shopify Integration] Error refreshing conversations:', error);
+                sendConversationsResponse(event.source, window.preloadedConversations || []);
               });
           } else {
-            console.error('[Shopify Integration] ShopifyAPIClient not available for conversations request');
-            event.source.postMessage({
-              type: 'conversations-response',
-              conversations: []
-            }, '*');
-            return;
+            console.log('[Shopify Integration] Using cached conversations');
+            sendConversationsResponse(event.source, window.preloadedConversations || []);
           }
-          break;
+          return;
 
         case 'add-to-cart':
           // Handle add to cart request
@@ -552,23 +574,13 @@
 
   function restoreChatbotState() {
     try {
-      const isOpen = localStorage.getItem('chatbotOpen') === 'true';
-      const timestamp = localStorage.getItem('chatbotStateTimestamp');
-
-      // Only restore state if it's recent (within 1 hour)
-      const oneHour = 60 * 60 * 1000;
-      const isRecent = timestamp && (Date.now() - parseInt(timestamp)) < oneHour;
-
-      if (isOpen && isRecent) {
-        console.log('[Shopify Integration] Restoring chatbot open state');
-        // Let the iframe be created and then show it
-        setTimeout(() => {
-          const iframe = document.getElementById('chatbot');
-          if (iframe) {
-            iframe.style.display = 'block';
-          }
-        }, 1000);
-      }
+      // Always show the chatbot by default
+      setTimeout(() => {
+        const iframe = document.getElementById('chatbot');
+        if (iframe) {
+          iframe.style.display = 'block';
+        }
+      }, 1000);
     } catch (error) {
       console.warn('[Shopify Integration] Failed to restore chatbot state:', error);
     }
@@ -607,9 +619,9 @@
     iframe.id = 'chatbot';
     iframe.src = 'https://v0-custom-chat-interface-kappa.vercel.app/';
     iframe.style.cssText = `
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
+      position: fixed !important;
+      bottom: 20px !important;
+      right: 20px !important;
       width: 400px;
       height: 600px;
       border: none;
@@ -654,10 +666,16 @@
           console.log('[Shopify Integration] Pre-loaded conversations:', conversations.length);
           // Store in a global variable for quick access
           window.preloadedConversations = conversations;
+          
+          // Add timestamp for cache validation
+          window.preloadedConversationsTimestamp = Date.now();
         })
         .catch(error => {
           console.warn('[Shopify Integration] Failed to pre-load conversations:', error);
+          window.preloadedConversations = [];
         });
+    } else {
+      window.preloadedConversations = [];
     }
 
     // Setup iframe detection and initialization
@@ -706,7 +724,7 @@
     console.log('[Shopify Integration] Main initialization complete');
   }
 
-    window.addEventListener('message', function(event) {
+    window.addEventListener('message', async function(event) {
       console.log('[Shopify Integration] Received message from parent window:', event.data);
 
       if (!event.data) {
@@ -743,7 +761,7 @@
         console.log('[Shopify Integration] Handling chat message:', messageData.payload);
         try {
           // Forward the message to the n8n webhook
-          const webhookUrl = 'https://similarly-secure-mayfly.ngrok-free.app/webhook/chat';
+          const webhookUrl = '/api/webhook'; // Use relative path to avoid CORS issues
 
           const payload = {
             session_id: messageData.payload.session_id,
@@ -770,7 +788,7 @@
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'ngrok-skip-browser-warning': 'true'
+              'X-Requested-With': 'XMLHttpRequest' // Add CORS header
             },
             body: JSON.stringify(payload)
           })
@@ -808,9 +826,18 @@
 
         } catch (error) {
           console.error('[Shopify Integration] Error processing chat message:', error);
+          
+          // Retry webhook once on failure
+          if (retryCount < 1) {
+            retryCount++;
+            console.log('[Shopify Integration] Retrying webhook...');
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            return handleChatMessage(event, message);
+          }
+          
           sendMessageToChatbot({
             type: 'chat-error',
-            error: error.message
+            error: 'Failed to process message after retry. Please try again later.'
           });
         }
         return;
