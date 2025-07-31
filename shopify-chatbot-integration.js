@@ -223,8 +223,9 @@
       // Add audio data if it's a voice message
       if (messageData.type === 'voice' && messageData.audioData) {
         payload.audioData = messageData.audioData;
-        payload.mimeType = messageData.mimeType;
-        payload.duration = messageData.duration;
+        payload.mimeType = messageData.mimeType || 'audio/webm';
+        payload.duration = messageData.duration || 0;
+        console.log('[Shopify Integration] Voice message data size:', messageData.audioData.length);
       }
 
       console.log('[Shopify Integration] Sending to n8n webhook:', payload);
@@ -247,10 +248,17 @@
 
       let data;
       try {
-        const parsedResponse = JSON.parse(responseText);
-        data = Array.isArray(parsedResponse) ? parsedResponse[0] : parsedResponse;
+        // Handle empty response
+        if (!responseText || responseText.trim() === '') {
+          console.warn('[Shopify Integration] Empty response from webhook');
+          data = { message: "I received your message but there was no response from the server." };
+        } else {
+          const parsedResponse = JSON.parse(responseText);
+          data = Array.isArray(parsedResponse) ? parsedResponse[0] : parsedResponse;
+        }
       } catch (e) {
         console.error('[Shopify Integration] Failed to parse webhook response:', e);
+        console.error('[Shopify Integration] Raw response:', responseText);
         data = { message: "I received your message but had trouble processing the response." };
       }
 

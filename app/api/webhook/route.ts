@@ -50,6 +50,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Log voice message details for debugging
+    if (body.type === 'voice') {
+      console.log("[Webhook Proxy] Processing voice message:", {
+        type: body.type,
+        hasAudioData: !!body.audioData,
+        audioDataSize: body.audioData ? body.audioData.length : 0,
+        mimeType: body.mimeType,
+        duration: body.duration
+      });
+    }
+
     // For conversation creation events, ensure we have the required fields
     if (body.event_type === "conversation_created") {
       if (!body.conversation_id) {
@@ -160,8 +171,23 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const data = await response.json();
-      console.log("[Webhook Proxy] n8n response data:", data);
+      // Check if response has content
+      const responseText = await response.text();
+      console.log("[Webhook Proxy] n8n response text:", responseText);
+
+      let data;
+      if (!responseText || responseText.trim() === '') {
+        console.warn("[Webhook Proxy] Empty response from n8n webhook");
+        data = { message: "Your message was received but no response was generated." };
+      } else {
+        try {
+          data = JSON.parse(responseText);
+          console.log("[Webhook Proxy] n8n response data:", data);
+        } catch (parseError) {
+          console.error("[Webhook Proxy] Failed to parse n8n response:", parseError);
+          data = { message: "Response received but could not be processed." };
+        }
+      }
 
       return NextResponse.json(data, { 
         status: 200,
