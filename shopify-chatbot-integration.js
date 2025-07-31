@@ -428,13 +428,6 @@
           });
           totalElement.textContent = formatter.format(cart.total_price / 100);
         }
-
-        function sendConversationsResponse(target, conversations) {
-          target.postMessage({
-            type: 'conversations-response',
-            conversations: conversations
-          }, '*');
-        }
       })
       .catch(error => {
         console.error('[Shopify Integration] Error fetching cart total:', error);
@@ -443,6 +436,13 @@
           totalElement.textContent = 'Error loading total';
         }
       });
+  }
+
+  function sendConversationsResponse(target, conversations) {
+    target.postMessage({
+      type: 'conversations-response',
+      conversations: conversations
+    }, '*');
   }
 
   // Global functions for popup
