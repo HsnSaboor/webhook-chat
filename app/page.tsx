@@ -34,6 +34,21 @@ import { useChat } from "@/components/chat/hooks/useChat";
 import { useAudio } from "@/components/chat/hooks/useAudio";
 import type { Message, ProductCardData, HistoryItem } from "@/components/chat/types";
 
+// Declare global interface for shopifyContext
+declare global {
+  interface Window {
+    shopifyContext?: {
+      session_id?: string;
+      source_url?: string | null;
+      page_context?: string | null;
+      cart_currency?: string | null;
+      localization?: any | null;
+      conversation_id?: string | null;
+      shopify_context?: any | null;
+    };
+  }
+}
+
 export default function ChatWidget() {
   // Session data from parent window (Shopify)
   const [sessionId, setSessionId] = useState<string>("");
@@ -371,7 +386,7 @@ export default function ChatWidget() {
     if (
       typeof window !== "undefined" &&
       navigator.mediaDevices &&
-      navigator.mediaDevices.getUserMedia
+      typeof navigator.mediaDevices.getUserMedia === 'function'
     ) {
       if (
         MediaRecorder.isTypeSupported("audio/webm") ||
@@ -502,7 +517,7 @@ export default function ChatWidget() {
           type: item.type || "text",
           cards: item.cards || undefined,
         };
-      }).filter(msg => msg.content.trim() !== "");
+      }).filter((msg: Message) => msg.content.trim() !== "");
 
       console.log("[Chatbot] Converted messages:", loadedMessages);
 
@@ -715,7 +730,22 @@ export default function ChatWidget() {
 
       if (isInShopify) {
         // Send through parent window (Shopify integration)
-        const messageData = {
+        const messageData: {
+          id: string;
+          session_id: string;
+          timestamp: string;
+          user_message: string;
+          message: string;
+          conversation_id: string;
+          source_url: string | null;
+          page_context: string | null;
+          cart_currency: string | null;
+          localization: any | null;
+          type: "text" | "voice";
+          audioData?: string;
+          mimeType?: string;
+          duration?: number;
+        } = {
           id: crypto.randomUUID(),
           session_id: effectiveSessionId,
           timestamp: new Date().toISOString(),
@@ -897,7 +927,7 @@ export default function ChatWidget() {
     if (window.parent && window.parent !== window) {
       try {
         // Use the product handle if available, otherwise construct from name
-        const productHandle = card.handle || card.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        const productHandle = card.handle || (card.name || 'product').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
         const productUrl = `https://zenmato.myshopify.com/products/${productHandle}`;
 
         window.parent.postMessage(
