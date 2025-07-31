@@ -205,8 +205,8 @@
     console.log('[Shopify Integration] Handling send-chat-message:', messageData);
     
     try {
-      // Use the correct webhook endpoint - /webhook/chat instead of /api/webhook
-      const webhookUrl = 'https://similarly-secure-mayfly.ngrok-free.app/webhook/chat';
+      // Use the correct webhook endpoint through our API proxy
+      const webhookUrl = 'https://v0-custom-chat-interface-kappa.vercel.app/api/webhook';
 
       const payload = {
         session_id: messageData.session_id,
@@ -217,7 +217,8 @@
         page_context: messageData.page_context,
         cart_currency: messageData.cart_currency,
         localization: messageData.localization,
-        type: messageData.type || 'text'
+        type: messageData.type || 'text',
+        webhookUrl: 'https://similarly-secure-mayfly.ngrok-free.app/webhook/chat'
       };
 
       // Add audio data if it's a voice message
@@ -233,8 +234,7 @@
       const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning': 'true'
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(payload)
       });
@@ -251,7 +251,12 @@
         // Handle empty response
         if (!responseText || responseText.trim() === '') {
           console.warn('[Shopify Integration] Empty response from webhook');
-          data = { message: "I received your message but there was no response from the server." };
+          const isVoiceMessage = messageData.type === 'voice';
+          data = { 
+            message: isVoiceMessage 
+              ? "I received your voice message, but the AI service is not responding. Please try sending a text message instead." 
+              : "I received your message but there was no response from the server." 
+          };
         } else {
           const parsedResponse = JSON.parse(responseText);
           data = Array.isArray(parsedResponse) ? parsedResponse[0] : parsedResponse;
