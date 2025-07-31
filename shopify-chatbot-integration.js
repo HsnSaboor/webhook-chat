@@ -152,7 +152,7 @@
       if (!window.preloadedConversations.some(c => c.id === conversationId)) {
         console.log('[Shopify Integration] Creating new conversation record:', conversationId);
         await window.ShopifyAPIClient.createConversation(conversationId);
-        
+
         // Add to cache
         window.preloadedConversations.push({
           id: conversationId,
@@ -163,7 +163,7 @@
 
       // Send message
       const result = await window.ShopifyAPIClient.sendMessage(message);
-      
+
       // Update cache with new message
       const conversation = window.preloadedConversations.find(c => c.id === conversationId);
       if (conversation) {
@@ -181,7 +181,7 @@
       }, '*');
     } catch (error) {
       console.error('[Shopify Integration] Error handling chat message:', error);
-      
+
       // Retry webhook on failure
       if (retryCount < 1) {
         retryCount++;
@@ -189,7 +189,7 @@
         await new Promise(resolve => setTimeout(resolve, 1000));
         return handleChatMessage(event, message);
       }
-      
+
       event.source.postMessage({
         type: 'CHAT_RESULT',
         data: {
@@ -428,7 +428,7 @@
           });
           totalElement.textContent = formatter.format(cart.total_price / 100);
         }
-        
+
         function sendConversationsResponse(target, conversations) {
           target.postMessage({
             type: 'conversations-response',
@@ -489,7 +489,7 @@
           // Refresh cache if older than 5 minutes
           const shouldRefresh = !window.preloadedConversationsTimestamp ||
                                (Date.now() - window.preloadedConversationsTimestamp) > 300000;
-                               
+
           if (shouldRefresh && window.ShopifyAPIClient) {
             console.log('[Shopify Integration] Refreshing conversation cache');
             window.ShopifyAPIClient.fetchAllConversations()
@@ -665,8 +665,31 @@
         .then(conversations => {
           console.log('[Shopify Integration] Pre-loaded conversations:', conversations.length);
           // Store in a global variable for quick access
-          window.preloadedConversations = conversations;
-          
+          const formattedConversations = conversations
+          .filter(conv => conv && typeof conv === 'object')
+          .map(conv => {
+            const conversationId = conv.conversation_id || conv.id;
+
+            if (!conversationId || typeof conversationId !== 'string') {
+              console.warn('[Shopify Integration] Invalid conversation ID:', conv);
+              return null;
+            }
+
+            const displayId = conversationId.length >= 4 ? conversationId.slice(-4) : conversationId;
+            const safeName = (conv.name && typeof conv.name === 'string') ? conv.name : `Chat ${displayId}`;
+
+            return {
+              id: conversationId,
+              conversation_id: conversationId,
+              title: safeName,
+              name: safeName,
+              started_at: conv.started_at || conv.timestamp || new Date().toISOString(),
+              timestamp: conv.started_at || conv.timestamp || new Date().toISOString()
+            };
+          })
+          .filter(Boolean); // Remove any null entries
+          window.preloadedConversations = formattedConversations;
+
           // Add timestamp for cache validation
           window.preloadedConversationsTimestamp = Date.now();
         })
@@ -826,7 +849,7 @@
 
         } catch (error) {
           console.error('[Shopify Integration] Error processing chat message:', error);
-          
+
           // Retry webhook once on failure
           if (retryCount < 1) {
             retryCount++;
@@ -834,7 +857,7 @@
             await new Promise(resolve => setTimeout(resolve, 1000));
             return handleChatMessage(event, message);
           }
-          
+
           sendMessageToChatbot({
             type: 'chat-error',
             error: 'Failed to process message after retry. Please try again later.'

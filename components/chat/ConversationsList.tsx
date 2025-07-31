@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Conversation } from "./types";
 
@@ -29,9 +28,9 @@ export const ConversationsList: React.FC<ConversationsListProps> = ({
     }
   };
 
-  const truncateText = (text: string, maxLength: number = 10) => {
-    if (text.length <= maxLength) return text;
-    return text.slice(0, maxLength) + "...";
+  const truncateText = (text: string | null | undefined, maxLength: number = 20) => {
+    if (!text || typeof text !== 'string') return "New Chat";
+    return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
   };
 
   return (

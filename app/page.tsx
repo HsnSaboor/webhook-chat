@@ -223,21 +223,31 @@ export default function ChatWidget() {
     console.log("[Chatbot] Received conversations from parent:", conversationsData);
     try {
       if (Array.isArray(conversationsData)) {
-        const formattedConversations = conversationsData.map((conv, index) => {
-          // Ensure we have a valid conversation object
-          if (!conv || typeof conv !== 'object') {
-            console.warn(`[Chatbot] Invalid conversation at index ${index}:`, conv);
+        const formattedConversations = conversationsData.map((conv: any) => {
+          console.log("[Chatbot] Processing conversation:", conv);
+
+          if (!conv) {
+            console.warn("[Chatbot] Null conversation found, skipping");
             return null;
           }
 
-          // Extract ID from either conversation_id or id field
-          const conversationId = conv.conversation_id || conv.id || `fallback-${index}-${Date.now()}`;
+          // Extract conversation ID from various possible formats
+          const conversationId = conv.conversation_id || conv.id || 
+                                (typeof conv === 'string' ? conv : null);
+
+          if (!conversationId || typeof conversationId !== 'string') {
+            console.warn("[Chatbot] No valid conversation ID found for:", conv);
+            return null;
+          }
+
+          // Safely get the last 4 characters for display
+          const displayId = conversationId.length >= 4 ? conversationId.slice(-4) : conversationId;
 
           return {
             id: conversationId,
             conversation_id: conversationId,
-            title: conv.name || `Chat ${conversationId.slice(-4)}`,
-            name: conv.name || `Chat ${conversationId.slice(-4)}`,
+            title: conv.name || `Chat ${displayId}`,
+            name: conv.name || `Chat ${displayId}`,
             started_at: conv.started_at || conv.timestamp || new Date().toISOString(),
             timestamp: conv.started_at || conv.timestamp || new Date().toISOString()
           };
@@ -415,7 +425,7 @@ export default function ChatWidget() {
         // Always refresh conversations when opening chat
         console.log("[Chatbot] Refreshing conversations on chat open");
         requestConversationsFromParent();
-        
+
         // Always show homepage first when opening chat
         setShowHomepage(true);
       } else {
@@ -643,7 +653,7 @@ export default function ChatWidget() {
         }),
       });
       console.log('[Chatbot] Conversation saved to DB:', conversationId);
-      
+
       // Update cache immediately after saving
       const newConversation = {
         id: conversationId,
@@ -653,11 +663,11 @@ export default function ChatWidget() {
         started_at: new Date().toISOString(),
         timestamp: new Date().toISOString()
       };
-      
+
       setConversations(prev => [...prev, newConversation]);
       setConversationsCache(prev => [...prev, newConversation]);
       setCacheTimestamp(Date.now());
-      
+
     } catch (error) {
       console.error("[Chatbot] Error saving conversation:", error);
     }
@@ -934,9 +944,8 @@ export default function ChatWidget() {
     // Add robust null/undefined checks
     if (!card) {
       console.error("[Chatbot] Attempted to open product page for a null card");
-      return;
-    }
-    
+      return;}
+
     const productName = card.name || 'product';
     console.log(`[Chatbot] Opening product page for: ${productName}`);
 
@@ -970,7 +979,7 @@ export default function ChatWidget() {
   const handleAddToCart = (card: ProductCardData, selectedVariant?: any, quantity: number = 1) => {
     const variantId = selectedVariant?.id || card.variantId;
     const price = selectedVariant?.price || card.price;
-    
+
     console.log(
       `[Chatbot] Attempting to send 'add-to-cart' message for variantId: ${variantId}, quantity: ${quantity}`,
     );
