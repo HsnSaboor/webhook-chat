@@ -209,3 +209,46 @@ export async function OPTIONS(request: NextRequest) {
     headers: corsHeaders,
   });
 }
+import { NextRequest, NextResponse } from 'next/server';
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    console.log('[Webhook] Received message:', body);
+
+    // Forward to the actual n8n webhook
+    const n8nWebhookUrl = process.env.NEXT_PUBLIC_N8N_CHAT_WEBHOOK || 
+      'https://similarly-secure-mayfly.ngrok-free.app/webhook/chat';
+
+    const response = await fetch(n8nWebhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      throw new Error(`N8N webhook failed: ${response.status}`);
+    }
+
+    const responseData = await response.text();
+    console.log('[Webhook] N8N response:', responseData);
+
+    let parsedData;
+    try {
+      parsedData = JSON.parse(responseData);
+    } catch (e) {
+      parsedData = { message: "Response received but couldn't parse it." };
+    }
+
+    return NextResponse.json(parsedData);
+  } catch (error) {
+    console.error('[Webhook] Error:', error);
+    return NextResponse.json(
+      { error: 'Webhook processing failed', message: 'Sorry, I encountered an error processing your request.' },
+      { status: 500 }
+    );
+  }
+}

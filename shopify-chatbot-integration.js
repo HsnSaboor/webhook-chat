@@ -201,6 +201,74 @@
     }
   }
 
+  async function handleSendChatMessage(event, messageData) {
+    console.log('[Shopify Integration] Handling send-chat-message:', messageData);
+    
+    try {
+      // Use the correct webhook endpoint - /webhook/chat instead of /api/webhook
+      const webhookUrl = 'https://similarly-secure-mayfly.ngrok-free.app/webhook/chat';
+
+      const payload = {
+        session_id: messageData.session_id,
+        message: messageData.type === 'voice' ? '' : (messageData.user_message || messageData.message),
+        timestamp: messageData.timestamp,
+        conversation_id: messageData.conversation_id,
+        source_url: messageData.source_url,
+        page_context: messageData.page_context,
+        cart_currency: messageData.cart_currency,
+        localization: messageData.localization,
+        type: messageData.type || 'text'
+      };
+
+      // Add audio data if it's a voice message
+      if (messageData.type === 'voice' && messageData.audioData) {
+        payload.audioData = messageData.audioData;
+        payload.mimeType = messageData.mimeType;
+        payload.duration = messageData.duration;
+      }
+
+      console.log('[Shopify Integration] Sending to n8n webhook:', payload);
+
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Webhook request failed: ${response.status}`);
+      }
+
+      const responseText = await response.text();
+      console.log('[Shopify Integration] Webhook response:', responseText);
+
+      let data;
+      try {
+        const parsedResponse = JSON.parse(responseText);
+        data = Array.isArray(parsedResponse) ? parsedResponse[0] : parsedResponse;
+      } catch (e) {
+        console.error('[Shopify Integration] Failed to parse webhook response:', e);
+        data = { message: "I received your message but had trouble processing the response." };
+      }
+
+      // Send the response back to the chatbot
+      sendMessageToChatbot({
+        type: 'chat-response',
+        response: data
+      });
+
+    } catch (error) {
+      console.error('[Shopify Integration] Webhook error:', error);
+      sendMessageToChatbot({
+        type: 'chat-error',
+        error: error.message
+      });
+    }
+  }
+
   function handleAddToCart(event, payload) {
     console.log('[Shopify Integration] Processing add to cart:', payload);
 
@@ -508,6 +576,11 @@
           }
           return;
 
+        case 'send-chat-message':
+          console.log('[Shopify Integration] Handling send-chat-message request:', event.data.payload);
+          handleSendChatMessage(event, event.data.payload);
+          return;
+
         case 'add-to-cart':
           // Handle add to cart request
           console.log('[Shopify Integration] Handling add-to-cart request:', event.data.payload);
@@ -747,127 +820,7 @@
     console.log('[Shopify Integration] Main initialization complete');
   }
 
-    window.addEventListener('message', async function(event) {
-      console.log('[Shopify Integration] Received message from parent window:', event.data);
-
-      if (!event.data) {
-        return;
-      }
-
-      const messageData = event.data;
-
-      if (messageData.type === 'chat-response') {
-        console.log('[Shopify Integration] Received chat response from webhook:', messageData.response);
-        sendMessageToChatbot({
-          type: 'chat-response',
-          response: messageData.response
-        });
-        return;
-      } else if (messageData.type === 'conversations-response') {
-        try {
-          const conversations = JSON.parse(messageData.conversations);
-          console.log('[Shopify Integration] Sending conversations response:', conversations);
-          sendMessageToChatbot({
-            type: 'conversations-response',
-            conversations: conversations
-          });
-          return;
-        } catch (error) {
-          console.error('[Shopify Integration] Error fetching conversations:', error);
-          sendMessageToChatbot({
-            type: 'conversations-response',
-            conversations: []
-          });
-          return;
-        }
-      } else if (messageData.type === 'send-chat-message') {
-        console.log('[Shopify Integration] Handling chat message:', messageData.payload);
-        try {
-          // Forward the message to the n8n webhook
-          const webhookUrl = '/api/webhook'; // Use relative path to avoid CORS issues
-
-          const payload = {
-            session_id: messageData.payload.session_id,
-            message: messageData.payload.type === 'voice' ? '' : (messageData.payload.user_message || messageData.payload.message),
-            timestamp: messageData.payload.timestamp,
-            conversation_id: messageData.payload.conversation_id,
-            source_url: messageData.payload.source_url,
-            page_context: messageData.payload.page_context,
-            cart_currency: messageData.payload.cart_currency,
-            localization: messageData.payload.localization,
-            type: messageData.payload.type || 'text'
-          };
-
-          // Add audio data if it's a voice message
-          if (messageData.payload.type === 'voice' && messageData.payload.audioData) {
-            payload.audioData = messageData.payload.audioData;
-            payload.mimeType = messageData.payload.mimeType;
-            payload.duration = messageData.payload.duration;
-          }
-
-          console.log('[Shopify Integration] Sending to n8n webhook:', payload);
-
-          fetch(webhookUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Requested-With': 'XMLHttpRequest' // Add CORS header
-            },
-            body: JSON.stringify(payload)
-          })
-          .then(response => {
-            if (!response.ok) {
-              throw new Error(`Webhook request failed: ${response.status}`);
-            }
-            return response.text();
-          })
-          .then(responseText => {
-            console.log('[Shopify Integration] Webhook response:', responseText);
-
-            let data;
-            try {
-              const parsedResponse = JSON.parse(responseText);
-              data = Array.isArray(parsedResponse) ? parsedResponse[0] : parsedResponse;
-            } catch (e) {
-              console.error('[Shopify Integration] Failed to parse webhook response:', e);
-              data = { message: "I received your message but had trouble processing the response." };
-            }
-
-            // Send the response back to the chatbot
-            sendMessageToChatbot({
-              type: 'chat-response',
-              response: data
-            });
-          })
-          .catch(error => {
-            console.error('[Shopify Integration] Webhook error:', error);
-            sendMessageToChatbot({
-              type: 'chat-error',
-              error: error.message
-            });
-          });
-
-        } catch (error) {
-          console.error('[Shopify Integration] Error processing chat message:', error);
-
-          // Retry webhook once on failure
-          if (retryCount < 1) {
-            retryCount++;
-            console.log('[Shopify Integration] Retrying webhook...');
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            return handleChatMessage(event, message);
-          }
-
-          sendMessageToChatbot({
-            type: 'chat-error',
-            error: 'Failed to process message after retry. Please try again later.'
-          });
-        }
-        return;
-      } else if (messageData.type !== 'send-chat-message') {
-          console.log('[Shopify Integration] Unknown message type:', messageData.type);
-        }
-    });
+    
 
   // Start the process
   console.log('[Shopify Integration] Starting dependency check...');
