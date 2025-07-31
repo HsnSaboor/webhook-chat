@@ -1,0 +1,202 @@
+03:48:54.200 [Shopify Session Manager] Initializing enhanced session manager... shopify-session-manager.js:1:34
+03:48:54.200 [Session Manager] Enhanced session manager loaded successfully shopify-session-manager.js:1:5840
+03:48:54.200 [Shopify API Client] Initializing enhanced API client... shopify-api-client.js:1:34
+03:48:54.200 [API Client] Enhanced API client loaded successfully shopify-api-client.js:1:3943
+03:48:54.201 [Shopify Integration] Initializing enhanced chatbot integration... shopify-chatbot-integration.js:1:34
+03:48:54.201 [Shopify Integration] Starting dependency check... shopify-chatbot-integration.js:116:2801
+03:48:54.201 [Shopify Integration] Dependencies loaded, proceeding with initialization... shopify-chatbot-integration.js:105:3462
+03:48:54.201 [Session Manager] Initializing session... shopify-session-manager.js:1:4957
+03:48:54.201 [Session Manager] Looking for Shopify session cookies... shopify-session-manager.js:1:389
+03:48:54.201 [Session Manager] Available cookies: 
+Array(7) [ "keep_alive", "localization", "cart_currency", "_shopify_y", "_tracking_consent", "_ab", "_shopify_s" ]
+shopify-session-manager.js:1:491
+03:48:54.202 [Session Manager] Found session cookie: _shopify_y = 704a41f4-bb93-47c1-a... shopify-session-manager.js:1:807
+03:48:54.202 [Session Manager] Session initialized: 
+Object { session_id: "704a41f4-bb93-47c1-ac64-cca6ac4248c0", source_url: "https://zenmato.myshopify.com/", page_context: "Home: home: EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en", shopify_context: {…}, timestamp: "2025-07-31T22:48:54.203Z" }
+shopify-session-manager.js:1:5383
+03:48:54.203 [Shopify Integration] Pre-loading conversations for session: 704a41f4-bb93-47c1-ac64-cca6ac4248c0 shopify-chatbot-integration.js:116:511
+03:48:54.203 [API Client] Fetching all conversations... shopify-api-client.js:1:2571
+03:48:54.203 [API Client] Request URL: https://v0-custom-chat-interface-kappa.vercel.app/api/conversations?session_id=704a41f4-bb93-47c1-ac64-cca6ac4248c0&t=1754002134204 shopify-api-client.js:1:2961
+03:48:54.203 [API Client] Making request to: https://v0-custom-chat-interface-kappa.vercel.app/api/conversations?session_id=704a41f4-bb93-47c1-ac64-cca6ac4248c0&t=1754002134204 shopify-api-client.js:1:532
+03:48:54.204 [Shopify Integration] Found existing chatbot iframe shopify-chatbot-integration.js:116:1800
+03:48:54.205 [Shopify Integration] Main initialization complete shopify-chatbot-integration.js:116:2735
+03:48:54.513 Cookie “_shopify_test” has been rejected for invalid domain. 4 zenmato.myshopify.com
+03:48:54.544 Cookie “_shopify_s” has been rejected for invalid domain. zenmato.myshopify.com
+03:48:54.544 Cookie “_shopify_sa_p” has been rejected for invalid domain. zenmato.myshopify.com
+03:48:54.544 Cookie “_shopify_sa_t” has been rejected for invalid domain. zenmato.myshopify.com
+03:48:54.544 Cookie “_shopify_y” has been rejected for invalid domain. zenmato.myshopify.com
+03:48:54.609 GET
+https://zenmato.myshopify.com/VideoDrop
+NS_BINDING_ABORTED
+
+03:48:54.609 GET
+https://zenmato.myshopify.com/VideoDrop
+NS_BINDING_ABORTED
+
+03:48:54.610 GET
+https://zenmato.myshopify.com/VideoDrop
+NS_BINDING_ABORTED
+
+03:48:56.774 [Shopify Integration] Initializing chatbot... shopify-chatbot-integration.js:105:2987
+03:48:56.775 [Shopify Integration] Chatbot system initialized. shopify-chatbot-integration.js:105:3178
+03:48:57.363 [API Client] Request successful: 
+Array(5) [ {…}, {…}, {…}, {…}, {…} ]
+shopify-api-client.js:1:834
+03:48:57.378 [API Client] Successfully fetched conversations: 
+Array(5) [ {…}, {…}, {…}, {…}, {…} ]
+shopify-api-client.js:1:3071
+03:48:57.384 [Shopify Integration] Pre-loaded conversations: 5 shopify-chatbot-integration.js:116:703
+03:48:58.781 [Shopify Integration] Valid Shopify session detected! shopify-chatbot-integration.js:116:2529
+03:48:58.781 [Shopify Integration] Attempting to send session data to chatbot iframe... shopify-chatbot-integration.js:1:216
+03:48:58.781 [Shopify Integration] Sending session data to chatbot iframe shopify-chatbot-integration.js:1:953
+03:48:58.782 [Shopify Integration] Session data sent successfully: 
+Object { type: "init", session_id: "704a41f4-bb93-47c1-ac64-cca6ac4248c0", source_url: "https://zenmato.myshopify.com/", page_context: "Home: home: EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en", shopify_context: {…}, timestamp: "2025-07-31T22:48:54.203Z", conversation_id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1754002138782" }
+shopify-chatbot-integration.js:1:1202
+03:48:58.783 [Chatbot] Received message from origin: https://zenmato.myshopify.com Data: 
+Object { type: "init", session_id: "704a41f4-bb93-47c1-ac64-cca6ac4248c0", source_url: "https://zenmato.myshopify.com/", page_context: "Home: home: EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en", shopify_context: {…}, timestamp: "2025-07-31T22:48:54.203Z", conversation_id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1754002138782" }
+page-68b6678b362267b9.js:1:19413
+03:48:58.793 [Chatbot] Received session_id from parent: 704a41f4-bb93-47c1-ac64-cca6ac4248c0 page-68b6678b362267b9.js:1:19685
+03:48:58.794 [Chatbot] Stored complete Shopify context: 
+Object { session_id: "704a41f4-bb93-47c1-ac64-cca6ac4248c0", source_url: "https://zenmato.myshopify.com/", page_context: "Home: home: EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en", conversation_id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1754002138782", shopify_context: {…} }
+page-68b6678b362267b9.js:1:20040
+03:48:58.794 [Chatbot] Auto-loading conversations on session init page-68b6678b362267b9.js:1:20140
+03:48:58.794 [Chatbot] Requesting conversations from parent page-68b6678b362267b9.js:1:24988
+03:48:58.795 [Chatbot] Received source_url: https://zenmato.myshopify.com/ page-68b6678b362267b9.js:1:20228
+03:48:58.795 [Chatbot] Received page_context: Home: home: EcomHQ Zenmato Demo – ZENMATO page-68b6678b362267b9.js:1:20303
+03:48:58.795 [Chatbot] Received cart_currency: USD page-68b6678b362267b9.js:1:20383
+03:48:58.795 [Chatbot] Received localization: en page-68b6678b362267b9.js:1:20464
+03:48:58.798 [Chatbot] Auto-loading conversations on component mount page-68b6678b362267b9.js:1:24572
+03:48:58.798 [Chatbot] Requesting conversations from parent page-68b6678b362267b9.js:1:24988
+03:48:58.855 [Shopify Integration] Received message from iframe: 
+Object { type: "get-all-conversations" }
+shopify-chatbot-integration.js:105:1115
+03:48:58.855 [Shopify Integration] Handling get-all-conversations request shopify-chatbot-integration.js:105:1571
+03:48:58.855 [Shopify Integration] Using cached conversations shopify-chatbot-integration.js:105:2225
+03:48:58.856 [Shopify Integration] Received message from iframe: 
+Object { type: "get-all-conversations" }
+shopify-chatbot-integration.js:105:1115
+03:48:58.856 [Shopify Integration] Handling get-all-conversations request shopify-chatbot-integration.js:105:1571
+03:48:58.857 [Shopify Integration] Using cached conversations shopify-chatbot-integration.js:105:2225
+03:48:58.861 [Chatbot] Received message from origin: https://zenmato.myshopify.com Data: 
+Object { type: "conversations-response", conversations: (5) […] }
+page-68b6678b362267b9.js:1:19413
+03:48:58.861 [Chatbot] Received conversations from parent: 
+Array(5) [ {…}, {…}, {…}, {…}, {…} ]
+page-68b6678b362267b9.js:1:20659
+03:48:58.862 [Chatbot] Processing conversation: 
+Object { id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1754001822272", conversation_id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1754001822272", title: "Voice message...", name: "Voice message...", started_at: "2025-07-31T22:43:43.891+00:00", timestamp: "2025-07-31T22:43:43.891+00:00" }
+page-68b6678b362267b9.js:1:20766
+03:48:58.862 [Chatbot] Processing conversation: 
+Object { id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1754001205156", conversation_id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1754001205156", title: "hi", name: "hi", started_at: "2025-07-31T22:33:27.079+00:00", timestamp: "2025-07-31T22:33:27.079+00:00" }
+page-68b6678b362267b9.js:1:20766
+03:48:58.863 [Chatbot] Processing conversation: 
+Object { id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1753983450904", conversation_id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1753983450904", title: "hi", name: "hi", started_at: "2025-07-31T17:37:32.311+00:00", timestamp: "2025-07-31T17:37:32.311+00:00" }
+page-68b6678b362267b9.js:1:20766
+03:48:58.863 [Chatbot] Processing conversation: 
+Object { id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1753980367287", conversation_id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1753980367287", title: "hi", name: "hi", started_at: "2025-07-31T16:46:08.749+00:00", timestamp: "2025-07-31T16:46:08.749+00:00" }
+page-68b6678b362267b9.js:1:20766
+03:48:58.863 [Chatbot] Processing conversation: 
+Object { id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1753979709403", conversation_id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1753979709403", title: "Voice message...", name: "Voice message...", started_at: "2025-07-31T16:35:10.837+00:00", timestamp: "2025-07-31T16:35:10.837+00:00" }
+page-68b6678b362267b9.js:1:20766
+03:48:58.863 [Chatbot] Formatted conversations: 
+Array(5) [ {…}, {…}, {…}, {…}, {…} ]
+page-68b6678b362267b9.js:1:21323
+03:48:58.865 [Chatbot] Received message from origin: https://zenmato.myshopify.com Data: 
+Object { type: "conversations-response", conversations: (5) […] }
+page-68b6678b362267b9.js:1:19413
+03:48:58.865 [Chatbot] Received conversations from parent: 
+Array(5) [ {…}, {…}, {…}, {…}, {…} ]
+page-68b6678b362267b9.js:1:20659
+03:48:58.866 [Chatbot] Processing conversation: 
+Object { id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1754001822272", conversation_id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1754001822272", title: "Voice message...", name: "Voice message...", started_at: "2025-07-31T22:43:43.891+00:00", timestamp: "2025-07-31T22:43:43.891+00:00" }
+page-68b6678b362267b9.js:1:20766
+03:48:58.866 [Chatbot] Processing conversation: 
+Object { id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1754001205156", conversation_id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1754001205156", title: "hi", name: "hi", started_at: "2025-07-31T22:33:27.079+00:00", timestamp: "2025-07-31T22:33:27.079+00:00" }
+page-68b6678b362267b9.js:1:20766
+03:48:58.866 [Chatbot] Processing conversation: 
+Object { id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1753983450904", conversation_id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1753983450904", title: "hi", name: "hi", started_at: "2025-07-31T17:37:32.311+00:00", timestamp: "2025-07-31T17:37:32.311+00:00" }
+page-68b6678b362267b9.js:1:20766
+03:48:58.866 [Chatbot] Processing conversation: 
+Object { id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1753980367287", conversation_id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1753980367287", title: "hi", name: "hi", started_at: "2025-07-31T16:46:08.749+00:00", timestamp: "2025-07-31T16:46:08.749+00:00" }
+page-68b6678b362267b9.js:1:20766
+03:48:58.867 [Chatbot] Processing conversation: 
+Object { id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1753979709403", conversation_id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1753979709403", title: "Voice message...", name: "Voice message...", started_at: "2025-07-31T16:35:10.837+00:00", timestamp: "2025-07-31T16:35:10.837+00:00" }
+page-68b6678b362267b9.js:1:20766
+03:48:58.867 [Chatbot] Formatted conversations: 
+Array(5) [ {…}, {…}, {…}, {…}, {…} ]
+page-68b6678b362267b9.js:1:21323
+03:48:59.759 Error: Promised response from onMessage listener went out of scope background.js:505:27
+03:49:04.565 [Chatbot] Refreshing conversations on chat open page-68b6678b362267b9.js:1:24340
+03:49:04.566 [Chatbot] Requesting conversations from parent page-68b6678b362267b9.js:1:24988
+03:49:04.568 [Shopify Integration] Received message from iframe: 
+Object { type: "get-all-conversations" }
+shopify-chatbot-integration.js:105:1115
+03:49:04.569 [Shopify Integration] Handling get-all-conversations request shopify-chatbot-integration.js:105:1571
+03:49:04.570 [Shopify Integration] Using cached conversations shopify-chatbot-integration.js:105:2225
+03:49:04.586 [Chatbot] Received message from origin: https://zenmato.myshopify.com Data: 
+Object { type: "conversations-response", conversations: (5) […] }
+page-68b6678b362267b9.js:1:19413
+03:49:04.586 [Chatbot] Received conversations from parent: 
+Array(5) [ {…}, {…}, {…}, {…}, {…} ]
+page-68b6678b362267b9.js:1:20659
+03:49:04.586 [Chatbot] Processing conversation: 
+Object { id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1754001822272", conversation_id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1754001822272", title: "Voice message...", name: "Voice message...", started_at: "2025-07-31T22:43:43.891+00:00", timestamp: "2025-07-31T22:43:43.891+00:00" }
+page-68b6678b362267b9.js:1:20766
+03:49:04.586 [Chatbot] Processing conversation: 
+Object { id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1754001205156", conversation_id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1754001205156", title: "hi", name: "hi", started_at: "2025-07-31T22:33:27.079+00:00", timestamp: "2025-07-31T22:33:27.079+00:00" }
+page-68b6678b362267b9.js:1:20766
+03:49:04.587 [Chatbot] Processing conversation: 
+Object { id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1753983450904", conversation_id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1753983450904", title: "hi", name: "hi", started_at: "2025-07-31T17:37:32.311+00:00", timestamp: "2025-07-31T17:37:32.311+00:00" }
+page-68b6678b362267b9.js:1:20766
+03:49:04.587 [Chatbot] Processing conversation: 
+Object { id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1753980367287", conversation_id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1753980367287", title: "hi", name: "hi", started_at: "2025-07-31T16:46:08.749+00:00", timestamp: "2025-07-31T16:46:08.749+00:00" }
+page-68b6678b362267b9.js:1:20766
+03:49:04.587 [Chatbot] Processing conversation: 
+Object { id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1753979709403", conversation_id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1753979709403", title: "Voice message...", name: "Voice message...", started_at: "2025-07-31T16:35:10.837+00:00", timestamp: "2025-07-31T16:35:10.837+00:00" }
+page-68b6678b362267b9.js:1:20766
+03:49:04.587 [Chatbot] Formatted conversations: 
+Array(5) [ {…}, {…}, {…}, {…}, {…} ]
+page-68b6678b362267b9.js:1:21323
+03:49:05.810 [Analytics] Event tracked: chat_opened page-68b6678b362267b9.js:1:15494
+03:49:10.661 [Chatbot] Sending voice message: Voice message (0s) page-68b6678b362267b9.js:1:28108
+03:49:10.662 [Chatbot] Created new conversation ID: conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1754002150662 page-68b6678b362267b9.js:1:28226
+03:49:11.677 [Chatbot] Conversation saved to DB: conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1754002150662 page-68b6678b362267b9.js:1:27566
+03:49:12.515 [Chatbot] Using Shopify context for message: 
+Object { session_id: "704a41f4-bb93-47c1-ac64-cca6ac4248c0", source_url: "https://zenmato.myshopify.com/", page_context: "Home: home: EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en", conversation_id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1754002138782", shopify_context: {…} }
+page-68b6678b362267b9.js:1:28829
+03:49:12.519 [Chatbot] Sending message through parent window: 
+Object { id: "110ad7ed-5e02-4eaf-a3d6-94e26811d2ad", session_id: "704a41f4-bb93-47c1-ac64-cca6ac4248c0", timestamp: "2025-07-31T22:49:12.517Z", user_message: "", message: "", conversation_id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1754002150662", source_url: "https://zenmato.myshopify.com/", page_context: "Home: home: EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en", … }
+page-68b6678b362267b9.js:1:29410
+03:49:12.520 [Shopify Integration] Received message from iframe: 
+Object { type: "send-chat-message", payload: {…} }
+shopify-chatbot-integration.js:105:1115
+03:49:12.523 [Shopify Integration] Handling send-chat-message request: 
+Object { id: "110ad7ed-5e02-4eaf-a3d6-94e26811d2ad", session_id: "704a41f4-bb93-47c1-ac64-cca6ac4248c0", timestamp: "2025-07-31T22:49:12.517Z", user_message: "", message: "", conversation_id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1754002150662", source_url: "https://zenmato.myshopify.com/", page_context: "Home: home: EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en", … }
+shopify-chatbot-integration.js:105:2395
+03:49:12.524 [Shopify Integration] Handling send-chat-message: 
+Object { id: "110ad7ed-5e02-4eaf-a3d6-94e26811d2ad", session_id: "704a41f4-bb93-47c1-ac64-cca6ac4248c0", timestamp: "2025-07-31T22:49:12.517Z", user_message: "", message: "", conversation_id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1754002150662", source_url: "https://zenmato.myshopify.com/", page_context: "Home: home: EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en", … }
+shopify-chatbot-integration.js:1:4323
+03:49:12.525 [Shopify Integration] Sending to n8n webhook: 
+Object { session_id: "704a41f4-bb93-47c1-ac64-cca6ac4248c0", message: "", timestamp: "2025-07-31T22:49:12.517Z", conversation_id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1754002150662", source_url: "https://zenmato.myshopify.com/", page_context: "Home: home: EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en", type: "voice", audioData: "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", … }
+shopify-chatbot-integration.js:1:5036
+03:49:12.827 [Analytics] Event tracked: message_sent page-68b6678b362267b9.js:1:15494
+03:49:13.958 [Shopify Integration] Webhook response: <empty string> shopify-chatbot-integration.js:1:5388
+03:49:13.958 [Shopify Integration] Failed to parse webhook response: SyntaxError: JSON.parse: unexpected end of data at line 1 column 1 of the JSON data
+    handleSendChatMessage shopify-chatbot-integration.js:250
+    setupMessageListener shopify-chatbot-integration.js:581
+    setupMessageListener shopify-chatbot-integration.js:530
+    main shopify-chatbot-integration.js:729
+    waitForDependencies shopify-chatbot-integration.js:627
+    <anonymous> shopify-chatbot-integration.js:827
+    <anonymous> shopify-chatbot-integration.js:828
+shopify-chatbot-integration.js:1:5592
+03:49:13.959 [Chatbot] Received message from origin: https://zenmato.myshopify.com Data: 
+Object { type: "chat-response", response: {…} }
+page-68b6678b362267b9.js:1:19413
+03:49:13.961 [Chatbot] Received chat response from parent: 
+Object { message: "I received your message but had trouble processing the response." }
+page-68b6678b362267b9.js:1:21940
+03:49:13.961 [Chatbot] Saving standalone AI response to database... 
+Object { content: "I received your message but had trouble processing the response.", cards: undefined, timestamp: "2025-07-31T22:49:13.962Z" }
+page-68b6678b362267b9.js:1:22219
+03:49:14.543 [Chatbot] Standalone AI message saved successfully page-68b6678b362267b9.js:1:22734
