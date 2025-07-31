@@ -1,0 +1,38 @@
+03:20:06.838 [Chatbot] Refreshing conversations on chat open page-55e3ebb844e8f99b.js:1:24340
+03:20:06.838 [Chatbot] Requesting conversations from parent page-55e3ebb844e8f99b.js:1:24988
+03:20:06.839 [Shopify Integration] Received message from parent window: 
+Object { type: "get-all-conversations" }
+shopify-chatbot-integration.js:116:2860
+03:20:06.840 [Shopify Integration] Unknown message type: get-all-conversations shopify-chatbot-integration.js:116:5835
+03:20:06.840 [Shopify Integration] Received message from iframe: 
+Object { type: "get-all-conversations" }
+shopify-chatbot-integration.js:105:1115
+03:20:06.840 [Shopify Integration] Handling get-all-conversations request shopify-chatbot-integration.js:105:1581
+03:20:06.841 [Shopify Integration] Using cached conversations shopify-chatbot-integration.js:105:2235
+03:20:06.852 [Chatbot] Received message from origin: https://zenmato.myshopify.com Data: 
+Object { type: "conversations-response", conversations: (3) […] }
+page-55e3ebb844e8f99b.js:1:19413
+03:20:06.852 [Chatbot] Received conversations from parent: 
+Array(3) [ {…}, {…}, {…} ]
+page-55e3ebb844e8f99b.js:1:20659
+03:20:06.853 [Chatbot] Processing conversation: 
+Object { conversation_id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1753983450904", name: "hi", started_at: "2025-07-31T17:37:32.311+00:00", ended_at: null }
+page-55e3ebb844e8f99b.js:1:20766
+03:20:06.853 [Chatbot] Processing conversation: 
+Object { conversation_id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1753980367287", name: "hi", started_at: "2025-07-31T16:46:08.749+00:00", ended_at: null }
+page-55e3ebb844e8f99b.js:1:20766
+03:20:06.853 [Chatbot] Processing conversation: 
+Object { conversation_id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1753979709403", name: "Voice message...", started_at: "2025-07-31T16:35:10.837+00:00", ended_at: null }
+page-55e3ebb844e8f99b.js:1:20766
+03:20:06.854 [Chatbot] Formatted conversations: 
+Array(3) [ {…}, {…}, {…} ]
+page-55e3ebb844e8f99b.js:1:21323
+03:20:07.153 [Analytics] Event tracked: chat_opened page-55e3ebb844e8f99b.js:1:15494
+03:20:09.862 [Chatbot] Loading conversation: conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1753980367287 page-55e3ebb844e8f99b.js:1:34838
+03:20:09.862 [Chatbot] Loading conversation: conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1753980367287 page-55e3ebb844e8f99b.js:1:25243
+03:20:10.608 [Chatbot] Loaded conversation history: 
+Array(11) [ {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, … ]
+page-55e3ebb844e8f99b.js:1:25499
+03:20:10.609 [Chatbot] Converted messages: 
+Array(11) [ {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, … ]
+page-55e3ebb844e8f99b.js:1:25819
