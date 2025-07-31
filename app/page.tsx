@@ -412,20 +412,10 @@ export default function ChatWidget() {
       if (sessionId && sessionReceived) {
         trackEvent("chat_opened", { initialMessagesCount: messages.length });
 
-        // Use cached conversations if available and recent (within 5 minutes)
-        const cacheAge = Date.now() - cacheTimestamp;
-        const cacheExpired = cacheAge > 5 * 60 * 1000; // 5 minutes
-
-        if (conversationsCache.length > 0 && !cacheExpired) {
-          console.log("[Chatbot] Using cached conversations");
-          setConversations(conversationsCache);
-          setConversationsLoaded(true);
-          setLoadingConversations(false);
-        } else if (!conversationsLoaded || cacheExpired) {
-          console.log("[Chatbot] Cache expired or no conversations loaded, requesting fresh data");
-          requestConversationsFromParent();
-        }
-
+        // Always refresh conversations when opening chat
+        console.log("[Chatbot] Refreshing conversations on chat open");
+        requestConversationsFromParent();
+        
         // Always show homepage first when opening chat
         setShowHomepage(true);
       } else {
@@ -436,7 +426,7 @@ export default function ChatWidget() {
       // Don't clear messages when closing - they will be preserved
       setShowHomepage(true);
     }
-  }, [isOpen, sessionId, sessionReceived, trackEvent, conversationsCache, cacheTimestamp, conversationsLoaded]);
+  }, [isOpen, sessionId, sessionReceived, trackEvent]);
 
   // Auto-load conversations when the component mounts and session is available
   useEffect(() => {
@@ -639,6 +629,40 @@ export default function ChatWidget() {
     }
   };
 
+  const saveConversationToDB = async (conversationId: string, sessionId: string) => {
+    try {
+      await fetch("/api/conversations/save", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          session_id: sessionId,
+          conversation_id: conversationId,
+          name: `Conversation ${new Date().toLocaleString()}`,
+        }),
+      });
+      console.log('[Chatbot] Conversation saved to DB:', conversationId);
+      
+      // Update cache immediately after saving
+      const newConversation = {
+        id: conversationId,
+        conversation_id: conversationId,
+        title: `Chat ${conversationId.slice(-4)}`,
+        name: `Chat ${conversationId.slice(-4)}`,
+        started_at: new Date().toISOString(),
+        timestamp: new Date().toISOString()
+      };
+      
+      setConversations(prev => [...prev, newConversation]);
+      setConversationsCache(prev => [...prev, newConversation]);
+      setCacheTimestamp(Date.now());
+      
+    } catch (error) {
+      console.error("[Chatbot] Error saving conversation:", error);
+    }
+  };
+
   const sendMessage = async (messageText: string, type: "text" | "voice" = "text", audioBlob?: Blob) => {
     if (!sessionId) {
       console.error("[Chatbot] Cannot send message: No session ID");
@@ -654,22 +678,8 @@ export default function ChatWidget() {
       setCurrentConversationId(conversationId);
       console.log("[Chatbot] Created new conversation ID:", conversationId);
 
-      // Save new conversation to database
-      try {
-        await fetch("/api/conversations/save", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            session_id: sessionId,
-            conversation_id: conversationId,
-            name: `Conversation ${new Date().toLocaleString()}`,
-          }),
-        });
-      } catch (error) {
-        console.error("[Chatbot] Error saving conversation:", error);
-      }
+      // Save new conversation immediately
+      await saveConversationToDB(conversationId, sessionId);
     }
 
     // Create the user message
