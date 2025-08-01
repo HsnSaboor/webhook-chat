@@ -580,6 +580,15 @@
       popup.style.opacity = '0';
       setTimeout(() => popup.remove(), 200);
     }
+    
+    // Send message to chatbot to stay in current conversation
+    const chatbotIframe = document.getElementById('chatbot');
+    if (chatbotIframe && chatbotIframe.contentWindow) {
+      chatbotIframe.contentWindow.postMessage({
+        type: 'continue-shopping',
+        action: 'stay-in-conversation'
+      }, '*');
+    }
   };
 
   window.goToCart = function() {

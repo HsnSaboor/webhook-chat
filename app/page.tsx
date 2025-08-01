@@ -323,7 +323,7 @@ export default function ChatWidget() {
               setCartTotal(parseFloat(messageData.cartTotal));
             }
             
-            // Show success message in chat
+            // Show success message in chat only
             const successMessage: Message = {
               id: `success-${Date.now()}`,
               content: `✅ Product added to cart successfully! ${messageData.cartTotal ? `Cart total: $${messageData.cartTotal}` : ''}`,
@@ -333,11 +333,7 @@ export default function ChatWidget() {
             };
             setMessages((prev) => [...prev, successMessage]);
             
-            // Show cart notification popup
-            setShowCartNotification(true);
-            setTimeout(() => {
-              setShowCartNotification(false);
-            }, 5000);
+            // Don't show additional popup - Shopify integration already shows one
             
           } else if (messageData?.type === "cart-info") {
             setCartTotal(messageData.total);
@@ -357,6 +353,10 @@ export default function ChatWidget() {
               type: "text",
             };
             setMessages((prev) => [...prev, errorMessage]);
+          } else if (messageData?.type === "continue-shopping") {
+            console.log("[Chatbot] Continue shopping action - staying in conversation");
+            // Don't change any state - just stay where we are
+            // This prevents the chat from going back to homepage
           }
         } catch (error) {
           console.error("[Chatbot] Error handling message from parent:", error);
@@ -422,17 +422,22 @@ export default function ChatWidget() {
         console.log("[Chatbot] Refreshing conversations on chat open");
         requestConversationsFromParent();
 
-        // Always show homepage first when opening chat
-        setShowHomepage(true);
+        // Only show homepage if we don't have an active conversation
+        if (!currentConversationId && messages.length <= 1) {
+          setShowHomepage(true);
+        }
       } else {
         console.error("[Chatbot] Cannot open chat without proper Shopify session");
         setIsOpen(false); // Close chat if no proper session
       }
     } else if (!isOpen) {
       // Don't clear messages when closing - they will be preserved
-      setShowHomepage(true);
+      // Only reset to homepage if no active conversation
+      if (!currentConversationId) {
+        setShowHomepage(true);
+      }
     }
-  }, [isOpen, sessionId, sessionReceived, trackEvent, messages.length]);
+  }, [isOpen, sessionId, sessionReceived, trackEvent, messages.length, currentConversationId]);
 
   // Auto-load conversations when the component mounts and session is available
   useEffect(() => {
@@ -1584,43 +1589,7 @@ export default function ChatWidget() {
               </CardContent>
             )}
             
-              {showCartNotification && (
-               <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                 <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full mx-4 p-6 transform animate-in zoom-in-95 duration-300">
-                   <div className="text-center mb-6">
-                     <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                       <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                       </svg>
-                     </div>
-                     <h3 className="text-xl font-bold text-gray-900 mb-2">Added to Cart!</h3>
-                     <p className="text-gray-600 mb-4">Your item has been successfully added</p>
-                     {cartTotal > 0 && (
-                       <div className="bg-gray-50 rounded-lg p-3 mb-4">
-                         <p className="text-sm text-gray-500 mb-1">Cart Total</p>
-                         <p className="text-2xl font-bold text-gray-900">${cartTotal}</p>
-                       </div>
-                     )}
-                   </div>
-                   
-                   <div className="space-y-3">
-                     <Button 
-                       onClick={handleGoToCart}
-                       className="w-full bg-black hover:bg-gray-800 text-white py-3 rounded-xl font-medium"
-                     >
-                       Go to Cart
-                     </Button>
-                     <Button 
-                       variant="outline" 
-                       onClick={() => setShowCartNotification(false)}
-                       className="w-full py-3 rounded-xl font-medium border-gray-300 hover:bg-gray-50"
-                     >
-                       Continue Shopping
-                     </Button>
-                   </div>
-                 </div>
-               </div>
-              )}
+              
 
             {/* Recording Indicator - Enhanced */}
             {isRecording && (
