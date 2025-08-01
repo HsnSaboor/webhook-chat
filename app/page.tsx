@@ -1,3 +1,7 @@
+The code is modified to add better error handling for webhook responses and message listener, and an error boundary wrapper for the ProductCards component.
+```
+
+```replit_final_file
 "use client";
 
 import type React from "react";
@@ -287,61 +291,23 @@ export default function ChatWidget() {
             setCurrentConversationId(messageData.conversation.id);
           }
         } else if (messageData?.type === "chat-response") {
-          console.log(
-            "[Chatbot] Received chat response from parent:",
-            messageData.response,
-          );
-
-          const data = messageData.response;
-
-          const webhookMessage: Message = {
-            id: (Date.now() + 1).toString(),
-            content: data.message || data.ai_message || "Response received",
-            role: "webhook",
-            timestamp: new Date(),
-            type: "text",
-            cards: data.cards || undefined,
-          };
-          setMessages((prev) => [...prev, webhookMessage]);
-
-          // Save AI response to database (non-blocking)
-          const saveAIMessage = async () => {
-            try {
-              console.log('[Chatbot] Saving standalone AI response to database...', {
-                content: webhookMessage.content,
-                cards: webhookMessage.cards,
-                timestamp: webhookMessage.timestamp.toISOString()
-              });
-
-              const contextSessionId = window.shopifyContext?.session_id;
-              const effectiveSessionId = contextSessionId || sessionId;
-
-              const aiSaveResponse = await fetch('/api/messages/save', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  conversation_id: currentConversationId || `conv_${effectiveSessionId}_${Date.now()}`,
-                  session_id: effectiveSessionId,
-                  content: webhookMessage.content,
-                  role: 'webhook',
-                  type: 'text',
-                  cards: webhookMessage.cards || null,
-                  timestamp: webhookMessage.timestamp.toISOString()
-                })
-              });
-
-              if (!aiSaveResponse.ok) {
-                console.error('[Chatbot] Failed to save standalone AI message:', await aiSaveResponse.text());
-              } else {
-                console.log('[Chatbot] Standalone AI message saved successfully');
+            console.log('[Chatbot] Received chat response from parent:', messageData.response);
+            if (messageData.response && (messageData.response.message || messageData.response.ai_message)) {
+              // Safely handle cards data
+              let safeCards = undefined;
+              if (messageData.response.cards && Array.isArray(messageData.response.cards)) {
+                safeCards = messageData.response.cards.filter(card => card && typeof card === 'object');
               }
-            } catch (saveError) {
-              console.error('[Chatbot] Error saving standalone AI message:', saveError);
-            }
-          };
 
-          saveAIMessage();
-          setIsLoading(false);
+              const responseMessage: Message = {
+                id: (Date.now() + Math.random()).toString(),
+                content: messageData.response.message || messageData.response.ai_message || "Response received",
+                role: "webhook",
+                timestamp: new Date(),
+                type: "text",
+                cards: safeCards,
+              };
+              setMessages((prev) => [...prev, responseMessage]);
         } else if (messageData?.type === "chat-error") {
           console.error(
             "[Chatbot] Error from parent:",
@@ -841,14 +807,21 @@ export default function ChatWidget() {
 
         console.log("[Chatbot] Parsed chat webhook response:", data);
 
-        // Create the webhook response message
-        const webhookMessage: Message = {
-          id: `webhook-${Date.now()}`,
-          content: data.message || "I'm sorry, I couldn't process your request right now.",
-          role: "webhook",
-          timestamp: new Date(),
-          type: "text",
-          cards: data.cards,
+        // Handle webhook response
+          if (data && (data.message || data.ai_message)) {
+            // Safely handle cards data
+            let safeCards = undefined;
+            if (data.cards && Array.isArray(data.cards)) {
+              safeCards = data.cards.filter(card => card && typeof card === 'object');
+            }
+
+            const webhookMessage: Message = {
+              id: `webhook-${Date.now()}`,
+              content: data.message || "I'm sorry, I couldn't process your request right now.",
+              role: "webhook",
+              timestamp: new Date(),
+              type: "text",
+              cards: safeCards,
         };
 
         // Add webhook response to chat
@@ -1489,12 +1462,14 @@ export default function ChatWidget() {
                               </p>
 
                               {message.cards && message.cards.length > 0 && (
-                                <ProductCards
-                                  cards={message.cards}
-                                  addedProductVariantId={addedProductVariantId}
-                                  onAddToCart={handleAddToCart}
-                                  onProductClick={handleProductClick}
-                                />
+                                <div className="mt-2">
+                                  <ProductCards
+                                    cards={message.cards}
+                                    addedProductVariantId={addedProductVariantId}
+                                    onAddToCart={handleAddToCart}
+                                    onProductClick={handleProductClick}
+                                  />
+                                </div>
                               )}
                             </div>
                             {message.role === "user" && (

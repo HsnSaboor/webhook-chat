@@ -24,7 +24,7 @@ export function ProductCards({ cards, addedProductVariantId, onAddToCart, onProd
   const getColorName = (color: string): string => {
     // A simplified map for brevity
     const colorMap: { [key: string]: string } = { '#000000': 'Black', '#ffffff': 'White', '#ff0000': 'Red', '#0000ff': 'Blue' };
-    return colorMap[color.toLowerCase()] || color;
+    return colorMap[color?.toLowerCase()] || color;
   };
 
   const getSelection = (cardIndex: number) => selections[`card-${cardIndex}`] || { selectedVariant: null, quantity: 1 };
