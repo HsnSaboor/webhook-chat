@@ -1,4 +1,3 @@
-
 "use client";
 
 import type React from "react";
@@ -128,6 +127,8 @@ export default function ChatWidget() {
   const [conversationsLoaded, setConversationsLoaded] = useState(false);
   const [conversationsCache, setConversationsCache] = useState<any[]>([]);
   const [cacheTimestamp, setCacheTimestamp] = useState<number>(0);
+  const [cartTotal, setCartTotal] = useState(0);
+  const [showCartNotification, setShowCartNotification] = useState(false);
 
   const dragStartY = useRef(0);
   const dragStartHeight = useRef(0);
@@ -314,6 +315,12 @@ export default function ChatWidget() {
               messageData.variantId,
             );
             // Show success message to user
+            setShowCartNotification(true);
+            setTimeout(() => {
+              setShowCartNotification(false);
+            }, 3000);
+          } else if (messageData?.type === "cart-info") {
+            setCartTotal(messageData.total);
           } else if (messageData?.type === "add-to-cart-error") {
             console.error(
               "[Chatbot] Failed to add product to cart:",
@@ -941,8 +948,14 @@ export default function ChatWidget() {
   };
 
   const handleAddToCart = (card: ProductCardData, selectedVariant?: any, quantity: number = 1) => {
+    // Ensure variantId is correctly accessed
     const variantId = selectedVariant?.id || card.variantId;
     const price = selectedVariant?.price || card.price;
+
+    if (!variantId) {
+        console.error("[Chatbot] Missing variantId. Cannot add to cart.");
+        return;
+    }
 
     console.log(
       `[Chatbot] Attempting to send 'add-to-cart' message for variantId: ${variantId}, quantity: ${quantity}`,
@@ -1154,6 +1167,18 @@ export default function ChatWidget() {
     // Use the trackEvent function from useChat hook with proper session ID
     trackEvent(eventName, { ...eventData, sessionId: effectiveSessionId });
   };
+  
+  const handleGoToCart = () => {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage(
+        {
+          type: "navigate-to-cart",
+        },
+        "https://zenmato.myshopify.com",
+      );
+    }
+  };
+  
 
   return (
     <Fragment>
@@ -1490,6 +1515,23 @@ export default function ChatWidget() {
                 </div>
               </CardContent>
             )}
+            
+              {showCartNotification && (
+               <div className="fixed bottom-0 left-0 w-full bg-green-500 text-white p-4 flex items-center justify-between transition-transform transform translate-y-0">
+                  <div>
+                    <p className="font-semibold">Added to cart!</p>
+                    <p>Cart total: ${cartTotal}</p>
+                  </div>
+                  <div className="space-x-3">
+                    <Button variant="secondary" size="sm" onClick={handleGoToCart}>
+                      Go to cart
+                    </Button>
+                    <Button variant="secondary" size="sm" onClick={() => setShowCartNotification(false)}>
+                      Continue shopping
+                    </Button>
+                  </div>
+                </div>
+              )}
 
             {/* Recording Indicator - Enhanced */}
             {isRecording && (

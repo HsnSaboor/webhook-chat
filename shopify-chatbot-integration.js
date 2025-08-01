@@ -203,7 +203,7 @@
 
   async function handleSendChatMessage(event, messageData) {
     console.log('[Shopify Integration] Handling send-chat-message:', messageData);
-    
+
     try {
       // Use the correct webhook endpoint through our API proxy
       const webhookUrl = 'https://v0-custom-chat-interface-kappa.vercel.app/api/webhook';
@@ -285,13 +285,22 @@
   function handleAddToCart(event, payload) {
     console.log('[Shopify Integration] Processing add to cart:', payload);
 
-    const { variantId, quantity = 1, redirect = false, productName, productPrice } = payload;
+    let variantId = payload.variantId;
+    const quantity = payload.quantity || 1;
+
+    // Try to get variantId from selectedVariant if main variantId is missing
+    if (!variantId && payload.selectedVariant && payload.selectedVariant.id) {
+      variantId = payload.selectedVariant.id;
+      console.log('[Shopify Integration] Using variantId from selectedVariant:', variantId);
+    }
 
     if (!variantId) {
       console.error('[Shopify Integration] No variantId provided for add to cart');
+      // Notify the chatbot of error
       event.source.postMessage({
         type: 'add-to-cart-error',
-        error: 'No variant ID provided'
+        variantId: variantId,
+        error: 'No variant ID provided. Please select a product variant.'
       }, '*');
       return;
     }
@@ -387,52 +396,54 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 20px;
+        padding: 16px;
       ">
         <div style="
           background: white;
-          border-radius: 12px;
+          border-radius: 16px;
           padding: 24px;
-          max-width: 400px;
+          max-width: 90vw;
           width: 100%;
-          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-          animation: slideUp 0.3s ease-out;
+          max-width: 400px;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+          animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          position: relative;
         ">
-          <div style="text-align: center; margin-bottom: 20px;">
+          <div style="text-align: center; margin-bottom: 24px;">
             <div style="
-              width: 48px;
-              height: 48px;
-              background: #10b981;
+              width: 56px;
+              height: 56px;
+              background: linear-gradient(135deg, #10b981, #059669);
               border-radius: 50%;
               display: flex;
               align-items: center;
               justify-content: center;
-              margin: 0 auto 12px auto;
+              margin: 0 auto 16px auto;
+              box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
             ">
-              <svg width="24" height="24" fill="white" viewBox="0 0 24 24">
+              <svg width="28" height="28" fill="white" viewBox="0 0 24 24">
                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
             </div>
-            <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #111827;">
+            <h3 style="margin: 0 0 8px 0; font-size: 20px; font-weight: 700; color: #111827;">
               Added to Cart!
             </h3>
-            <p style="margin: 0; color: #6b7280; font-size: 14px;">
-              ${productName || 'Product'} has been added to your cart
+            <p style="margin: 0 0 8px 0; color: #6b7280; font-size: 15px; font-weight: 500;">
+              ${productName} has been added to your cart
             </p>
-          </div>
-
-          <div style="
-            background: #f9fafb;
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 20px;
-            border: 1px solid #e5e7eb;
-          ">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-size: 14px; color: #374151;">Cart Total:</span>
-              <span style="font-weight: 600; color: #111827;" id="cart-total">
+            <div style="
+              padding: 20px;
+              background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+              border-radius: 12px;
+              margin: 16px 0;
+              border: 1px solid #e2e8f0;
+            ">
+              <p style="margin: 0 0 8px 0; font-size: 13px; color: #64748b; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600;">
+                Cart Total
+              </p>
+              <p id="cart-total" style="margin: 0; font-size: 28px; font-weight: 800; color: #0f172a; text-shadow: 0 1px 2px rgba(0,0,0,0.1);">
                 Loading...
-              </span>
+              </p>
             </div>
           </div>
 
@@ -715,6 +726,12 @@
       box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
       z-index: 9999;
       background: white;
+
+      @media (max-width: 600px) {
+        /* On smaller screens, make the chatbot take up more vertical space */
+        height: 90vh; /* Use 90% of the viewport height */
+        max-height: 90vh; /* Ensure it doesn't exceed 90% */
+      }
     `;
     iframe.title = 'Chatbot';
     iframe.allow = 'microphone';
@@ -833,7 +850,7 @@
     console.log('[Shopify Integration] Main initialization complete');
   }
 
-    
+
 
   // Start the process
   console.log('[Shopify Integration] Starting dependency check...');
