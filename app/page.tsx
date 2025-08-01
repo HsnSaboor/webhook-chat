@@ -155,7 +155,37 @@ export default function ChatWidget() {
 
   // Listen for messages from parent window (Shopify theme)
   useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
+    let typingTimeout: NodeJS.Timeout;
+
+    if (isLoading) {
+      // Set a fallback timeout to hide typing indicator after 30 seconds
+      typingTimeout = setTimeout(() => {
+        console.warn('[Chatbot] Typing indicator timeout - stopping loading state');
+        setIsLoading(false);
+
+        // Add timeout message
+        const timeoutMessage: Message = {
+          id: `timeout-${Date.now()}`,
+          content: "I'm taking longer than expected to respond. Please try sending your message again.",
+          role: "webhook",
+          timestamp: new Date(),
+          type: "text",
+        };
+
+        setMessages((prev) => [...prev, timeoutMessage]);
+      }, 30000); // 30 second timeout
+    }
+
+    return () => {
+      if (typingTimeout) {
+        clearTimeout(typingTimeout);
+      }
+    };
+  }, [isLoading]);
+
+  // Listen for messages from parent window (webhook responses)
+  useEffect(() => {
+    const handleMessage = async (event: MessageEvent) => {
       const trustedOrigins = [
         "https://zenmato.myshopify.com",
         "https://cdn.shopify.com",
@@ -317,12 +347,12 @@ export default function ChatWidget() {
               messageData.variantId,
               messageData
             );
-            
+
             // Update cart total if provided
             if (messageData.cartTotal) {
               setCartTotal(parseFloat(messageData.cartTotal));
             }
-            
+
             // Show success message in chat only
             const successMessage: Message = {
               id: `success-${Date.now()}`,
@@ -332,9 +362,9 @@ export default function ChatWidget() {
               type: "text",
             };
             setMessages((prev) => [...prev, successMessage]);
-            
+
             // Don't show additional popup - Shopify integration already shows one
-            
+
           } else if (messageData?.type === "cart-info") {
             setCartTotal(messageData.total);
           } else if (messageData?.type === "add-to-cart-error") {
@@ -343,7 +373,7 @@ export default function ChatWidget() {
               messageData.error,
               messageData.details
             );
-            
+
             // Show error message in chat
             const errorMessage: Message = {
               id: `error-${Date.now()}`,
@@ -359,7 +389,9 @@ export default function ChatWidget() {
             // This prevents the chat from going back to homepage
           }
         } catch (error) {
-          console.error("[Chatbot] Error handling message from parent:", error);
+          console.error('[Chatbot] Error in message event listener:', error);
+          // Stop loading indicator on error
+          setIsLoading(false);
         }
       }
     };
@@ -368,7 +400,7 @@ export default function ChatWidget() {
     return () => {
       window.removeEventListener("message", handleMessage);
     };
-  }, [setSessionId, setSessionReceived, setSourceUrl, setPageContext, setCartCurrency, setLocalization, setMessages, currentConversationId, conversationsLoaded, conversationsCache.length]);
+  }, [setSessionId, setSessionReceived, setSourceUrl, setPageContext, setCartCurrency, setLocalization, setMessages, currentConversationId, conversationsLoaded, conversationsCache.length, setIsLoading]);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -711,224 +743,62 @@ export default function ChatWidget() {
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
 
-    // Save user message to database
+    // Send the message and wait for webhook response
     try {
-      await fetch("/api/messages/save", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          conversation_id: conversationId,
-          session_id: sessionId,
-          content: messageText,
-          role: "user",
-          type,
-          timestamp: userMessage.timestamp.toISOString(),
-        }),
-      });
-    } catch (error) {
-      console.error("[Chatbot] Error saving user message:", error);
-    }
+      console.log('[Chatbot] Sending message to parent window for webhook processing...');
 
-    try {
-      // Track the message sent event
-      trackAnalyticsEvent("message_sent", {
+      const messagePayload = {
         message: messageText,
-        type,
-        conversationId,
-      });
+        type: type,
+        audioUrl: audioBlob ? URL.createObjectURL(audioBlob) : null,
+        sessionId: effectiveSessionId,
+        sourceUrl: sourceUrl,
+        pageContext: pageContext,
+        cartCurrency: cartCurrency,
+        localization: localization
+      };
 
-      // Get the latest context data
-      const context = window.shopifyContext || {};
-      console.log("[Chatbot] Using Shopify context for message:", context);
-
-      // Use the session ID from context if available, otherwise use the local sessionId
-      const effectiveSessionId = context.session_id || sessionId;
-
-      // Check if we're in a parent window (Shopify) context
-      const isInShopify = window.parent && window.parent !== window;
-
-      if (isInShopify) {
-        // Send through parent window (Shopify integration)
-        const messageData: {
-          id: string;
-          session_id: string;
-          timestamp: string;
-          user_message: string;
-          message: string;
-          conversation_id: string;
-          source_url: string | null;
-          page_context: string | null;
-          cart_currency: string | null;
-          localization: any | null;
-          type: "text" | "voice";
-          audioData?: string;
-          mimeType?: string;
-          duration?: number;
-        } = {
-          id: crypto.randomUUID(),
-          session_id: effectiveSessionId,
-          timestamp: new Date().toISOString(),
-          user_message: type === "voice" ? "" : messageText, // Empty for voice messages
-          message: type === "voice" ? "" : messageText, // Empty for voice messages - n8n will transcribe
-          conversation_id: conversationId,
-          source_url: context.source_url || null,
-          page_context: context.page_context || null,
-          cart_currency: context.cart_currency || null,
-          localization: context.localization || null,
-          type,
-        };
-
-        // Add audio data for voice messages
-        if (type === "voice" && audioBlob) {
-          const arrayBuffer = await audioBlob.arrayBuffer();
-          const base64Audio = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-          messageData.audioData = base64Audio;
-          messageData.mimeType = audioBlob.type;
-          messageData.duration = Math.floor((audioBlob.size / 16000) / 2); // Rough estimate
-        }
-
-        console.log("[Chatbot] Sending message through parent window:", messageData);
-        sendChatMessageToParent(messageData);
-
-        // The response will come through the message listener - don't set isLoading false here
-        // isLoading will be set false when we receive the chat-response or chat-error message
-        return;
+      // Send to parent window for webhook processing
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({
+          type: 'send-chat-message',
+          payload: messagePayload
+        }, '*');
+        // Don't set isLoading to false here - wait for the response
       } else {
-        // Direct webhook call (fallback when not in Shopify)
-        const chatWebhookUrl = process.env.NEXT_PUBLIC_N8N_CHAT_WEBHOOK || 
-          "https://similarly-secure-mayfly.ngrok-free.app/webhook/chat";
-
-        const webhookPayload = {
-          session_id: effectiveSessionId,
-          message: messageText,
-          timestamp: new Date().toISOString(),
-          conversation_id: conversationId,
-          source_url: context.source_url || null,
-          page_context: context.page_context || null,
-          cart_currency: context.cart_currency || null,
-          localization: context.localization || null,
-          type,
-        };
-
-        console.log("[Chatbot] Sending directly to n8n chat webhook:", webhookPayload);
-
-        const response = await fetch(chatWebhookUrl, {
-          method: "POST",
+        console.warn('[Chatbot] No parent window detected, sending directly to webhook');
+        // Fallback: send directly to webhook if no parent window
+        const response = await fetch('/api/webhook', {
+          method: 'POST',
           headers: {
-            "Content-Type": "application/json",
-            "ngrok-skip-browser-warning": "true",
+            'Content-Type': 'application/json',
           },
-          body: JSON.stringify(webhookPayload),
+          body: JSON.stringify(messagePayload),
         });
 
         if (!response.ok) {
-          throw new Error(`Chat webhook request failed: ${response.status}`);
+          throw new Error(`Webhook request failed: ${response.status}`);
         }
 
-        const responseText = await response.text();
-        console.log("[Chatbot] Raw webhook response:", responseText);
+        const data = await response.json();
 
-        let data;
-        try {
-          const parsedResponse = JSON.parse(responseText);
-          // Handle array responses from webhook
-          data = Array.isArray(parsedResponse) ? parsedResponse[0] : parsedResponse;
-        } catch (e) {
-          console.error("[Chatbot] Failed to parse webhook response as JSON:", e);
-          data = { message: "I received your message but had trouble processing the response. Please try again." };
-        }
+        // Process the response as if it came from parent window
+        const webhookMessage: Message = {
+          id: `webhook-${Date.now()}`,
+          content: data.message || "I'm sorry, I couldn't process your request right now.",
+          role: "webhook",
+          timestamp: new Date(),
+          type: "text",
+          cards: data.cards || undefined,
+        };
 
-        console.log("[Chatbot] Parsed chat webhook response:", data);
-
-        // Handle webhook response
-        if (data && (data.message || data.ai_message)) {
-          // Safely handle cards data
-          let safeCards = undefined;
-          if (data.cards && Array.isArray(data.cards)) {
-            safeCards = data.cards.filter((card: any) => card && typeof card === 'object');
-          }
-
-          const webhookMessage: Message = {
-            id: `webhook-${Date.now()}`,
-            content: data.message || "I'm sorry, I couldn't process your request right now.",
-            role: "webhook",
-            timestamp: new Date(),
-            type: "text",
-            cards: safeCards,
-          };
-
-          // Add webhook response to chat
-          setMessages((prev) => [...prev, webhookMessage]);
-
-          // Track the response received event
-          trackAnalyticsEvent("response_received", {
-            response: webhookMessage.content,
-            conversationId,
-          });
-
-          try {
-            // Save user message
-            console.log('[Chatbot] Saving user message to database...');
-            const userSaveResponse = await fetch('/api/messages/save', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                conversation_id: conversationId,
-                session_id: effectiveSessionId,
-                content: messageText,
-                role: 'user',
-                type: type,
-                audio_url: audioBlob ? URL.createObjectURL(audioBlob) : null,
-                timestamp: userMessage.timestamp.toISOString()
-              })
-            });
-
-            if (!userSaveResponse.ok) {
-              console.error('[Chatbot] Failed to save user message:', await userSaveResponse.text());
-            } else {
-              console.log('[Chatbot] User message saved successfully');
-            }
-
-            // Save AI response
-            console.log('[Chatbot] Saving AI message to database...', {
-              content: data.message,
-              cards: data.cards,
-              timestamp: webhookMessage.timestamp.toISOString()
-            });
-
-            const aiSaveResponse = await fetch('/api/messages/save', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                conversation_id: conversationId,
-                session_id: effectiveSessionId,
-                content: data.message || "No response content",
-                role: 'webhook',
-                type: 'text',
-                cards: data.cards || null,
-                timestamp: webhookMessage.timestamp.toISOString()
-              })
-            });
-
-            if (!aiSaveResponse.ok) {
-              console.error('[Chatbot] Failed to save AI message:', await aiSaveResponse.text());
-            } else {
-              console.log('[Chatbot] AI message saved successfully');
-            }
-          } catch (saveError) {
-            console.error('[Chatbot] Error saving messages:', saveError);
-          }
-
-          // Only set loading false after everything is processed
-          setIsLoading(false);
-        }
+        setMessages((prev) => [...prev, webhookMessage]);
+        setIsLoading(false); // Only set to false after processing response
       }
     } catch (error) {
-      console.error("[Chatbot] Error sending message:", error);
+      console.error('[Chatbot] Error sending message:', error);
 
-      // Add error message
+      // Add error message to chat
       const errorMessage: Message = {
         id: `error-${Date.now()}`,
         content: "I'm sorry, there was an error processing your message. Please try again.",
@@ -938,14 +808,7 @@ export default function ChatWidget() {
       };
 
       setMessages((prev) => [...prev, errorMessage]);
-
-      // Track the error event
-      trackAnalyticsEvent("message_error", {
-        error: error instanceof Error ? error.message : "Unknown error",
-        conversationId,
-      });
-    } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Set to false on error
     }
   };
 
@@ -989,9 +852,9 @@ export default function ChatWidget() {
   const handleAddToCart = (card: ProductCardData, selectedVariant?: any, quantity: number = 1) => {
     // Enhanced variant ID extraction logic with better error handling
     let variantId = null;
-    
+
     console.log("[Chatbot] handleAddToCart called with:", { card, selectedVariant, quantity });
-    
+
     // Try multiple ways to get the variant ID
     if (selectedVariant?.id) {
       variantId = selectedVariant.id;
@@ -1017,7 +880,7 @@ export default function ChatWidget() {
           cardVariantId: card.variantId,
           cardVariants: card.variants
         });
-        
+
         // Show user-friendly error message
         const errorMessage: Message = {
           id: `error-${Date.now()}`,
@@ -1240,7 +1103,7 @@ export default function ChatWidget() {
     // Use the trackEvent function from useChat hook with proper session ID
     trackEvent(eventName, { ...eventData, sessionId: effectiveSessionId });
   };
-  
+
   const handleGoToCart = () => {
     if (window.parent && window.parent !== window) {
       window.parent.postMessage(
@@ -1251,7 +1114,7 @@ export default function ChatWidget() {
       );
     }
   };
-  
+
 
   return (
     <Fragment>
@@ -1588,8 +1451,8 @@ export default function ChatWidget() {
                 </div>
               </CardContent>
             )}
-            
-              
+
+
 
             {/* Recording Indicator - Enhanced */}
             {isRecording && (
