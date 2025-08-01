@@ -1,7 +1,4 @@
-The code is modified to add better error handling for webhook responses and message listener, and an error boundary wrapper for the ProductCards component.
-```
 
-```replit_final_file
 "use client";
 
 import type React from "react";
@@ -179,124 +176,111 @@ export default function ChatWidget() {
       const messageData = event.data;
 
       if (trustedOrigins.includes(event.origin)) {
-        if (messageData?.type === "init") {
-          if (messageData.session_id) {
-            console.log("[Chatbot] Received session_id from parent:", messageData.session_id);
+        try {
+          if (messageData?.type === "init") {
+            if (messageData.session_id) {
+              console.log("[Chatbot] Received session_id from parent:", messageData.session_id);
 
-            // Set the actual session ID from Shopify
-            setSessionId(messageData.session_id);
-            setSessionReceived(true);
+              // Set the actual session ID from Shopify
+              setSessionId(messageData.session_id);
+              setSessionReceived(true);
 
-            // Initialize shopifyContext with all available data
-            window.shopifyContext = {
-              session_id: messageData.session_id,
-              source_url: messageData.source_url || null,
-              page_context: messageData.page_context || null,
-              cart_currency: messageData.cart_currency || null,
-              localization: messageData.localization || null,
-              conversation_id: messageData.conversation_id || null,
-              shopify_context: messageData.shopify_context || null
+              // Initialize shopifyContext with all available data
+              window.shopifyContext = {
+                session_id: messageData.session_id,
+                source_url: messageData.source_url || null,
+                page_context: messageData.page_context || null,
+                cart_currency: messageData.cart_currency || null,
+                localization: messageData.localization || null,
+                conversation_id: messageData.conversation_id || null,
+                shopify_context: messageData.shopify_context || null
+              };
+
+              console.log("[Chatbot] Stored complete Shopify context:", window.shopifyContext);
+
+              // Auto-load conversations immediately when session is received
+              if (!conversationsLoaded && conversationsCache.length === 0) {
+                console.log("[Chatbot] Auto-loading conversations on session init");
+                requestConversationsFromParent();
+              }
+            } else {
+              console.warn("[Chatbot] Received init message without session_id");
+            }
+          } else if (messageData?.type === "conversations-response") {
+            const handleConversationsReceived = (conversationsData: any[]) => {
+              console.log("[Chatbot] Received conversations from parent:", conversationsData);
+              try {
+                if (Array.isArray(conversationsData)) {
+                  const formattedConversations = conversationsData.map((conv: any) => {
+                    console.log("[Chatbot] Processing conversation:", conv);
+
+                    if (!conv) {
+                      console.warn("[Chatbot] Null conversation found, skipping");
+                      return null;
+                    }
+
+                    // Extract conversation ID from various possible formats
+                    const conversationId = conv.conversation_id || conv.id || 
+                                          (typeof conv === 'string' ? conv : null);
+
+                    if (!conversationId || typeof conversationId !== 'string') {
+                      console.warn("[Chatbot] No valid conversation ID found for:", conv);
+                      return null;
+                    }
+
+                    // Safely get the last 4 characters for display
+                    const displayId = conversationId.length >= 4 ? conversationId.slice(-4) : conversationId;
+
+                    return {
+                      id: conversationId,
+                      conversation_id: conversationId,
+                      title: conv.name || `Chat ${displayId}`,
+                      name: conv.name || `Chat ${displayId}`,
+                      started_at: conv.started_at || conv.timestamp || new Date().toISOString(),
+                      timestamp: conv.started_at || conv.timestamp || new Date().toISOString()
+                    };
+                  }).filter(Boolean); // Remove any null entries
+
+                  console.log("[Chatbot] Formatted conversations:", formattedConversations);
+
+                  // Update both current conversations and cache
+                  setConversations(formattedConversations);
+                  setConversationsCache(formattedConversations);
+                  setCacheTimestamp(Date.now());
+                  setConversationsLoaded(true);
+                  setLoadingConversations(false);
+                } else {
+                  console.warn("[Chatbot] Conversations data is not an array:", conversationsData);
+                  setConversations([]);
+                  setConversationsCache([]);
+                  setConversationsLoaded(true);
+                  setLoadingConversations(false);
+                }
+              } catch (error) {
+                console.error("[Chatbot] Error processing conversations:", error);
+                setConversations([]);
+                setConversationsCache([]);
+                setConversationsLoaded(true);
+                setLoadingConversations(false);
+              }
             };
-
-            console.log("[Chatbot] Stored complete Shopify context:", window.shopifyContext);
-
-            // Auto-load conversations immediately when session is received
-            if (!conversationsLoaded && conversationsCache.length === 0) {
-              console.log("[Chatbot] Auto-loading conversations on session init");
-              requestConversationsFromParent();
+            handleConversationsReceived(messageData.conversations);
+          } else if (messageData?.type === "conversation-response") {
+            console.log(
+              "[Chatbot] Received conversation history from parent:",
+              messageData.conversation,
+            );
+            if (messageData.conversation?.messages) {
+              setMessages(messageData.conversation.messages);
+              setCurrentConversationId(messageData.conversation.id);
             }
-
-            // Log individual received values
-            if (messageData.source_url) {
-              console.log("[Chatbot] Received source_url:", messageData.source_url);
-            }
-            if (messageData.page_context) {
-              console.log("[Chatbot] Received page_context:", messageData.page_context);
-            }
-            if (messageData.cart_currency) {
-              console.log("[Chatbot] Received cart_currency:", messageData.cart_currency);
-            }
-            if (messageData.localization) {
-              console.log("[Chatbot] Received localization:", messageData.localization);
-            }
-          } else {
-            console.warn("[Chatbot] Received init message without session_id");
-          }
-        } else if (messageData?.type === "conversations-response") {
-          const handleConversationsReceived = (conversationsData: any[]) => {
-    console.log("[Chatbot] Received conversations from parent:", conversationsData);
-    try {
-      if (Array.isArray(conversationsData)) {
-        const formattedConversations = conversationsData.map((conv: any) => {
-          console.log("[Chatbot] Processing conversation:", conv);
-
-          if (!conv) {
-            console.warn("[Chatbot] Null conversation found, skipping");
-            return null;
-          }
-
-          // Extract conversation ID from various possible formats
-          const conversationId = conv.conversation_id || conv.id || 
-                                (typeof conv === 'string' ? conv : null);
-
-          if (!conversationId || typeof conversationId !== 'string') {
-            console.warn("[Chatbot] No valid conversation ID found for:", conv);
-            return null;
-          }
-
-          // Safely get the last 4 characters for display
-          const displayId = conversationId.length >= 4 ? conversationId.slice(-4) : conversationId;
-
-          return {
-            id: conversationId,
-            conversation_id: conversationId,
-            title: conv.name || `Chat ${displayId}`,
-            name: conv.name || `Chat ${displayId}`,
-            started_at: conv.started_at || conv.timestamp || new Date().toISOString(),
-            timestamp: conv.started_at || conv.timestamp || new Date().toISOString()
-          };
-        }).filter(Boolean); // Remove any null entries
-
-        console.log("[Chatbot] Formatted conversations:", formattedConversations);
-
-        // Update both current conversations and cache
-        setConversations(formattedConversations);
-        setConversationsCache(formattedConversations);
-        setCacheTimestamp(Date.now());
-        setConversationsLoaded(true);
-        setLoadingConversations(false);
-      } else {
-        console.warn("[Chatbot] Conversations data is not an array:", conversationsData);
-        setConversations([]);
-        setConversationsCache([]);
-        setConversationsLoaded(true);
-        setLoadingConversations(false);
-      }
-    } catch (error) {
-      console.error("[Chatbot] Error processing conversations:", error);
-      setConversations([]);
-      setConversationsCache([]);
-      setConversationsLoaded(true);
-      setLoadingConversations(false);
-    }
-  };
-          handleConversationsReceived(messageData.conversations);
-        } else if (messageData?.type === "conversation-response") {
-          console.log(
-            "[Chatbot] Received conversation history from parent:",
-            messageData.conversation,
-          );
-          if (messageData.conversation?.messages) {
-            setMessages(messageData.conversation.messages);
-            setCurrentConversationId(messageData.conversation.id);
-          }
-        } else if (messageData?.type === "chat-response") {
+          } else if (messageData?.type === "chat-response") {
             console.log('[Chatbot] Received chat response from parent:', messageData.response);
             if (messageData.response && (messageData.response.message || messageData.response.ai_message)) {
               // Safely handle cards data
               let safeCards = undefined;
               if (messageData.response.cards && Array.isArray(messageData.response.cards)) {
-                safeCards = messageData.response.cards.filter(card => card && typeof card === 'object');
+                safeCards = messageData.response.cards.filter((card: any) => card && typeof card === 'object');
               }
 
               const responseMessage: Message = {
@@ -308,31 +292,36 @@ export default function ChatWidget() {
                 cards: safeCards,
               };
               setMessages((prev) => [...prev, responseMessage]);
-        } else if (messageData?.type === "chat-error") {
-          console.error(
-            "[Chatbot] Error from parent:",
-            messageData.error,
-          );
-          const errorMessage: Message = {
-            id: (Date.now() + 1).toString(),
-            content: "Sorry, I'm having trouble responding right now. Please try again.",
-            role: "webhook",
-            timestamp: new Date(),
-            type: "text",
-          };
-          setMessages((prev) => [...prev, errorMessage]);
-          setIsLoading(false);
-        } else if (messageData?.type === "add-to-cart-success") {
-          console.log(
-            "[Chatbot] Product added to cart successfully:",
-            messageData.variantId,
-          );
-          // Show success message to user
-        } else if (messageData?.type === "add-to-cart-error") {
-          console.error(
-            "[Chatbot] Failed to add product to cart:",
-            messageData.error,
-          );
+              setIsLoading(false);
+            }
+          } else if (messageData?.type === "chat-error") {
+            console.error(
+              "[Chatbot] Error from parent:",
+              messageData.error,
+            );
+            const errorMessage: Message = {
+              id: (Date.now() + 1).toString(),
+              content: "Sorry, I'm having trouble responding right now. Please try again.",
+              role: "webhook",
+              timestamp: new Date(),
+              type: "text",
+            };
+            setMessages((prev) => [...prev, errorMessage]);
+            setIsLoading(false);
+          } else if (messageData?.type === "add-to-cart-success") {
+            console.log(
+              "[Chatbot] Product added to cart successfully:",
+              messageData.variantId,
+            );
+            // Show success message to user
+          } else if (messageData?.type === "add-to-cart-error") {
+            console.error(
+              "[Chatbot] Failed to add product to cart:",
+              messageData.error,
+            );
+          }
+        } catch (error) {
+          console.error("[Chatbot] Error handling message from parent:", error);
         }
       }
     };
@@ -341,7 +330,7 @@ export default function ChatWidget() {
     return () => {
       window.removeEventListener("message", handleMessage);
     };
-  }, [setSessionId, setSessionReceived, setSourceUrl, setPageContext, setCartCurrency, setLocalization, setMessages, currentConversationId]);
+  }, [setSessionId, setSessionReceived, setSourceUrl, setPageContext, setCartCurrency, setLocalization, setMessages, currentConversationId, conversationsLoaded, conversationsCache.length]);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -402,7 +391,7 @@ export default function ChatWidget() {
       // Don't clear messages when closing - they will be preserved
       setShowHomepage(true);
     }
-  }, [isOpen, sessionId, sessionReceived, trackEvent]);
+  }, [isOpen, sessionId, sessionReceived, trackEvent, messages.length]);
 
   // Auto-load conversations when the component mounts and session is available
   useEffect(() => {
@@ -808,86 +797,87 @@ export default function ChatWidget() {
         console.log("[Chatbot] Parsed chat webhook response:", data);
 
         // Handle webhook response
-          if (data && (data.message || data.ai_message)) {
-            // Safely handle cards data
-            let safeCards = undefined;
-            if (data.cards && Array.isArray(data.cards)) {
-              safeCards = data.cards.filter(card => card && typeof card === 'object');
+        if (data && (data.message || data.ai_message)) {
+          // Safely handle cards data
+          let safeCards = undefined;
+          if (data.cards && Array.isArray(data.cards)) {
+            safeCards = data.cards.filter((card: any) => card && typeof card === 'object');
+          }
+
+          const webhookMessage: Message = {
+            id: `webhook-${Date.now()}`,
+            content: data.message || "I'm sorry, I couldn't process your request right now.",
+            role: "webhook",
+            timestamp: new Date(),
+            type: "text",
+            cards: safeCards,
+          };
+
+          // Add webhook response to chat
+          setMessages((prev) => [...prev, webhookMessage]);
+
+          // Track the response received event
+          trackAnalyticsEvent("response_received", {
+            response: webhookMessage.content,
+            conversationId,
+          });
+
+          try {
+            // Save user message
+            console.log('[Chatbot] Saving user message to database...');
+            const userSaveResponse = await fetch('/api/messages/save', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                conversation_id: conversationId,
+                session_id: effectiveSessionId,
+                content: messageText,
+                role: 'user',
+                type: type,
+                audio_url: audioBlob ? URL.createObjectURL(audioBlob) : null,
+                timestamp: userMessage.timestamp.toISOString()
+              })
+            });
+
+            if (!userSaveResponse.ok) {
+              console.error('[Chatbot] Failed to save user message:', await userSaveResponse.text());
+            } else {
+              console.log('[Chatbot] User message saved successfully');
             }
 
-            const webhookMessage: Message = {
-              id: `webhook-${Date.now()}`,
-              content: data.message || "I'm sorry, I couldn't process your request right now.",
-              role: "webhook",
-              timestamp: new Date(),
-              type: "text",
-              cards: safeCards,
-        };
-
-        // Add webhook response to chat
-        setMessages((prev) => [...prev, webhookMessage]);
-
-        // Track the response received event
-        trackAnalyticsEvent("response_received", {
-          response: webhookMessage.content,
-          conversationId,
-        });
-
-        try {
-          // Save user message
-          console.log('[Chatbot] Saving user message to database...');
-          const userSaveResponse = await fetch('/api/messages/save', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              conversation_id: conversationId,
-              session_id: effectiveSessionId,
-              content: messageText,
-              role: 'user',
-              type: type,
-              audio_url: audioBlob ? URL.createObjectURL(audioBlob) : null,
-              timestamp: userMessage.timestamp.toISOString()
-            })
-          });
-
-          if (!userSaveResponse.ok) {
-            console.error('[Chatbot] Failed to save user message:', await userSaveResponse.text());
-          } else {
-            console.log('[Chatbot] User message saved successfully');
-          }
-
-          // Save AI response
-          console.log('[Chatbot] Saving AI message to database...', {
-            content: data.message,
-            cards: data.cards,
-            timestamp: webhookMessage.timestamp.toISOString()
-          });
-
-          const aiSaveResponse = await fetch('/api/messages/save', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              conversation_id: conversationId,
-              session_id: effectiveSessionId,
-              content: data.message || "No response content",
-              role: 'webhook',
-              type: 'text',
-              cards: data.cards || null,
+            // Save AI response
+            console.log('[Chatbot] Saving AI message to database...', {
+              content: data.message,
+              cards: data.cards,
               timestamp: webhookMessage.timestamp.toISOString()
-            })
-          });
+            });
 
-          if (!aiSaveResponse.ok) {
-            console.error('[Chatbot] Failed to save AI message:', await aiSaveResponse.text());
-          } else {
-            console.log('[Chatbot] AI message saved successfully');
+            const aiSaveResponse = await fetch('/api/messages/save', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                conversation_id: conversationId,
+                session_id: effectiveSessionId,
+                content: data.message || "No response content",
+                role: 'webhook',
+                type: 'text',
+                cards: data.cards || null,
+                timestamp: webhookMessage.timestamp.toISOString()
+              })
+            });
+
+            if (!aiSaveResponse.ok) {
+              console.error('[Chatbot] Failed to save AI message:', await aiSaveResponse.text());
+            } else {
+              console.log('[Chatbot] AI message saved successfully');
+            }
+          } catch (saveError) {
+            console.error('[Chatbot] Error saving messages:', saveError);
           }
-        } catch (saveError) {
-          console.error('[Chatbot] Error saving messages:', saveError);
-        }
 
-        // Only set loading false after everything is processed
-        setIsLoading(false);
+          // Only set loading false after everything is processed
+          setIsLoading(false);
+        }
       }
     } catch (error) {
       console.error("[Chatbot] Error sending message:", error);
@@ -917,7 +907,8 @@ export default function ChatWidget() {
     // Add robust null/undefined checks
     if (!card) {
       console.error("[Chatbot] Attempted to open product page for a null card");
-      return;}
+      return;
+    }
 
     const productName = card.name || 'product';
     console.log(`[Chatbot] Opening product page for: ${productName}`);
@@ -1146,7 +1137,8 @@ export default function ChatWidget() {
     } catch (error) {
       console.error("[Chatbot] Error loading conversation:", error);
       // Reset state on error
-      setCurrentConversationId(null);      setIsLoading(false);
+      setCurrentConversationId(null);
+      setIsLoading(false);
     }
   };
 
@@ -1334,7 +1326,7 @@ export default function ChatWidget() {
                     ) : conversations.length > 0 ? (
                       <div className="space-y-3 mb-6">
                         {conversations.slice(0, 3).map((conv, index) => (
-                          <div key={conv.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200 transform hover:-translate-y-1">
+                          <div key={conv.id || index} className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200 transform hover:-translate-y-1">
                             <button
                               onClick={() => loadConversationAndStartChat(conv.id)}
                               className="w-full text-left p-4 flex items-center justify-between group"
@@ -1345,12 +1337,12 @@ export default function ChatWidget() {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <p className="font-medium text-gray-900 text-sm truncate">
-                                    {conv.title}
+                                    {conv.title || conv.name || `Chat ${conv.id?.slice(-4) || index}`}
                                   </p>
                                   <p className="text-xs text-gray-500 flex items-center space-x-1">
-                                    <span>{new Date(conv.started_at || conv.timestamp).toLocaleDateString()}</span>
+                                    <span>{new Date(conv.started_at || conv.timestamp || Date.now()).toLocaleDateString()}</span>
                                     <span>•</span>
-                                    <span>{new Date(conv.started_at || conv.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                    <span>{new Date(conv.started_at || conv.timestamp || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                   </p>
                                 </div>
                               </div>
@@ -1542,8 +1534,6 @@ export default function ChatWidget() {
                 </div>
               </div>
             )}
-
-
 
             {/* Scroll to bottom button */}
             {showScrollToBottom && !showHomepage && (
