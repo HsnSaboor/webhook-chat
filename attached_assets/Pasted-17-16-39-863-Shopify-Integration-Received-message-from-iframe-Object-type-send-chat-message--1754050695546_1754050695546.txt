@@ -1,0 +1,36 @@
+17:16:39.863 [Shopify Integration] Received message from iframe: 
+Object { type: "send-chat-message", payload: {…} }
+shopify-chatbot-integration.js:544:15
+17:16:39.863 [Shopify Integration] Handling send-chat-message request: 
+Object { id: "3432f982-6d73-4860-b0c6-e4d44e3db95b", session_id: "704a41f4-bb93-47c1-ac64-cca6ac4248c0", timestamp: "2025-08-01T12:16:39.863Z", user_message: "hi", message: "hi", conversation_id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1754050598659", source_url: "https://zenmato.myshopify.com/", page_context: "Home: home: EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en", … }
+shopify-chatbot-integration.js:593:19
+17:16:39.863 [Shopify Integration] Handling send-chat-message: 
+Object { id: "3432f982-6d73-4860-b0c6-e4d44e3db95b", session_id: "704a41f4-bb93-47c1-ac64-cca6ac4248c0", timestamp: "2025-08-01T12:16:39.863Z", user_message: "hi", message: "hi", conversation_id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1754050598659", source_url: "https://zenmato.myshopify.com/", page_context: "Home: home: EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en", … }
+shopify-chatbot-integration.js:205:13
+17:16:39.863 [Shopify Integration] Sending to n8n webhook: 
+Object { session_id: "704a41f4-bb93-47c1-ac64-cca6ac4248c0", message: "hi", timestamp: "2025-08-01T12:16:39.863Z", conversation_id: "conv_704a41f4-bb93-47c1-ac64-cca6ac4248c0_1754050598659", source_url: "https://zenmato.myshopify.com/", page_context: "Home: home: EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en", type: "text", webhookUrl: "https://similarly-secure-mayfly.ngrok-free.app/webhook/chat" }
+shopify-chatbot-integration.js:232:15
+17:16:40.144 [Analytics] Event tracked: message_sent page-68b6678b362267b9.js:1:15494
+17:17:03.779 [Shopify Integration] Webhook response: [{"message":"Hey there! Welcome to Zenmato, your ultimate destination for epic anime merch! We've got some amazing gear that perfectly blends your passion for anime with everyday style. Check out these fan favorites that just arrived:","event_type":"product_recommendation","cards":[{"id":"7929446826031","name":"Zenmato T-Shirt Bundle","image":"https://cdn.shopify.com/s/files/1/0633/0915/2303/files/pixelcut-export_58.png?v=1739875960","price":"105.00","url":"https://zenmato.myshopify.com/products/zenmato-t-shirt-bundle","variants":[{"size":"XL","color":null,"variantId":"43609653575727"},{"size":"S","color":null,"variantId":"43609653608495"},{"size":"L","color":null,"variantId":"43609653641263"},{"size":"M","color":null,"variantId":"43609653674031"},{"size":"XS","color":null,"variantId":"43609653706799"}]},{"id":"7929457934383","name":"Zenmato Hoodie Bundle","image":"https://cdn.shopify.com/s/files/1/0633/0915/2303/files/pixelcut-export_59.png?v=1739967458","price":"108.00","url":"https://zenmato.myshopify.com/products/zenmato-hoodie-bundle","variants":[{"size":"XL","color":null,"variantId":"43609697386543"},{"size":"S","color":null,"variantId":"43609697419311"},{"size":"L","color":null,"variantId":"43609697452079"},{"size":"M","color":null,"variantId":"43609697484847"},{"size":"XS","color":null,"variantId":"43609697517615"}]},{"id":"7927670505519","name":"Berserk Core Oversized Pull Over Hoodie (Acid Washed)","image":"https://cdn.shopify.com/s/files/1/0633/0915/2303/files/pixelcut-export_62.png?v=1739967466","price":"40.00","url":"https://zenmato.myshopify.com/products/berserk-oversized-pull-over-hoodie-acid-washed","variants":[{"size":"S","color":"Caramel","variantId":"43602302926895"},{"size":"M","color":"Caramel","variantId":"43602302959663"},{"size":"L","color":"Caramel","variantId":"43602302992431"},{"size":"XL","color":"Caramel","variantId":"43602303025199"},{"size":"2XL","color":"Caramel","variantId":"43602303057967"}]}]}] shopify-chatbot-integration.js:247:15
+17:17:03.782 [Chatbot] Received message from origin: https://zenmato.myshopify.com Data: 
+Object { type: "chat-response", response: {…} }
+page-68b6678b362267b9.js:1:19413
+17:17:03.783 [Chatbot] Received chat response from parent: 
+Object { message: "Hey there! Welcome to Zenmato, your ultimate destination for epic anime merch! We've got some amazing gear that perfectly blends your passion for anime with everyday style. Check out these fan favorites that just arrived:", event_type: "product_recommendation", cards: (3) […] }
+page-68b6678b362267b9.js:1:21940
+17:17:03.783 [Chatbot] Saving standalone AI response to database... 
+Object { content: "Hey there! Welcome to Zenmato, your ultimate destination for epic anime merch! We've got some amazing gear that perfectly blends your passion for anime with everyday style. Check out these fan favorites that just arrived:", cards: (3) […], timestamp: "2025-08-01T12:17:03.783Z" }
+page-68b6678b362267b9.js:1:22219
+17:17:03.807
+Uncaught TypeError: can't access property "toLowerCase", e is null
+    NextJS 13
+page-68b6678b362267b9.js:1:9728
+    NextJS 2
+    map self-hosted:175
+    children NextJS
+    map self-hosted:175
+    NextJS 10
+17:17:04.489 [Chatbot] Standalone AI message saved successfully page-68b6678b362267b9.js:1:22734
+
+​
+
