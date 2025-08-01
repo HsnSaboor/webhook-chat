@@ -32,11 +32,36 @@ export function ProductCards({ cards, addedProductVariantId, onAddToCart, onProd
     const key = `card-${cardIndex}`;
     setSelections(prev => ({ ...prev, [key]: { ...getSelection(cardIndex), ...updates } }));
   };
-  const getUniqueColors = (variants: ProductVariant[]): string[] => [...new Set(variants.map(v => v.color))];
+  const getUniqueColors = (variants: ProductVariant[]): string[] => {
+    const colors = [...new Set(variants.map(v => v.color))].filter(color => 
+      color && color.toLowerCase() !== 'n/a' && color.toLowerCase() !== 'null'
+    );
+    return colors;
+  };
   const getAvailableSizes = (variants: ProductVariant[], selectedColor: string): string[] => [...new Set(variants.filter(v => v.color === selectedColor).map(v => v.size))];
   const findVariant = (variants: ProductVariant[], color: string, size: string): ProductVariant | undefined => variants.find(v => v.color === color && v.size === size);
 
-  // Event handlers (unchanged logic)
+  // Helper to check if we should show color selection
+  const shouldShowColorSelection = (variants: ProductVariant[]): boolean => {
+    const uniqueColors = getUniqueColors(variants);
+    return uniqueColors.length > 1;
+  };
+
+  // Helper to auto-select variant when appropriate
+  const getAutoSelectedVariant = (variants: ProductVariant[]): ProductVariant | null => {
+    const uniqueColors = getUniqueColors(variants);
+    
+    // If only one color or no valid colors, auto-select first variant
+    if (uniqueColors.length <= 1) {
+      const firstColor = uniqueColors[0] || variants[0]?.color;
+      const availableSizes = getAvailableSizes(variants, firstColor);
+      return findVariant(variants, firstColor, availableSizes[0]) || variants[0] || null;
+    }
+    
+    return null;
+  };
+
+  // Event handlers
   const handleColorSelect = (cardIndex: number, color: string, variants: ProductVariant[]) => {
     const availableSizes = getAvailableSizes(variants, color);
     const variant = findVariant(variants, color, availableSizes[0]);
@@ -66,6 +91,16 @@ export function ProductCards({ cards, addedProductVariantId, onAddToCart, onProd
         const selection = getSelection(index);
         const hasVariants = card.variants && card.variants.length > 0;
         const uniqueColors = hasVariants ? getUniqueColors(card.variants!) : [];
+        const showColorSelection = hasVariants ? shouldShowColorSelection(card.variants!) : false;
+        
+        // Auto-select variant if not already selected and appropriate
+        if (hasVariants && !selection.selectedVariant) {
+          const autoSelected = getAutoSelectedVariant(card.variants!);
+          if (autoSelected) {
+            updateSelection(index, { selectedVariant: autoSelected });
+          }
+        }
+        
         const selectedColor = selection.selectedVariant?.color || uniqueColors[0];
         const availableSizes = hasVariants && selectedColor ? getAvailableSizes(card.variants!, selectedColor) : [];
         const selectedSize = selection.selectedVariant?.size || availableSizes[0];
@@ -114,28 +149,30 @@ export function ProductCards({ cards, addedProductVariantId, onAddToCart, onProd
                 {/* Variants Selection */}
                 {hasVariants && (
                   <div className="space-y-3">
-                    {/* Color Selection */}
-                    <div>
-                      <label className="text-xs font-medium text-gray-700 block mb-1.5">
-                        Color: <span className="font-semibold">{selectedColor ? getColorName(selectedColor) : 'N/A'}</span>
-                      </label>
-                      <div className="flex flex-wrap gap-2">
-                        {uniqueColors.map((color) => (
-                          <button
-                            key={color}
-                            type="button"
-                            onClick={() => handleColorSelect(index, color, card.variants!)}
-                            className={`w-6 h-6 rounded-full border-2 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 ${
-                              selectedColor === color 
-                                ? 'border-black scale-110 shadow' 
-                                : 'border-gray-300 hover:border-gray-500'
-                            }`}
-                            style={{ backgroundColor: color }}
-                            title={getColorName(color)}
-                          />
-                        ))}
+                    {/* Color Selection - Only show if multiple colors */}
+                    {showColorSelection && (
+                      <div>
+                        <label className="text-xs font-medium text-gray-700 block mb-1.5">
+                          Color: <span className="font-semibold">{selectedColor ? getColorName(selectedColor) : 'N/A'}</span>
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          {uniqueColors.map((color) => (
+                            <button
+                              key={color}
+                              type="button"
+                              onClick={() => handleColorSelect(index, color, card.variants!)}
+                              className={`w-6 h-6 rounded-full border-2 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 ${
+                                selectedColor === color 
+                                  ? 'border-black scale-110 shadow' 
+                                  : 'border-gray-300 hover:border-gray-500'
+                              }`}
+                              style={{ backgroundColor: color }}
+                              title={getColorName(color)}
+                            />
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* Size Selection */}
                     {selectedColor && availableSizes.length > 0 && (
