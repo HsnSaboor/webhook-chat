@@ -287,20 +287,36 @@
 
     let variantId = payload.variantId;
     const quantity = payload.quantity || 1;
+    const productName = payload.productName || 'Product';
+    const productPrice = payload.productPrice || '0';
 
-    // Try to get variantId from selectedVariant if main variantId is missing
-    if (!variantId && payload.selectedVariant && payload.selectedVariant.id) {
-      variantId = payload.selectedVariant.id;
-      console.log('[Shopify Integration] Using variantId from selectedVariant:', variantId);
+    // Enhanced variant ID extraction with better logging
+    if (!variantId && payload.selectedVariant) {
+      if (payload.selectedVariant.id) {
+        variantId = payload.selectedVariant.id;
+        console.log('[Shopify Integration] Using variantId from selectedVariant.id:', variantId);
+      } else if (payload.selectedVariant.variantId) {
+        variantId = payload.selectedVariant.variantId;
+        console.log('[Shopify Integration] Using variantId from selectedVariant.variantId:', variantId);
+      }
     }
 
     if (!variantId) {
-      console.error('[Shopify Integration] No variantId provided for add to cart');
-      // Notify the chatbot of error
+      console.error('[Shopify Integration] No variantId provided for add to cart', {
+        payload,
+        variantId,
+        selectedVariant: payload.selectedVariant
+      });
+      
+      // Notify the chatbot of error with detailed info
       event.source.postMessage({
         type: 'add-to-cart-error',
         variantId: variantId,
-        error: 'No variant ID provided. Please select a product variant.'
+        error: 'No variant ID provided. Please select a product variant.',
+        details: {
+          payload,
+          missingVariantId: true
+        }
       }, '*');
       return;
     }
@@ -318,27 +334,35 @@
     })
     .then(response => {
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        return response.text().then(text => {
+          throw new Error(`HTTP error! status: ${response.status}, message: ${text}`);
+        });
       }
       return response.json();
     })
     .then(data => {
       console.log('[Shopify Integration] Successfully added to cart:', data);
 
-      // Notify the chatbot of success
-      event.source.postMessage({
-        type: 'add-to-cart-success',
-        variantId: variantId,
-        data: data
-      }, '*');
+      // Fetch updated cart total
+      return fetch('/cart.js')
+        .then(cartResponse => cartResponse.json())
+        .then(cartData => {
+          console.log('[Shopify Integration] Updated cart data:', cartData);
+          
+          // Notify the chatbot of success with cart total
+          event.source.postMessage({
+            type: 'add-to-cart-success',
+            variantId: variantId,
+            data: data,
+            cartTotal: (cartData.total_price / 100).toFixed(2),
+            cartItemCount: cartData.item_count
+          }, '*');
 
-      // Show cart popup instead of redirecting
-      if (!redirect) {
-        showCartPopup(data, productName, productPrice);
-      } else {
-        console.log('[Shopify Integration] Redirecting to cart page...');
-        window.location.href = '/cart';
-      }
+          // Show cart popup
+          showCartPopup(data, productName, productPrice, cartData);
+          
+          return data;
+        });
     })
     .catch(error => {
       console.error('[Shopify Integration] Error adding to cart:', error);
@@ -347,7 +371,12 @@
       event.source.postMessage({
         type: 'add-to-cart-error',
         variantId: variantId,
-        error: error.message
+        error: error.message,
+        details: {
+          variantId,
+          quantity,
+          productName
+        }
       }, '*');
     });
   }
@@ -372,14 +401,19 @@
     }
   }
 
-  function showCartPopup(cartData, productName, productPrice) {
-    console.log('[Shopify Integration] Showing cart popup for:', productName);
+  function showCartPopup(addedItemData, productName, productPrice, fullCartData) {
+    console.log('[Shopify Integration] Showing cart popup for:', productName, { addedItemData, fullCartData });
 
     // Remove existing popup if any
     const existingPopup = document.getElementById('chatbot-cart-popup');
     if (existingPopup) {
       existingPopup.remove();
     }
+
+    // Calculate cart total from full cart data
+    const cartTotal = fullCartData ? (fullCartData.total_price / 100).toFixed(2) : 'Loading...';
+    const cartCurrency = fullCartData ? fullCartData.currency : 'USD';
+    const itemCount = fullCartData ? fullCartData.item_count : 1;
 
     // Create popup HTML
     const popup = document.createElement('div');
@@ -397,6 +431,7 @@
         align-items: center;
         justify-content: center;
         padding: 16px;
+        animation: fadeIn 0.3s ease-out;
       ">
         <div style="
           background: white;
@@ -439,42 +474,42 @@
               border: 1px solid #e2e8f0;
             ">
               <p style="margin: 0 0 8px 0; font-size: 13px; color: #64748b; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600;">
-                Cart Total
+                Cart Total (${itemCount} item${itemCount !== 1 ? 's' : ''})
               </p>
-              <p id="cart-total" style="margin: 0; font-size: 28px; font-weight: 800; color: #0f172a; text-shadow: 0 1px 2px rgba(0,0,0,0.1);">
-                Loading...
+              <p style="margin: 0; font-size: 28px; font-weight: 800; color: #0f172a; text-shadow: 0 1px 2px rgba(0,0,0,0.1);">
+                $${cartTotal}
               </p>
             </div>
           </div>
 
-          <div style="display: flex; gap: 12px;">
+          <div style="display: flex; gap: 12px; flex-direction: column;">
+            <button onclick="goToCart()" style="
+              width: 100%;
+              padding: 14px 20px;
+              border: none;
+              background: #111827;
+              color: white;
+              border-radius: 12px;
+              font-size: 16px;
+              font-weight: 600;
+              cursor: pointer;
+              transition: all 0.2s;
+            " onmouseover="this.style.background='#374151'" onmouseout="this.style.background='#111827'">
+              Go to Cart
+            </button>
             <button onclick="closeChatbotCartPopup()" style="
-              flex: 1;
+              width: 100%;
               padding: 12px 16px;
               border: 1px solid #d1d5db;
               background: white;
               color: #374151;
-              border-radius: 8px;
+              border-radius: 12px;
               font-size: 14px;
               font-weight: 500;
               cursor: pointer;
               transition: all 0.2s;
             " onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='white'">
               Continue Shopping
-            </button>
-            <button onclick="goToCart()" style="
-              flex: 1;
-              padding: 12px 16px;
-              border: none;
-              background: #111827;
-              color: white;
-              border-radius: 8px;
-              font-size: 14px;
-              font-weight: 500;
-              cursor: pointer;
-              transition: all 0.2s;
-            " onmouseover="this.style.background='#374151'" onmouseout="this.style.background='#111827'">
-              View Cart
             </button>
           </div>
         </div>
@@ -487,25 +522,26 @@
       @keyframes slideUp {
         from {
           opacity: 0;
-          transform: translateY(20px);
+          transform: translateY(20px) scale(0.9);
         }
         to {
           opacity: 1;
-          transform: translateY(0);
+          transform: translateY(0) scale(1);
         }
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
       }
     `;
     document.head.appendChild(style);
 
     document.body.appendChild(popup);
 
-    // Update cart total
-    updateCartTotal();
-
-    // Auto close after 5 seconds
+    // Auto close after 7 seconds
     setTimeout(() => {
       closeChatbotCartPopup();
-    }, 5000);
+    }, 7000);
   }
 
   function updateCartTotal() {

@@ -109,7 +109,9 @@ export default function ChatWidget() {
   const [input, setInput] = useState("");
   const [chatHeight, setChatHeight] = useState(() => {
     if (typeof window !== "undefined") {
-      return Math.min(window.innerHeight * 0.75, 600);
+      // Use 90% height on mobile, 75% on desktop
+      const isMobileDevice = window.innerWidth <= 768;
+      return isMobileDevice ? Math.min(window.innerHeight * 0.9, window.innerHeight - 50) : Math.min(window.innerHeight * 0.75, 600);
     }
     return 600;
   });
@@ -313,19 +315,48 @@ export default function ChatWidget() {
             console.log(
               "[Chatbot] Product added to cart successfully:",
               messageData.variantId,
+              messageData
             );
-            // Show success message to user
+            
+            // Update cart total if provided
+            if (messageData.cartTotal) {
+              setCartTotal(parseFloat(messageData.cartTotal));
+            }
+            
+            // Show success message in chat
+            const successMessage: Message = {
+              id: `success-${Date.now()}`,
+              content: `✅ Product added to cart successfully! ${messageData.cartTotal ? `Cart total: $${messageData.cartTotal}` : ''}`,
+              role: "webhook",
+              timestamp: new Date(),
+              type: "text",
+            };
+            setMessages((prev) => [...prev, successMessage]);
+            
+            // Show cart notification popup
             setShowCartNotification(true);
             setTimeout(() => {
               setShowCartNotification(false);
-            }, 3000);
+            }, 5000);
+            
           } else if (messageData?.type === "cart-info") {
             setCartTotal(messageData.total);
           } else if (messageData?.type === "add-to-cart-error") {
             console.error(
               "[Chatbot] Failed to add product to cart:",
               messageData.error,
+              messageData.details
             );
+            
+            // Show error message in chat
+            const errorMessage: Message = {
+              id: `error-${Date.now()}`,
+              content: `❌ Failed to add product to cart: ${messageData.error}`,
+              role: "webhook",
+              timestamp: new Date(),
+              type: "text",
+            };
+            setMessages((prev) => [...prev, errorMessage]);
           }
         } catch (error) {
           console.error("[Chatbot] Error handling message from parent:", error);
@@ -344,7 +375,10 @@ export default function ChatWidget() {
       const mobile = window.innerWidth <= 768;
       setIsMobile(mobile);
       if (mobile) {
-        setChatHeight(Math.min(window.innerHeight * 0.75, window.innerHeight - 100));
+        // Use 90%+ height on mobile as requested
+        setChatHeight(Math.min(window.innerHeight * 0.92, window.innerHeight - 50));
+      } else {
+        setChatHeight(Math.min(window.innerHeight * 0.75, 600));
       }
     };
 
@@ -948,12 +982,46 @@ export default function ChatWidget() {
   };
 
   const handleAddToCart = (card: ProductCardData, selectedVariant?: any, quantity: number = 1) => {
-    // Ensure variantId is correctly accessed
-    const variantId = selectedVariant?.id || card.variantId;
+    // Enhanced variant ID extraction logic with better error handling
+    let variantId = null;
+    
+    console.log("[Chatbot] handleAddToCart called with:", { card, selectedVariant, quantity });
+    
+    // Try multiple ways to get the variant ID
+    if (selectedVariant?.id) {
+      variantId = selectedVariant.id;
+      console.log("[Chatbot] Using selectedVariant.id:", variantId);
+    } else if (selectedVariant?.variantId) {
+      variantId = selectedVariant.variantId;
+      console.log("[Chatbot] Using selectedVariant.variantId:", variantId);
+    } else if (card.variantId) {
+      variantId = card.variantId;
+      console.log("[Chatbot] Using card.variantId:", variantId);
+    } else if (card.variants && card.variants.length > 0) {
+      // Use the first variant as fallback
+      variantId = card.variants[0].id || card.variants[0].variantId;
+      console.log("[Chatbot] Using first variant ID as fallback:", variantId);
+    }
+
     const price = selectedVariant?.price || card.price;
 
     if (!variantId) {
-        console.error("[Chatbot] Missing variantId. Cannot add to cart.");
+        console.error("[Chatbot] Missing variantId. Cannot add to cart.", {
+          card,
+          selectedVariant,
+          cardVariantId: card.variantId,
+          cardVariants: card.variants
+        });
+        
+        // Show user-friendly error message
+        const errorMessage: Message = {
+          id: `error-${Date.now()}`,
+          content: "Sorry, I couldn't add this product to your cart. Please try selecting a different variant or contact support.",
+          role: "webhook",
+          timestamp: new Date(),
+          type: "text",
+        };
+        setMessages((prev) => [...prev, errorMessage]);
         return;
     }
 
@@ -1517,20 +1585,41 @@ export default function ChatWidget() {
             )}
             
               {showCartNotification && (
-               <div className="fixed bottom-0 left-0 w-full bg-green-500 text-white p-4 flex items-center justify-between transition-transform transform translate-y-0">
-                  <div>
-                    <p className="font-semibold">Added to cart!</p>
-                    <p>Cart total: ${cartTotal}</p>
-                  </div>
-                  <div className="space-x-3">
-                    <Button variant="secondary" size="sm" onClick={handleGoToCart}>
-                      Go to cart
-                    </Button>
-                    <Button variant="secondary" size="sm" onClick={() => setShowCartNotification(false)}>
-                      Continue shopping
-                    </Button>
-                  </div>
-                </div>
+               <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                 <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full mx-4 p-6 transform animate-in zoom-in-95 duration-300">
+                   <div className="text-center mb-6">
+                     <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                       <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                       </svg>
+                     </div>
+                     <h3 className="text-xl font-bold text-gray-900 mb-2">Added to Cart!</h3>
+                     <p className="text-gray-600 mb-4">Your item has been successfully added</p>
+                     {cartTotal > 0 && (
+                       <div className="bg-gray-50 rounded-lg p-3 mb-4">
+                         <p className="text-sm text-gray-500 mb-1">Cart Total</p>
+                         <p className="text-2xl font-bold text-gray-900">${cartTotal}</p>
+                       </div>
+                     )}
+                   </div>
+                   
+                   <div className="space-y-3">
+                     <Button 
+                       onClick={handleGoToCart}
+                       className="w-full bg-black hover:bg-gray-800 text-white py-3 rounded-xl font-medium"
+                     >
+                       Go to Cart
+                     </Button>
+                     <Button 
+                       variant="outline" 
+                       onClick={() => setShowCartNotification(false)}
+                       className="w-full py-3 rounded-xl font-medium border-gray-300 hover:bg-gray-50"
+                     >
+                       Continue Shopping
+                     </Button>
+                   </div>
+                 </div>
+               </div>
               )}
 
             {/* Recording Indicator - Enhanced */}
