@@ -317,12 +317,12 @@ export default function ChatWidget() {
               messageData.variantId,
               messageData
             );
-            
+
             // Update cart total if provided
             if (messageData.cartTotal) {
               setCartTotal(parseFloat(messageData.cartTotal));
             }
-            
+
             // Show success message in chat only
             const successMessage: Message = {
               id: `success-${Date.now()}`,
@@ -332,9 +332,9 @@ export default function ChatWidget() {
               type: "text",
             };
             setMessages((prev) => [...prev, successMessage]);
-            
+
             // Don't show additional popup - Shopify integration already shows one
-            
+
           } else if (messageData?.type === "cart-info") {
             setCartTotal(messageData.total);
           } else if (messageData?.type === "add-to-cart-error") {
@@ -343,7 +343,7 @@ export default function ChatWidget() {
               messageData.error,
               messageData.details
             );
-            
+
             // Show error message in chat
             const errorMessage: Message = {
               id: `error-${Date.now()}`,
@@ -919,7 +919,7 @@ export default function ChatWidget() {
             }
           } catch (saveError) {
             console.error('[Chatbot] Error saving messages:', saveError);
-          }
+          }```text
 
           // Only set loading false after everything is processed
           setIsLoading(false);
@@ -989,9 +989,9 @@ export default function ChatWidget() {
   const handleAddToCart = (card: ProductCardData, selectedVariant?: any, quantity: number = 1) => {
     // Enhanced variant ID extraction logic with better error handling
     let variantId = null;
-    
+
     console.log("[Chatbot] handleAddToCart called with:", { card, selectedVariant, quantity });
-    
+
     // Try multiple ways to get the variant ID
     if (selectedVariant?.id) {
       variantId = selectedVariant.id;
@@ -1017,7 +1017,7 @@ export default function ChatWidget() {
           cardVariantId: card.variantId,
           cardVariants: card.variants
         });
-        
+
         // Show user-friendly error message
         const errorMessage: Message = {
           id: `error-${Date.now()}`,
@@ -1240,7 +1240,7 @@ export default function ChatWidget() {
     // Use the trackEvent function from useChat hook with proper session ID
     trackEvent(eventName, { ...eventData, sessionId: effectiveSessionId });
   };
-  
+
   const handleGoToCart = () => {
     if (window.parent && window.parent !== window) {
       window.parent.postMessage(
@@ -1251,7 +1251,7 @@ export default function ChatWidget() {
       );
     }
   };
-  
+
 
   return (
     <Fragment>
@@ -1588,8 +1588,8 @@ export default function ChatWidget() {
                 </div>
               </CardContent>
             )}
-            
-              
+
+
 
             {/* Recording Indicator - Enhanced */}
             {isRecording && (
