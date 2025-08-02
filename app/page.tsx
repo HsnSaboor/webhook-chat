@@ -137,7 +137,7 @@ export default function ChatWidget() {
     string | null
   >(null);
   const [isSoundEnabled, setIsSoundEnabled] = useState(true);
-  const [showHomepage, setShowHomepage] = useState(true);
+  const [showHomepage, setShowHomepage] = useState(false);
   const [loadingConversations, setLoadingConversations] = useState(false);
   const [conversationsLoaded, setConversationsLoaded] = useState(false);
   const [conversationsCache, setConversationsCache] = useState<any[]>([]);
@@ -504,21 +504,22 @@ export default function ChatWidget() {
         console.log("[Chatbot] Refreshing conversations on chat open");
         requestConversationsFromParent();
 
-        // Only show homepage if we don't have an active conversation
-        if (!currentConversationId && messages.length <= 1) {
-          setShowHomepage(true);
+        // Send initial welcome message if no messages exist
+        if (!currentConversationId && messages.length === 0) {
+          const welcomeMessage: Message = {
+            id: "welcome-features",
+            content: "👋 Welcome to our AI Shopping Assistant! I can help you with:\n\n🛍️ **Product Recommendations** - Find the perfect items for your needs\n🔍 **Product Search** - Search our inventory by description or features\n🛒 **Add to Cart** - I can add items directly to your cart\n💬 **Voice Messages** - Speak to me using the microphone button\n📋 **Order Assistance** - Help with sizing, availability, and comparisons\n\nHow can I assist you today?",
+            role: "webhook",
+            timestamp: new Date(),
+            type: "text",
+          };
+          setMessages([welcomeMessage]);
         }
       } else {
         console.error(
           "[Chatbot] Cannot open chat without proper Shopify session",
         );
         setIsOpen(false); // Close chat if no proper session
-      }
-    } else if (!isOpen) {
-      // Don't clear messages when closing - they will be preserved
-      // Only reset to homepage if no active conversation
-      if (!currentConversationId) {
-        setShowHomepage(true);
       }
     }
   }, [
@@ -1331,36 +1332,19 @@ export default function ChatWidget() {
     setCurrentConversationId(null);
     setMessages([
       {
-        id: "welcome",
-        content:
-          "Hello! How can I assist you today? Feel free to ask me anything about our products or services.",
+        id: "welcome-features",
+        content: "👋 Welcome to our AI Shopping Assistant! I can help you with:\n\n🛍️ **Product Recommendations** - Find the perfect items for your needs\n🔍 **Product Search** - Search our inventory by description or features\n🛒 **Add to Cart** - I can add items directly to your cart\n💬 **Voice Messages** - Speak to me using the microphone button\n📋 **Order Assistance** - Help with sizing, availability, and comparisons\n\nHow can I assist you today?",
         role: "webhook",
         timestamp: new Date(),
         type: "text",
       },
     ]);
-    setShowHomepage(false);
 
     // Refresh conversations cache after starting new conversation
     requestConversationsFromParent();
   };
 
-  const startChatInterface = () => {
-    setShowHomepage(false);
-    // Clear current conversation ID to start fresh
-    setCurrentConversationId(null);
-    // Always show welcome message when starting new chat interface
-    setMessages([
-      {
-        id: "welcome",
-        content:
-          "Hello! How can I assist you today? Feel free to ask me anything about our products or services.",
-        role: "webhook",
-        timestamp: new Date(),
-        type: "text",
-      },
-    ]);
-  };
+  
 
   const loadConversationAndStartChat = async (conversationId: string) => {
     try {
@@ -1374,7 +1358,6 @@ export default function ChatWidget() {
 
       setCurrentConversationId(conversationId);
       await loadConversationFromParent(conversationId);
-      setShowHomepage(false);
     } catch (error) {
       console.error("[Chatbot] Error loading conversation:", error);
       // Reset state on error
@@ -1464,19 +1447,9 @@ export default function ChatWidget() {
 
             {/* Header - Only sticky in chat interface */}
             <CardHeader
-              className={`flex flex-row items-center justify-between p-4 bg-white/95 backdrop-blur-sm border-b border-gray-100 ${!showHomepage ? "sticky top-0 z-10 shadow-sm" : ""}`}
+              className="flex flex-row items-center justify-between p-4 bg-white/95 backdrop-blur-sm border-b border-gray-100 sticky top-0 z-10 shadow-sm"
             >
               <div className="flex items-center space-x-3">
-                {!showHomepage && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowHomepage(true)}
-                    className="text-gray-600 hover:text-black hover:bg-gray-100 h-8 w-8 p-0 rounded-lg transition-all duration-200"
-                  >
-                    <ChevronDown className="h-4 w-4 rotate-90" />
-                  </Button>
-                )}
                 <div className="h-10 w-10 bg-black rounded-full flex items-center justify-center">
                   <MessageCircle className="h-5 w-5 text-white" />
                 </div>
@@ -1515,187 +1488,15 @@ export default function ChatWidget() {
               </div>
             </CardHeader>
 
-            {/* Enhanced Homepage */}
-            {showHomepage ? (
-              <CardContent className="flex-1 flex flex-col p-0 bg-gradient-to-br from-gray-50 to-gray-100 overflow-y-auto">
-                <div className="flex-1 flex flex-col">
-                  {/* Hero Section */}
-                  <div className="text-center p-6 pb-4">
-                    <div className="relative mb-6">
-                      <div className="h-20 w-20 mx-auto bg-gradient-to-r from-black to-gray-800 rounded-2xl flex items-center justify-center mb-4 shadow-lg transform hover:scale-105 transition-transform duration-300">
-                        <MessageCircle className="h-10 w-10 text-white" />
-                      </div>
-                    </div>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                      Welcome to Support
-                    </h2>
-                    <p className="text-gray-600 leading-relaxed text-sm max-w-xs mx-auto">
-                      Get instant help, find products, and receive personalized
-                      recommendations
-                    </p>
-                  </div>
-
-                  {/* Quick Actions */}
-                  <div className="px-6 mb-6">
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        onClick={startChatInterface}
-                        className="p-4 bg-white rounded-xl border border-gray-200 hover:border-black hover:shadow-md transition-all duration-200 group"
-                      >
-                        <MessageCircle className="h-6 w-6 text-black mb-2 mx-auto group-hover:scale-110 transition-transform" />
-                        <span className="text-xs font-medium text-gray-900">
-                          New Chat
-                        </span>
-                      </button>
-                      {voiceSupported && (
-                        <button
-                          onClick={() => {
-                            startChatInterface();
-                            setTimeout(() => toggleRecording(), 500);
-                          }}
-                          className="p-4 bg-white rounded-xl border border-gray-200 hover:border-red-500 hover:shadow-md transition-all duration-200 group"
-                        >
-                          <Mic className="h-6 w-6 text-red-500 mb-2 mx-auto group-hover:scale-110 transition-transform" />
-                          <span className="text-xs font-medium text-gray-900">
-                            Voice Chat
-                          </span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Recent Conversations */}
-                  <div className="flex-1 px-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        Recent Chats
-                      </h3>
-                      {conversations.length > 3 && (
-                        <button className="text-xs text-gray-500 hover:text-gray-700">
-                          View All
-                        </button>
-                      )}
-                    </div>
-
-                    {loadingConversations && !conversationsLoaded ? (
-                      <div className="space-y-3">
-                        {[1, 2, 3].map((i) => (
-                          <div
-                            key={i}
-                            className="bg-white rounded-xl border border-gray-200 p-4 animate-pulse"
-                          >
-                            <div className="flex items-center space-x-3">
-                              <div className="h-10 w-10 bg-gray-200 rounded-full"></div>
-                              <div className="flex-1">
-                                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : conversations.length > 0 ? (
-                      <div className="space-y-3 mb-6">
-                        {conversations.slice(0, 3).map((conv, index) => (
-                          <div
-                            key={conv.id || index}
-                            className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200 transform hover:-translate-y-1"
-                          >
-                            <button
-                              onClick={() =>
-                                loadConversationAndStartChat(conv.id)
-                              }
-                              className="w-full text-left p-4 flex items-center justify-between group"
-                            >
-                              <div className="flex items-center space-x-3">
-                                <div className="h-10 w-10 bg-gradient-to-r from-gray-100 to-gray-200 rounded-full flex items-center justify-center">
-                                  <MessageCircle className="h-5 w-5 text-gray-600" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="font-medium text-gray-900 text-sm truncate">
-                                    {conv.title ||
-                                      conv.name ||
-                                      `Chat ${conv.id?.slice(-4) || index}`}
-                                  </p>
-                                  <p className="text-xs text-gray-500 flex items-center space-x-1">
-                                    <span>
-                                      {new Date(
-                                        conv.started_at ||
-                                          conv.timestamp ||
-                                          Date.now(),
-                                      ).toLocaleDateString()}
-                                    </span>
-                                    <span>•</span>
-                                    <span>
-                                      {new Date(
-                                        conv.started_at ||
-                                          conv.timestamp ||
-                                          Date.now(),
-                                      ).toLocaleTimeString([], {
-                                        hour: "2-digit",
-                                        minute: "2-digit",
-                                      })}
-                                    </span>
-                                  </p>
-                                </div>
-                              </div>
-                              <ChevronDown className="h-4 w-4 text-gray-400 -rotate-90 group-hover:text-gray-600 transition-all duration-200 group-hover:translate-x-1" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    ) : conversationsLoaded ? (
-                      <div className="bg-white rounded-xl border-2 border-dashed border-gray-200 p-8 text-center">
-                        <div className="h-12 w-12 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-3">
-                          <MessageCircle className="h-6 w-6 text-gray-400" />
-                        </div>
-                        <p className="text-sm text-gray-500">
-                          No conversations yet
-                        </p>
-                      </div>
-                    ) : null}
-                  </div>
-
-                  {/* Footer Actions */}
-                  <div className="p-6 pt-0">
-                    <Button
-                      onClick={startChatInterface}
-                      className="w-full h-12 bg-gradient-to-r from-black to-gray-800 hover:from-gray-800 hover:to-black text-white rounded-xl font-medium transition-all duration-300 transform hover:scale-105 shadow-lg"
-                    >
-                      <MessageCircle className="h-5 w-5 mr-2" />
-                      Start New Conversation
-                    </Button>
-
-                    {/* Feature Pills */}
-                    <div className="flex items-center justify-center space-x-4 mt-4">
-                      <div className="flex items-center space-x-1 text-xs text-gray-500">
-                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span>Instant replies</span>
-                      </div>
-                      {voiceSupported && (
-                        <div className="flex items-center space-x-1 text-xs text-gray-500">
-                          <Mic className="h-3 w-3" />
-                          <span>Voice support</span>
-                        </div>
-                      )}
-                      <div className="flex items-center space-x-1 text-xs text-gray-500">
-                        <Sparkles className="h-3 w-3" />
-                        <span>AI powered</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            ) : (
-              /* Chat Interface */
-              <CardContent className="flex-1 flex flex-col p-0 bg-gray-50 overflow-hidden">
+            {/* Chat Interface */}
+            <CardContent className="flex-1 flex flex-col p-0 bg-gray-50 overflow-hidden">
                 <div
                   className="flex-1 overflow-y-auto px-4 py-4 space-y-4 bg-gray-50 chat-messages"
                   ref={messagesContainerRef}
                   style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
                 >
                   {messages.length === 1 &&
-                  messages[0].id === "welcome" &&
+                  (messages[0].id === "welcome" || messages[0].id === "welcome-features") &&
                   !isLoading ? (
                     <div className="flex items-center justify-center h-full">
                       <div className="text-center">
@@ -1852,7 +1653,7 @@ export default function ChatWidget() {
             )}
 
             {/* Scroll to bottom button */}
-            {showScrollToBottom && !showHomepage && (
+            {showScrollToBottom && (
               <Button
                 variant="secondary"
                 size="icon"
@@ -1866,8 +1667,8 @@ export default function ChatWidget() {
               </Button>
             )}
 
-            {/* Input - Modern Minimalist - Only show in chat interface */}
-            {!showHomepage && (
+            {/* Input - Modern Minimalist */}
+            {(
               <CardFooter
                 className={`p-3 border-t border-gray-100 bg-white transition-all duration-200 ${
                   isRecording ? "bg-red-50/30" : ""
