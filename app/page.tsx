@@ -747,6 +747,10 @@ export default function ChatWidget() {
     try {
       console.log('[Chatbot] Sending message to parent window for webhook processing...');
 
+      // Get effective session ID from context or fallback to state
+      const contextSessionId = window.shopifyContext?.session_id;
+      const effectiveSessionId = contextSessionId || sessionId;
+
       const messagePayload = {
         message: messageText,
         type: type,
