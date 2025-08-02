@@ -267,8 +267,7 @@
         data = { message: "I received your message but had trouble processing the response." };
       }
 
-      // Send the response back to the chatbot immediately after processing
-      console.log('[Shopify Integration] Sending response to chatbot:', data);
+      // Send the response back to the chatbot
       sendMessageToChatbot({
         type: 'chat-response',
         response: data
@@ -277,10 +276,8 @@
     } catch (error) {
       console.error('[Shopify Integration] Webhook error:', error);
       sendMessageToChatbot({
-        type: 'chat-response',
-        response: {
-          message: "I'm sorry, there was an error processing your message. Please try again."
-        }
+        type: 'chat-error',
+        error: error.message
       });
     }
   }
