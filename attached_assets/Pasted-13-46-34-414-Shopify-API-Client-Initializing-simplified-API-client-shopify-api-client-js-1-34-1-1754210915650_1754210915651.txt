@@ -1,0 +1,163 @@
+13:46:34.414 [Shopify API Client] Initializing simplified API client... shopify-api-client.js:1:34
+13:46:34.414 [API Client] Simplified API client loaded successfully shopify-api-client.js:1:1611
+13:46:34.552 [Shopify Integration] Initializing simplified chatbot integration... shopify-chatbot-integration.js:1:34
+13:46:34.552 [Shopify Integration] Starting dependency check... shopify-chatbot-integration.js:129:1552
+13:46:34.552 [Shopify Integration] Waiting for dependencies... shopify-chatbot-integration.js:112:1816
+13:46:34.588 GET
+https://zenmato.myshopify.com/VideoDrop
+NS_BINDING_ABORTED
+
+13:46:34.589 GET
+https://zenmato.myshopify.com/VideoDrop
+NS_BINDING_ABORTED
+
+13:46:34.590 GET
+https://zenmato.myshopify.com/VideoDrop
+NS_BINDING_ABORTED
+
+13:46:34.626 Cookie “_shopify_test” has been rejected for invalid domain. 4 zenmato.myshopify.com
+13:46:34.654 Cookie “_shopify_s” has been rejected for invalid domain. zenmato.myshopify.com
+13:46:34.654 Cookie “_shopify_sa_p” has been rejected for invalid domain. zenmato.myshopify.com
+13:46:34.654 Cookie “_shopify_sa_t” has been rejected for invalid domain. zenmato.myshopify.com
+13:46:34.654 Cookie “_shopify_y” has been rejected for invalid domain. zenmato.myshopify.com
+13:46:34.655 [Shopify Session Manager] Initializing simplified session manager... shopify-session-manager.js:1:34
+13:46:34.656 [Session Manager] Simplified session manager loaded successfully shopify-session-manager.js:1:5524
+13:46:34.965 [Shopify Integration] Dependencies loaded, proceeding with initialization... shopify-chatbot-integration.js:112:1924
+13:46:34.965 [Session Manager] Initializing session... shopify-session-manager.js:1:4759
+13:46:34.966 [Session Manager] Looking for Shopify session cookies... shopify-session-manager.js:1:371
+13:46:34.966 [Session Manager] Available cookies: 
+Array(6) [ "localization", "cart_currency", "_shopify_y", "_tracking_consent", "keep_alive", "_shopify_s" ]
+shopify-session-manager.js:1:473
+13:46:34.967 [Session Manager] Found session cookie: _shopify_y = cf09b52f-1d31-4adf-b... shopify-session-manager.js:1:789
+13:46:34.967 [Session Manager] Session initialized: 
+Object { session_id: "cf09b52f-1d31-4adf-b882-3b181f1427f6", source_url: "https://zenmato.myshopify.com/", page_context: "Home: home: EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en", shopify_context: {…}, timestamp: "2025-08-03T08:46:34.968Z" }
+shopify-session-manager.js:1:5185
+13:46:34.968 [Shopify Integration] Found existing chatbot iframe shopify-chatbot-integration.js:129:551
+13:46:34.968 [Shopify Integration] Main initialization complete shopify-chatbot-integration.js:129:1486
+13:46:35.026 [Shopify Integration] Received message from iframe: 
+Array(7) [ "esms", true, false, true, false, false, false ]
+shopify-chatbot-integration.js:112:637
+13:46:36.384 GET
+https://zenmato.myshopify.com/favicon.ico
+[HTTP/2 404  0ms]
+
+13:46:36.720 [Shopify Integration] Initializing chatbot... shopify-chatbot-integration.js:112:1449
+13:46:36.720 [Shopify Integration] Chatbot system initialized. shopify-chatbot-integration.js:112:1640
+13:46:37.732 [Shopify Integration] Attempting to send session data to chatbot iframe... shopify-chatbot-integration.js:1:218
+13:46:37.732 [Shopify Integration] Sending session data to chatbot iframe shopify-chatbot-integration.js:1:955
+13:46:37.733 [Shopify Integration] Session data sent successfully: 
+Object { type: "init", session_id: "cf09b52f-1d31-4adf-b882-3b181f1427f6", source_url: "https://zenmato.myshopify.com/", page_context: "Home: home: EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en", shopify_context: {…}, timestamp: "2025-08-03T08:46:34.968Z" }
+shopify-chatbot-integration.js:1:1139
+13:46:37.735 [Chatbot] Received message from origin: https://zenmato.myshopify.com Data: 
+Object { type: "init", session_id: "cf09b52f-1d31-4adf-b882-3b181f1427f6", source_url: "https://zenmato.myshopify.com/", page_context: "Home: home: EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en", shopify_context: {…}, timestamp: "2025-08-03T08:46:34.968Z" }
+page-0a466ade73998f86.js:1:16217
+13:46:37.756 [Chatbot] Received session_id from parent: cf09b52f-1d31-4adf-b882-3b181f1427f6 page-0a466ade73998f86.js:1:16492
+13:46:37.756 [Chatbot] Stored complete Shopify context: 
+Object { session_id: "cf09b52f-1d31-4adf-b882-3b181f1427f6", source_url: "https://zenmato.myshopify.com/", page_context: "Home: home: EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en", conversation_id: null, shopify_context: {…} }
+page-0a466ade73998f86.js:1:16847
+13:46:37.757 [Chatbot] Auto-loading conversations on session init page-0a466ade73998f86.js:1:16947
+13:46:37.757 [Chatbot] Requesting conversations from parent page-0a466ade73998f86.js:1:22244
+13:46:37.760 [Shopify Integration] Received message from iframe: 
+Object { type: "get-all-conversations" }
+shopify-chatbot-integration.js:112:637
+13:46:37.761 [Shopify Integration] Unknown message type: get-all-conversations shopify-chatbot-integration.js:112:1342
+13:46:37.761 [Chatbot] Auto-loading conversations on component mount page-0a466ade73998f86.js:1:21828
+13:46:37.762 [Chatbot] Requesting conversations from parent page-0a466ade73998f86.js:1:22244
+13:46:37.765 [Shopify Integration] Received message from iframe: 
+Object { type: "get-all-conversations" }
+shopify-chatbot-integration.js:112:637
+13:46:37.766 [Shopify Integration] Unknown message type: get-all-conversations shopify-chatbot-integration.js:112:1342
+13:46:37.972 [Shopify Integration] Valid Shopify session detected! shopify-chatbot-integration.js:129:1280
+13:46:39.363 Error: Promised response from onMessage listener went out of scope background.js:505:27
+13:46:39.871 [Chatbot] Refreshing conversations on chat open page-0a466ade73998f86.js:1:20997
+13:46:39.871 [Chatbot] Requesting conversations from parent page-0a466ade73998f86.js:1:22244
+13:46:39.875 [Shopify Integration] Received message from iframe: 
+Object { type: "get-all-conversations" }
+shopify-chatbot-integration.js:112:637
+13:46:39.875 [Shopify Integration] Unknown message type: get-all-conversations shopify-chatbot-integration.js:112:1342
+13:46:39.907 [Chatbot] Refreshing conversations on chat open page-0a466ade73998f86.js:1:20997
+13:46:39.907 [Chatbot] Requesting conversations from parent page-0a466ade73998f86.js:1:22244
+13:46:39.908 [Shopify Integration] Received message from iframe: 
+Object { type: "get-all-conversations" }
+shopify-chatbot-integration.js:112:637
+13:46:39.909 [Shopify Integration] Unknown message type: get-all-conversations shopify-chatbot-integration.js:112:1342
+13:46:40.195 [Analytics] Event tracked: chat_opened 2 page-0a466ade73998f86.js:1:12169
+13:46:43.703 [Chatbot] Sending text message: hi page-0a466ade73998f86.js:1:24553
+13:46:43.704 [Chatbot] Created new conversation ID: conv_cf09b52f-1d31-4adf-b882-3b181f1427f6_1754210803704 page-0a466ade73998f86.js:1:24671
+13:46:43.721 [Chatbot] Refreshing conversations on chat open page-0a466ade73998f86.js:1:20997
+13:46:43.721 [Chatbot] Requesting conversations from parent page-0a466ade73998f86.js:1:22244
+13:46:43.722 [Shopify Integration] Received message from iframe: 
+Object { type: "get-all-conversations" }
+shopify-chatbot-integration.js:112:637
+13:46:43.723 XHRPOST
+https://v0-custom-chat-interface-kappa.vercel.app/api/conversations/save
+[HTTP/2 500  594ms]
+
+13:46:43.723 [Shopify Integration] Unknown message type: get-all-conversations shopify-chatbot-integration.js:112:1342
+13:46:44.002 [Analytics] Event tracked: chat_opened page-0a466ade73998f86.js:1:12169
+13:46:44.329 [Chatbot] Conversation saved to DB: conv_cf09b52f-1d31-4adf-b882-3b181f1427f6_1754210803704 page-0a466ade73998f86.js:1:24011
+13:46:44.348 XHRPOST
+https://v0-custom-chat-interface-kappa.vercel.app/api/messages/save
+[HTTP/2 500  583ms]
+
+13:46:44.364 [Chatbot] Refreshing conversations on chat open page-0a466ade73998f86.js:1:20997
+13:46:44.364 [Chatbot] Requesting conversations from parent page-0a466ade73998f86.js:1:22244
+13:46:44.367 [Shopify Integration] Received message from iframe: 
+Object { type: "get-all-conversations" }
+shopify-chatbot-integration.js:112:637
+13:46:44.368 [Shopify Integration] Unknown message type: get-all-conversations shopify-chatbot-integration.js:112:1342
+13:46:44.640 [Analytics] Event tracked: chat_opened page-0a466ade73998f86.js:1:12169
+13:46:44.936 [Chatbot] Using Shopify context for message: 
+Object { session_id: "cf09b52f-1d31-4adf-b882-3b181f1427f6", source_url: "https://zenmato.myshopify.com/", page_context: "Home: home: EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en", conversation_id: null, shopify_context: {…} }
+page-0a466ade73998f86.js:1:25274
+13:46:44.937 [Chatbot] Sending message through parent window: 
+Object { id: "2ac7c18f-03c0-48b5-a8b4-0f2dc582d004", session_id: "cf09b52f-1d31-4adf-b882-3b181f1427f6", timestamp: "2025-08-03T08:46:44.938Z", user_message: "hi", message: "hi", conversation_id: "conv_cf09b52f-1d31-4adf-b882-3b181f1427f6_1754210803704", source_url: "https://zenmato.myshopify.com/", page_context: "Home: home: EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en", … }
+page-0a466ade73998f86.js:1:25855
+13:46:44.945 [Shopify Integration] Received message from iframe: 
+Object { type: "send-chat-message", payload: {…} }
+shopify-chatbot-integration.js:112:637
+13:46:44.947 [Shopify Integration] Handling send-chat-message request: 
+Object { id: "2ac7c18f-03c0-48b5-a8b4-0f2dc582d004", session_id: "cf09b52f-1d31-4adf-b882-3b181f1427f6", timestamp: "2025-08-03T08:46:44.938Z", user_message: "hi", message: "hi", conversation_id: "conv_cf09b52f-1d31-4adf-b882-3b181f1427f6_1754210803704", source_url: "https://zenmato.myshopify.com/", page_context: "Home: home: EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en", … }
+shopify-chatbot-integration.js:112:857
+13:46:44.947 [Shopify Integration] Handling send-chat-message: 
+Object { id: "2ac7c18f-03c0-48b5-a8b4-0f2dc582d004", session_id: "cf09b52f-1d31-4adf-b882-3b181f1427f6", timestamp: "2025-08-03T08:46:44.938Z", user_message: "hi", message: "hi", conversation_id: "conv_cf09b52f-1d31-4adf-b882-3b181f1427f6_1754210803704", source_url: "https://zenmato.myshopify.com/", page_context: "Home: home: EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en", … }
+shopify-chatbot-integration.js:1:1456
+13:46:44.948 [Shopify Integration] Sending to n8n webhook: 
+Object { session_id: "cf09b52f-1d31-4adf-b882-3b181f1427f6", message: "hi", timestamp: "2025-08-03T08:46:44.938Z", source_url: "https://zenmato.myshopify.com/", page_context: "Home: home: EcomHQ Zenmato Demo – ZENMATO", cart_currency: "USD", localization: "en", type: "text", webhookUrl: "https://similarly-secure-mayfly.ngrok-free.app/webhook/chat" }
+shopify-chatbot-integration.js:1:2332
+13:46:44.958 XHRPOST
+https://v0-custom-chat-interface-kappa.vercel.app/api/webhook
+[HTTP/2 502  861ms]
+
+	
+POST
+	https://v0-custom-chat-interface-kappa.vercel.app/api/webhook
+Status
+502
+VersionHTTP/2
+Transferred1.12 kB (438 B size)
+Referrer Policystrict-origin-when-cross-origin
+DNS ResolutionSystem
+
+13:46:45.226 [Analytics] Event tracked: message_sent page-0a466ade73998f86.js:1:12169
+13:46:46.117 [Shopify Integration] Webhook error: Error: Webhook request failed: 502
+    handleSendChatMessage shopify-chatbot-integration.js:101
+    setupMessageListener shopify-chatbot-integration.js:443
+    setupMessageListener shopify-chatbot-integration.js:428
+    main shopify-chatbot-integration.js:598
+    waitForDependencies shopify-chatbot-integration.js:489
+    setTimeout handler*waitForDependencies shopify-chatbot-integration.js:484
+    <anonymous> shopify-chatbot-integration.js:651
+    <anonymous> shopify-chatbot-integration.js:652
+shopify-chatbot-integration.js:1:3487
+13:46:46.121 [Chatbot] Received message from origin: https://zenmato.myshopify.com Data: 
+Object { type: "chat-error", error: "Webhook request failed: 502" }
+page-0a466ade73998f86.js:1:16217
+13:46:46.122 [Chatbot] Error from parent: Webhook request failed: 502 954-4a74a2281360139c.js:1:17078
+13:46:46.131 [Chatbot] Refreshing conversations on chat open page-0a466ade73998f86.js:1:20997
+13:46:46.131 [Chatbot] Requesting conversations from parent page-0a466ade73998f86.js:1:22244
+13:46:46.132 [Shopify Integration] Received message from iframe: 
+Object { type: "get-all-conversations" }
+shopify-chatbot-integration.js:112:637
+13:46:46.133 [Shopify Integration] Unknown message type: get-all-conversations shopify-chatbot-integration.js:112:1342
+13:46:46.414 [Analytics] Event tracked: chat_opened page-0a466ade73998f86.js:1:12169
