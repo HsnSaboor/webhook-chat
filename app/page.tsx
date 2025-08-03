@@ -1490,116 +1490,115 @@ export default function ChatWidget() {
 
             {/* Chat Interface */}
             <CardContent className="flex-1 flex flex-col p-0 bg-gray-50 overflow-hidden">
-                <div
-                  className="flex-1 overflow-y-auto px-4 py-4 space-y-4 bg-gray-50 chat-messages"
-                  ref={messagesContainerRef}
-                  style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-                >
-                  {messages.length === 1 &&
-                  (messages[0].id === "welcome" || messages[0].id === "welcome-features") &&
-                  !isLoading ? (
-                    <div className="flex items-center justify-center h-full">
-                      <div className="text-center">
-                        <div className="h-16 w-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                          <MessageCircle className="h-8 w-8 text-gray-600" />
+              <div
+                className="flex-1 overflow-y-auto px-4 py-4 space-y-4 bg-gray-50 chat-messages"
+                ref={messagesContainerRef}
+                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+              >
+                {messages.length === 1 &&
+                (messages[0].id === "welcome" || messages[0].id === "welcome-features") &&
+                !isLoading ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-center">
+                      <div className="h-16 w-16 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                        <MessageCircle className="h-8 w-8 text-gray-600" />
+                      </div>
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                        Welcome!
+                      </h3>
+                      <p className="text-gray-600 mb-6">
+                        How can we help you today?
+                      </p>
+                      <div className="flex items-center justify-center space-x-4 text-sm text-gray-500">
+                        <div className="flex items-center space-x-2">
+                          <MessageCircle className="h-4 w-4" />
+                          <span>Type a message</span>
                         </div>
-                        <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                          Welcome!
-                        </h3>
-                        <p className="text-gray-600 mb-6">
-                          How can we help you today?
-                        </p>
-                        <div className="flex items-center justify-center space-x-4 text-sm text-gray-500">
+                        {voiceSupported && (
                           <div className="flex items-center space-x-2">
-                            <MessageCircle className="h-4 w-4" />
-                            <span>Type a message</span>
+                            <Mic className="h-4 w-4" />
+                            <span>Voice message</span>
                           </div>
-                          {voiceSupported && (
-                            <div className="flex items-center space-x-2">
-                              <Mic className="h-4 w-4" />
-                              <span>Voice message</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {messages.map((message, index) => (
+                      <div
+                        key={message.id}
+                        className={`flex ${message.role === "user" ? "justify-end" : "justify-start"} mb-3`}
+                      >
+                        <div className="flex items-start space-x-2 max-w-[85%]">
+                          {message.role === "webhook" && (
+                            <div className="h-7 w-7 rounded-full bg-black flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <Sparkles className="h-3.5 w-3.5 text-white" />
+                            </div>
+                          )}
+                          <div
+                            className={`rounded-2xl p-3 shadow-sm transition-all duration-200 ${
+                              message.role === "user"
+                                ? "bg-black text-white ml-6"
+                                : "bg-white text-gray-900 border border-gray-200 hover:shadow-md"
+                            }`}
+                          >
+                            {message.type === "voice" && (
+                              <div className="mb-2">
+                                <div className="flex items-center space-x-2 mb-2">
+                                  <Mic className="h-4 w-4 opacity-75" />
+                                  <span className="text-xs opacity-75 font-medium">
+                                    VOICE MESSAGE
+                                  </span>
+                                </div>
+                                <StaticWaveform audioUrl={message.audioUrl} />
+                              </div>
+                            )}
+                            <p className="text-sm leading-relaxed">
+                              {message.content}
+                            </p>
+                            <p className={`text-xs mt-2 opacity-60`}>
+                              {formatTime(message.timestamp)}
+                            </p>
+
+                            {message.cards && message.cards.length > 0 && (
+                              <div className="mt-2">
+                                <ProductCards
+                                  cards={message.cards}
+                                  addedProductVariantId={
+                                    addedProductVariantId
+                                  }
+                                  onAddToCart={handleAddToCart}
+                                  onProductClick={handleProductClick}
+                                />
+                              </div>
+                            )}
+                          </div>
+                          {message.role === "user" && (
+                            <div className="h-7 w-7 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <User className="h-3.5 w-3.5 text-gray-600" />
                             </div>
                           )}
                         </div>
                       </div>
-                    </div>
-                  ) : (
-                    <>
-                      {messages.map((message, index) => (
-                        <div
-                          key={message.id}
-                          className={`flex ${message.role === "user" ? "justify-end" : "justify-start"} mb-3`}
-                        >
-                          <div className="flex items-start space-x-2 max-w-[85%]">
-                            {message.role === "webhook" && (
-                              <div className="h-7 w-7 rounded-full bg-black flex items-center justify-center flex-shrink-0 mt-0.5">
-                                <Sparkles className="h-3.5 w-3.5 text-white" />
-                              </div>
-                            )}
-                            <div
-                              className={`rounded-2xl p-3 shadow-sm transition-all duration-200 ${
-                                message.role === "user"
-                                  ? "bg-black text-white ml-6"
-                                  : "bg-white text-gray-900 border border-gray-200 hover:shadow-md"
-                              }`}
-                            >
-                              {message.type === "voice" && (
-                                <div className="mb-2">
-                                  <div className="flex items-center space-x-2 mb-2">
-                                    <Mic className="h-4 w-4 opacity-75" />
-                                    <span className="text-xs opacity-75 font-medium">
-                                      VOICE MESSAGE
-                                    </span>
-                                  </div>
-                                  <StaticWaveform audioUrl={message.audioUrl} />
-                                </div>
-                              )}
-                              <p className="text-sm leading-relaxed">
-                                {message.content}
-                              </p>
-                              <p className={`text-xs mt-2 opacity-60`}>
-                                {formatTime(message.timestamp)}
-                              </p>
-
-                              {message.cards && message.cards.length > 0 && (
-                                <div className="mt-2">
-                                  <ProductCards
-                                    cards={message.cards}
-                                    addedProductVariantId={
-                                      addedProductVariantId
-                                    }
-                                    onAddToCart={handleAddToCart}
-                                    onProductClick={handleProductClick}
-                                  />
-                                </div>
-                              )}
-                            </div>
-                            {message.role === "user" && (
-                              <div className="h-7 w-7 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                <User className="h-3.5 w-3.5 text-gray-600" />
-                              </div>
-                            )}
+                    ))}
+                    {isLoading && (
+                      <div className="flex justify-start mb-3">
+                        <div className="flex items-start space-x-2">
+                          <div className="h-7 w-7 rounded-full bg-black flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <Sparkles className="h-3.5 w-3.5 text-white animate-pulse" />
+                          </div>
+                          <div className="bg-white border border-gray-200 rounded-2xl shadow-sm">
+                            <TypingIndicator />
                           </div>
                         </div>
-                      ))}
-                      {isLoading && (
-                        <div className="flex justify-start mb-3">
-                          <div className="flex items-start space-x-2">
-                            <div className="h-7 w-7 rounded-full bg-black flex items-center justify-center flex-shrink-0 mt-0.5">
-                              <Sparkles className="h-3.5 w-3.5 text-white animate-pulse" />
-                            </div>
-                            <div className="bg-white border border-gray-200 rounded-2xl shadow-sm">
-                              <TypingIndicator />
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                      <div ref={messagesEndRef} />
-                    </>
-                  )}
-                </div>
-              </CardContent>
-            )}
+                      </div>
+                    )}
+                    <div ref={messagesEndRef} />
+                  </>
+                )}
+              </div>
+            </CardContent>
 
             {/* Recording Indicator - Enhanced */}
             {isRecording && (
