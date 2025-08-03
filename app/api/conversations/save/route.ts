@@ -1,83 +1,117 @@
+
 import { type NextRequest, NextResponse } from "next/server";
-import { createConversation } from "../../../../lib/database/conversations";
+import { supabase } from "../../../../lib/supabase";
 
 export async function POST(request: NextRequest) {
   const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, User-Agent",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, User-Agent, Cache-Control",
     "Access-Control-Allow-Credentials": "false",
   };
 
-  console.log(`[Save Conversation API] ============== SAVE CONVERSATION REQUEST ==============`);
+  console.log(`[Save Session API] ============== SAVE SESSION REQUEST ==============`);
+  console.log(`[Save Session API] Request received at: ${new Date().toISOString()}`);
 
   try {
     const body = await request.json();
-    console.log(`[Save Conversation API] Received payload:`, JSON.stringify(body, null, 2));
+    console.log(`[Save Session API] Request body:`, body);
 
-    const { session_id, conversation_id, name } = body;
+    const { session_id, name } = body;
 
-    // Validate required fields - make conversation_id optional as it can be generated
     if (!session_id) {
+      console.error("[Save Session API] Missing session_id");
       return NextResponse.json(
-        { error: 'Missing required field: session_id' },
-        { status: 400, headers: corsHeaders }
+        { error: "session_id is required" },
+        { 
+          status: 400, 
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json"
+          }
+        }
       );
     }
 
-    // Generate conversation_id if not provided
-    if (!conversation_id) {
-      body.conversation_id = `conv_${session_id}_${Date.now()}`;
+    console.log(`[Save Session API] Upserting session: ${session_id}`);
+
+    // Upsert the user session (insert if not exists, update if exists)
+    const { data, error } = await supabase
+      .from('user_sessions')
+      .upsert({
+        session_id,
+        name: name || 'Chat Session',
+        started_at: new Date().toISOString(),
+        last_activity: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'session_id',
+        ignoreDuplicates: false
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("[Save Session API] Database error:", error);
+      throw new Error(`Database error: ${error.message}`);
     }
 
-    const conversationName = name || `Conversation ${new Date().toLocaleString()}`;
+    console.log(`[Save Session API] Session saved successfully:`, data);
+    console.log(`[Save Session API] ============== REQUEST COMPLETED SUCCESSFULLY ==============`);
 
-    console.log(`[Save Conversation API] Creating conversation in Supabase`);
-
-    const conversation = await createConversation({
-      session_id: body.session_id,
-      conversation_id: body.conversation_id,
-      name: conversationName,
-      started_at: new Date().toISOString()
-    });
-
-    if (!conversation) {
-      console.error("[Save Conversation API] Failed to create conversation");
-      return NextResponse.json(
-        { error: "Failed to create conversation" },
-        { status: 500, headers: corsHeaders }
-      );
-    }
-
-    console.log(`[Save Conversation API] Successfully created conversation:`, conversation);
-    console.log(`[Save Conversation API] ============== REQUEST COMPLETED ==============`);
-
-    return NextResponse.json({ 
-      success: true, 
-      conversation 
+    return NextResponse.json({
+      success: true,
+      session: data
     }, { 
       status: 200,
-      headers: corsHeaders
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json"
+      }
     });
 
   } catch (error) {
-    console.error("[Save Conversation API] ============== ERROR OCCURRED ==============");
-    console.error("[Save Conversation API] Error:", error);
+    console.error("[Save Session API] ============== ERROR OCCURRED ==============");
+    console.error("[Save Session API] Error details:", error);
+
+    let errorMessage = 'Database error occurred';
+    if (error instanceof Error) {
+      console.error("[Save Session API] Error name:", error.name);
+      console.error("[Save Session API] Error message:", error.message);
+      errorMessage = error.message;
+    }
+
+    console.error(`[Save Session API] Final error message: ${errorMessage}`);
 
     return NextResponse.json(
-      { error: "Failed to save conversation" },
-      { status: 500, headers: corsHeaders }
+      { 
+        success: false,
+        error: errorMessage 
+      },
+      { 
+        status: 500,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json"
+        }
+      }
     );
   }
 }
 
+// Handle preflight OPTIONS requests
 export async function OPTIONS() {
+  console.log("[Save Session API] ============== OPTIONS PREFLIGHT REQUEST ==============");
+
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, User-Agent, Cache-Control",
+    "Access-Control-Allow-Credentials": "false",
+  };
+
   return new Response(null, {
     status: 200,
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    },
+    headers: corsHeaders,
   });
 }

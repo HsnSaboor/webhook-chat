@@ -1,5 +1,6 @@
+
 import { type NextRequest, NextResponse } from "next/server";
-import { getConversationsWithLatestMessages } from "../../../lib/database/conversations";
+import { supabase } from "../../../lib/supabase";
 
 export async function GET(request: NextRequest) {
   // CORS headers to allow requests from Shopify store
@@ -10,7 +11,7 @@ export async function GET(request: NextRequest) {
     "Access-Control-Allow-Credentials": "false",
   };
 
-  console.log(`[Conversations API] ============== GET ALL CONVERSATIONS REQUEST ==============`);
+  console.log(`[Conversations API] ============== GET ALL SESSIONS REQUEST ==============`);
   console.log(`[Conversations API] Request received at: ${new Date().toISOString()}`);
   console.log(`[Conversations API] Request URL: ${request.url}`);
 
@@ -35,48 +36,46 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log(`[Conversations API] Fetching conversations from Supabase for session: ${sessionId}`);
+    console.log(`[Conversations API] Fetching user session from Supabase for session: ${sessionId}`);
 
-    const conversations = await getConversationsWithLatestMessages(sessionId);
+    // Get the user session
+    const { data: sessionData, error: sessionError } = await supabase
+      .from('user_sessions')
+      .select('*')
+      .eq('session_id', sessionId)
+      .single();
 
-    console.log(`[Conversations API] Found ${conversations.length} conversations`);
-    console.log(`[Conversations API] Conversations:`, JSON.stringify(conversations, null, 2));
+    if (sessionError && sessionError.code !== 'PGRST116') {
+      console.error("[Conversations API] Error fetching session:", sessionError);
+      throw new Error(`Database error: ${sessionError.message}`);
+    }
 
-    // Helper function to generate name from user message
-    const generateNameFromMessage = (message: string): string => {
-      if (!message) return 'New Chat';
-      
-      // Clean the message - remove extra whitespace and newlines
-      const cleanMessage = message.replace(/\s+/g, ' ').trim();
-      
-      // Take first 15 characters
-      const truncated = cleanMessage.substring(0, 15);
-      
-      // If we cut off in the middle of a word, try to end at a word boundary
-      if (cleanMessage.length > 15) {
-        const lastSpace = truncated.lastIndexOf(' ');
-        if (lastSpace > 5) { // Only use word boundary if it's not too short
-          return truncated.substring(0, lastSpace) + '...';
+    // If no session exists, return empty array
+    if (!sessionData) {
+      console.log(`[Conversations API] No session found for session_id: ${sessionId}`);
+      return NextResponse.json([], { 
+        status: 200,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json"
         }
-        return truncated + '...';
-      }
-      
-      return truncated;
-    };
+      });
+    }
 
-    // Transform database format to frontend format
-    const transformedConversations = conversations.map(conv => ({
-      conversation_id: conv.conversation_id,
-      name: conv.latest_user_message 
-        ? generateNameFromMessage(conv.latest_user_message)
-        : conv.name || 'New Chat',
-      started_at: conv.started_at,
-      ended_at: conv.ended_at
-    }));
+    console.log(`[Conversations API] Found session:`, sessionData);
 
+    // Return the session as a single "conversation" for compatibility with frontend
+    const conversationData = [{
+      conversation_id: sessionData.session_id,
+      name: sessionData.name,
+      started_at: sessionData.started_at,
+      ended_at: null
+    }];
+
+    console.log(`[Conversations API] Returning session as conversation:`, conversationData);
     console.log(`[Conversations API] ============== REQUEST COMPLETED SUCCESSFULLY ==============`);
 
-    return NextResponse.json(transformedConversations, { 
+    return NextResponse.json(conversationData, { 
       status: 200,
       headers: {
         ...corsHeaders,

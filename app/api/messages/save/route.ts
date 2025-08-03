@@ -1,80 +1,144 @@
+
 import { type NextRequest, NextResponse } from "next/server";
-import { createMessage } from "../../../../lib/database/messages";
+import { supabase } from "../../../../lib/supabase";
 
 export async function POST(request: NextRequest) {
   const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, User-Agent",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, User-Agent, Cache-Control",
     "Access-Control-Allow-Credentials": "false",
   };
 
   console.log(`[Save Message API] ============== SAVE MESSAGE REQUEST ==============`);
+  console.log(`[Save Message API] Request received at: ${new Date().toISOString()}`);
 
   try {
     const body = await request.json();
-    console.log(`[Save Message API] Received payload:`, JSON.stringify(body, null, 2));
+    console.log(`[Save Message API] Request body:`, body);
 
-    const { conversation_id, session_id, content, role, type, audio_url, cards, timestamp } = body;
+    const { session_id, content, role, type = 'text', audioUrl, cards, timestamp } = body;
 
-    if (!conversation_id || !session_id || !content || !role || !timestamp) {
+    if (!session_id || !content || !role) {
       console.error("[Save Message API] Missing required fields");
       return NextResponse.json(
-        { error: "conversation_id, session_id, content, role, and timestamp are required" },
-        { status: 400, headers: corsHeaders }
+        { error: "session_id, content, and role are required" },
+        { 
+          status: 400, 
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json"
+          }
+        }
       );
     }
 
-    console.log(`[Save Message API] Creating message in Supabase`);
+    console.log(`[Save Message API] Saving message for session: ${session_id}`);
 
-    const message = await createMessage({
-      conversation_id,
-      session_id,
-      content,
-      role,
-      type: type || 'text',
-      audio_url,
-      cards,
-      timestamp
-    });
+    // First ensure the user session exists
+    const { data: sessionData, error: sessionError } = await supabase
+      .from('user_sessions')
+      .select('session_id')
+      .eq('session_id', session_id)
+      .single();
 
-    if (!message) {
-      console.error("[Save Message API] Failed to create message");
-      return NextResponse.json(
-        { error: "Failed to create message" },
-        { status: 500, headers: corsHeaders }
-      );
+    if (sessionError && sessionError.code === 'PGRST116') {
+      // Session doesn't exist, create it
+      console.log(`[Save Message API] Creating new session: ${session_id}`);
+      const { error: createSessionError } = await supabase
+        .from('user_sessions')
+        .insert({
+          session_id,
+          name: 'Chat Session',
+          started_at: new Date().toISOString(),
+          last_activity: new Date().toISOString()
+        });
+
+      if (createSessionError) {
+        console.error("[Save Message API] Error creating session:", createSessionError);
+        throw new Error(`Failed to create session: ${createSessionError.message}`);
+      }
+    } else if (sessionError) {
+      console.error("[Save Message API] Error checking session:", sessionError);
+      throw new Error(`Database error: ${sessionError.message}`);
     }
 
-    console.log(`[Save Message API] Successfully created message:`, message);
-    console.log(`[Save Message API] ============== REQUEST COMPLETED ==============`);
+    // Insert the message
+    const { data, error } = await supabase
+      .from('messages')
+      .insert({
+        session_id,
+        content,
+        role,
+        type,
+        audio_url: audioUrl,
+        cards: cards ? JSON.stringify(cards) : null,
+        timestamp: timestamp ? new Date(timestamp).toISOString() : new Date().toISOString()
+      })
+      .select()
+      .single();
 
-    return NextResponse.json({ 
-      success: true, 
-      message 
+    if (error) {
+      console.error("[Save Message API] Database error:", error);
+      throw new Error(`Database error: ${error.message}`);
+    }
+
+    console.log(`[Save Message API] Message saved successfully:`, data);
+    console.log(`[Save Message API] ============== REQUEST COMPLETED SUCCESSFULLY ==============`);
+
+    return NextResponse.json({
+      success: true,
+      message: data
     }, { 
       status: 200,
-      headers: corsHeaders
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json"
+      }
     });
 
   } catch (error) {
     console.error("[Save Message API] ============== ERROR OCCURRED ==============");
-    console.error("[Save Message API] Error:", error);
+    console.error("[Save Message API] Error details:", error);
+
+    let errorMessage = 'Database error occurred';
+    if (error instanceof Error) {
+      console.error("[Save Message API] Error name:", error.name);
+      console.error("[Save Message API] Error message:", error.message);
+      errorMessage = error.message;
+    }
+
+    console.error(`[Save Message API] Final error message: ${errorMessage}`);
 
     return NextResponse.json(
-      { error: "Failed to save message" },
-      { status: 500, headers: corsHeaders }
+      { 
+        success: false,
+        error: errorMessage 
+      },
+      { 
+        status: 500,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json"
+        }
+      }
     );
   }
 }
 
+// Handle preflight OPTIONS requests
 export async function OPTIONS() {
+  console.log("[Save Message API] ============== OPTIONS PREFLIGHT REQUEST ==============");
+
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, User-Agent, Cache-Control",
+    "Access-Control-Allow-Credentials": "false",
+  };
+
   return new Response(null, {
     status: 200,
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    },
+    headers: corsHeaders,
   });
 }

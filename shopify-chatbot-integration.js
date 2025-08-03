@@ -259,6 +259,50 @@
     }
   }
 
+  async function handleGetAllConversations(event) {
+    console.log('[Shopify Integration] Processing get-all-conversations request');
+
+    try {
+      if (!window.ShopifySessionManager) {
+        throw new Error('ShopifySessionManager not available');
+      }
+
+      const sessionData = window.ShopifySessionManager.getSessionData();
+      if (!sessionData) {
+        throw new Error('No valid session data available');
+      }
+
+      // Fetch conversations from our API
+      const response = await fetch(`https://v0-custom-chat-interface-kappa.vercel.app/api/conversations?session_id=${sessionData.session_id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch conversations: ${response.status}`);
+      }
+
+      const conversations = await response.json();
+      console.log('[Shopify Integration] Successfully fetched conversations:', conversations);
+
+      // Send the conversations back to the chatbot
+      sendMessageToChatbot({
+        type: 'conversations-response',
+        conversations: conversations || []
+      });
+
+    } catch (error) {
+      console.error('[Shopify Integration] Error fetching conversations:', error);
+      sendMessageToChatbot({
+        type: 'conversations-error',
+        error: error.message
+      });
+    }
+  }
+
   function showCartPopup(addedItemData, productName, productPrice, fullCartData) {
     console.log('[Shopify Integration] Showing cart popup for:', productName, { addedItemData, fullCartData });
 
@@ -453,6 +497,12 @@
           // Handle product navigation request
           console.log('[Shopify Integration] Handling navigate-to-product request:', event.data.payload);
           handleProductNavigation(event, event.data.payload);
+          return;
+
+        case 'get-all-conversations':
+          // Handle conversation list request
+          console.log('[Shopify Integration] Handling get-all-conversations request');
+          handleGetAllConversations(event);
           return;
 
         default:

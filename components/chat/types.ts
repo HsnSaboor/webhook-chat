@@ -31,6 +31,8 @@ export interface Conversation {
   name: string;
   started_at: string;
   ended_at?: string;
+  id?: string; // For compatibility
+  timestamp?: string; // For compatibility
 }
 
 export interface HistoryItem {
