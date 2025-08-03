@@ -586,35 +586,35 @@ export default function ChatWidget() {
     }
   };
 
-  const loadConversationFromParent = async (conversationId: string) => {
+  const loadSessionFromAPI = async (targetSessionId: string) => {
     if (!sessionId) {
-      console.error("[Chatbot] Cannot load conversation: No session ID");
+      console.error("[Chatbot] Cannot load session: No session ID");
       return;
     }
 
-    console.log(`[Chatbot] Loading conversation: ${conversationId}`);
+    console.log(`[Chatbot] Loading session: ${targetSessionId}`);
     setIsLoading(true);
 
     try {
       const response = await fetch(
-        `/api/conversations/${conversationId}?session_id=${sessionId}`,
+        `/api/sessions/${targetSessionId}`,
       );
 
       if (!response.ok) {
         console.error(
-          `[Chatbot] Failed to load conversation: ${response.status}`,
+          `[Chatbot] Failed to load session: ${response.status}`,
         );
         return;
       }
 
       const history = await response.json();
-      console.log("[Chatbot] Loaded conversation history:", history);
+      console.log("[Chatbot] Loaded session history:", history);
 
       // Transform database messages to frontend format
       const loadedMessages = history
         .map((item: any, index: number) => {
           return {
-            id: `msg-${conversationId}-${index}`,
+            id: `msg-${targetSessionId}-${index}`,
             content: item.content || item.user_message || item.ai_message || "",
             role: item.role || (item.user_message ? "user" : "webhook"),
             timestamp: new Date(item.timestamp),
@@ -627,7 +627,7 @@ export default function ChatWidget() {
       console.log("[Chatbot] Converted messages:", loadedMessages);
 
       setMessages(loadedMessages);
-      setCurrentConversationId(conversationId);
+      setCurrentConversationId(targetSessionId);
     } catch (error) {
       console.error("[Chatbot] Error loading conversation:", error);
     } finally {
@@ -744,39 +744,37 @@ export default function ChatWidget() {
     }
   };
 
-  const saveConversationToDB = async (
-    conversationId: string,
+  const saveSessionToDB = async (
     sessionId: string,
   ) => {
     try {
-      await fetch("/api/conversations/save", {
+      await fetch("/api/sessions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           session_id: sessionId,
-          conversation_id: conversationId,
-          name: `Conversation ${new Date().toLocaleString()}`,
+          name: `Chat Session ${new Date().toLocaleString()}`,
         }),
       });
-      console.log("[Chatbot] Conversation saved to DB:", conversationId);
+      console.log("[Chatbot] Session saved to DB:", sessionId);
 
       // Update cache immediately after saving
-      const newConversation = {
-        id: conversationId,
-        conversation_id: conversationId,
-        title: `Chat ${conversationId.slice(-4)}`,
-        name: `Chat ${conversationId.slice(-4)}`,
+      const newSession = {
+        id: sessionId,
+        session_id: sessionId,
+        title: `Chat ${sessionId.slice(-4)}`,
+        name: `Chat ${sessionId.slice(-4)}`,
         started_at: new Date().toISOString(),
         timestamp: new Date().toISOString(),
       };
 
-      setConversations((prev) => [...prev, newConversation]);
-      setConversationsCache((prev) => [...prev, newConversation]);
+      setConversations((prev) => [...prev, newSession]);
+      setConversationsCache((prev) => [...prev, newSession]);
       setCacheTimestamp(Date.now());
     } catch (error) {
-      console.error("[Chatbot] Error saving conversation:", error);
+      console.error("[Chatbot] Error saving session:", error);
     }
   };
 
@@ -792,15 +790,14 @@ export default function ChatWidget() {
 
     console.log(`[Chatbot] Sending ${type} message:`, messageText);
 
-    // Create conversation ID if this is the first message
-    let conversationId = currentConversationId;
-    if (!conversationId) {
-      conversationId = `conv_${sessionId}_${Date.now()}`;
-      setCurrentConversationId(conversationId);
-      console.log("[Chatbot] Created new conversation ID:", conversationId);
+    // Use session ID directly - no separate conversation needed
+    let conversationId = sessionId;
+    if (!currentConversationId) {
+      setCurrentConversationId(sessionId);
+      console.log("[Chatbot] Using session ID as conversation ID:", sessionId);
 
-      // Save new conversation immediately
-      await saveConversationToDB(conversationId, sessionId);
+      // Save session if not already saved
+      await saveSessionToDB(sessionId);
     }
 
     // Create the user message
@@ -829,7 +826,6 @@ export default function ChatWidget() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          conversation_id: conversationId,
           session_id: sessionId,
           content: messageText,
           role: "user",
@@ -1007,7 +1003,6 @@ export default function ChatWidget() {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                conversation_id: conversationId,
                 session_id: effectiveSessionId,
                 content: messageText,
                 role: "user",
@@ -1037,7 +1032,6 @@ export default function ChatWidget() {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                conversation_id: conversationId,
                 session_id: effectiveSessionId,
                 content: data.message || "No response content",
                 role: "webhook",
@@ -1358,7 +1352,7 @@ export default function ChatWidget() {
       }
 
       setCurrentConversationId(conversationId);
-      await loadConversationFromParent(conversationId);
+      await loadSessionFromAPI(conversationId);
     } catch (error) {
       console.error("[Chatbot] Error loading conversation:", error);
       // Reset state on error

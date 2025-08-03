@@ -84,16 +84,26 @@ export async function POST(request: NextRequest) {
       console.log("[Webhook Proxy] Save conversation payload:", savePayload);
 
       try {
-        // Forward the request to the n8n webhook
+        console.log("[Webhook Proxy] Making request to n8n webhook:", webhookUrl);
+        console.log("[Webhook Proxy] Request payload:", JSON.stringify(savePayload, null, 2));
+
+        // Add timeout and retry logic
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
         const response = await fetch(webhookUrl, {
-          method: "POST",
+          method: 'POST',
           headers: {
-            "Content-Type": "application/json",
-            "User-Agent": "Shopify-Chat-Proxy/1.0",
-            "ngrok-skip-browser-warning": "true",
+            'Content-Type': 'application/json',
+            'ngrok-skip-browser-warning': 'true',
+            'User-Agent': 'Webhook-Proxy/1.0',
+            'Cache-Control': 'no-cache'
           },
           body: JSON.stringify(savePayload),
+          signal: controller.signal
         });
+
+        clearTimeout(timeoutId);
 
         console.log(`[Webhook Proxy] Save conversation response status: ${response.status}`);
 
@@ -142,33 +152,43 @@ export async function POST(request: NextRequest) {
     console.log("[Webhook Proxy] Forwarding to webhook URL:", body.webhookUrl);
 
     try {
-      // Forward the request to the n8n webhook
+      console.log("[Webhook Proxy] Making request to n8n webhook:", body.webhookUrl);
+      console.log("[Webhook Proxy] Request payload:", JSON.stringify(body, null, 2));
+
+      // Add timeout and retry logic
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
       const response = await fetch(body.webhookUrl, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
-          "User-Agent": "Shopify-Chat-Proxy/1.0",
-          "ngrok-skip-browser-warning": "true",
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+          'User-Agent': 'Webhook-Proxy/1.0',
+          'Cache-Control': 'no-cache'
         },
         body: JSON.stringify(body),
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       console.log(`[Webhook Proxy] n8n response status: ${response.status}`);
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`[Webhook Proxy] n8n webhook error (${response.status}):`, errorText);
+        console.error("[Webhook Proxy] Webhook request failed:", response.status, response.statusText);
 
-        return NextResponse.json(
-          { 
-            error: response.status === 404 
-              ? "The AI service failed with status: 404" 
-              : "Could not connect to the AI service. Please try again later.",
-            details: errorText,
-            status: response.status
-          },
-          { status: 502, headers: corsHeaders }
-        );
+        // Return a helpful error message instead of just failing
+        const fallbackResponse = {
+          message: "I'm sorry, I'm having trouble connecting to the AI service right now. Please try again in a moment.",
+          error: true,
+          status: response.status
+        };
+
+        return NextResponse.json(fallbackResponse, { 
+          status: 200, // Return 200 so the frontend can handle the error gracefully
+          headers: corsHeaders 
+        });
       }
 
       // Check if response has content

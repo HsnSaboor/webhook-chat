@@ -52,19 +52,19 @@ export const ConversationsList: React.FC<ConversationsListProps> = ({
                 return null;
               }
 
-              const conversationId = conversation.conversation_id || conversation.id || `fallback-${index}`;
-              const conversationName = conversation.name || "New Chat";
+              const sessionId = conversation.session_id || conversation.id || `fallback-${index}`;
+              const sessionName = conversation.name || "New Chat";
               const startedAt = conversation.started_at || conversation.timestamp || new Date().toISOString();
 
               return (
                 <button
-                  key={conversationId}
-                  onClick={() => onLoadConversation(conversationId)}
+                  key={sessionId}
+                  onClick={() => onLoadConversation(sessionId)}
                   disabled={loadingHistory}
                   className="w-full text-left p-2 rounded-lg border border-gray-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800 transition-colors duration-200 disabled:opacity-50 overflow-hidden"
                 >
                   <div className="font-medium text-sm text-foreground truncate min-w-0">
-                    {truncateText(conversationName)}
+                    {truncateText(sessionName)}
                   </div>
                   <div className="text-xs text-muted-foreground mt-1 truncate">
                     {formatTime(startedAt)}

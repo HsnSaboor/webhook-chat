@@ -90,6 +90,53 @@ export async function GET(request: NextRequest) {
   }
 }
 
+export async function POST(request: NextRequest) {
+  console.log(`[Sessions API] ============== POST REQUEST ==============`);
+  
+  try {
+    const body = await request.json();
+    console.log(`[Sessions API] POST body:`, body);
+
+    const { session_id, name } = body;
+
+    if (!session_id) {
+      console.log(`[Sessions API] No session_id provided in POST`);
+      return NextResponse.json(
+        { error: "session_id is required" },
+        { 
+          status: 400,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+    }
+
+    // For now, just return success - actual session creation happens in Supabase automatically
+    // when messages are saved with a new session_id
+    console.log(`[Sessions API] Session creation acknowledged for: ${session_id}`);
+
+    return NextResponse.json(
+      { success: true, session_id },
+      { 
+        status: 200,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json"
+        }
+      }
+    );
+
+  } catch (error) {
+    console.error("[Sessions API] Error in POST:", error);
+    return NextResponse.json(
+      { error: "Failed to create session" },
+      { status: 500, headers: corsHeaders }
+    );
+  }
+}
+
 export async function OPTIONS() {
   console.log("[Sessions API] Handling OPTIONS preflight request");
   return new Response(null, {
