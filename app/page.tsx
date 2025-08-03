@@ -1668,12 +1668,11 @@ export default function ChatWidget() {
             )}
 
             {/* Input - Modern Minimalist */}
-            {(
-              <CardFooter
-                className={`p-3 border-t border-gray-100 bg-white transition-all duration-200 ${
-                  isRecording ? "bg-red-50/30" : ""
-                }`}
-              >
+            <CardFooter
+              className={`p-3 border-t border-gray-100 bg-white transition-all duration-200 ${
+                isRecording ? "bg-red-50/30" : ""
+              }`}
+            >
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
@@ -1748,7 +1747,6 @@ export default function ChatWidget() {
                   </Button>
                 </form>
               </CardFooter>
-            )}
           </Card>
         </div>
       )}
