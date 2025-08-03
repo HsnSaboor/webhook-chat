@@ -50,12 +50,12 @@ export async function createMessage(data: {
   }
 }
 
-export async function getMessagesByConversation(conversationId: string): Promise<DatabaseMessage[]> {
+export async function getMessagesBySession(sessionId: string): Promise<DatabaseMessage[]> {
   try {
     const { data: messages, error } = await supabase
       .from('messages')
       .select('*')
-      .eq('conversation_id', conversationId)
+      .eq('session_id', sessionId)
       .order('timestamp', { ascending: true })
 
     if (error) {
@@ -70,12 +70,12 @@ export async function getMessagesByConversation(conversationId: string): Promise
   }
 }
 
-export async function deleteMessagesByConversation(conversationId: string): Promise<boolean> {
+export async function deleteMessagesBySession(sessionId: string): Promise<boolean> {
   try {
     const { error } = await supabase
       .from('messages')
       .delete()
-      .eq('conversation_id', conversationId)
+      .eq('session_id', sessionId)
 
     if (error) {
       console.error('Error deleting messages:', error)

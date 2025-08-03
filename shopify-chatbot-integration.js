@@ -272,8 +272,8 @@
         throw new Error('No valid session data available');
       }
 
-      // Fetch conversations from our API
-      const response = await fetch(`https://v0-custom-chat-interface-kappa.vercel.app/api/conversations?session_id=${sessionData.session_id}`, {
+      // Fetch session data from our API
+      const response = await fetch(`https://v0-custom-chat-interface-kappa.vercel.app/api/sessions?session_id=${sessionData.session_id}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -285,17 +285,17 @@
         throw new Error(`Failed to fetch conversations: ${response.status}`);
       }
 
-      const conversations = await response.json();
-      console.log('[Shopify Integration] Successfully fetched conversations:', conversations);
+      const sessions = await response.json();
+      console.log('[Shopify Integration] Successfully fetched sessions:', sessions);
 
-      // Send the conversations back to the chatbot
+      // Send the sessions back to the chatbot (keeping conversations-response for frontend compatibility)
       sendMessageToChatbot({
         type: 'conversations-response',
-        conversations: conversations || []
+        conversations: sessions || []
       });
 
     } catch (error) {
-      console.error('[Shopify Integration] Error fetching conversations:', error);
+      console.error('[Shopify Integration] Error fetching sessions:', error);
       sendMessageToChatbot({
         type: 'conversations-error',
         error: error.message
