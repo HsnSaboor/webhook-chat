@@ -1002,7 +1002,8 @@ export default function ChatWidget() {
           try {
             // Save user message
             console.log("[Chatbot] Saving user message to database...");
-            const userSaveResponse = await fetch("/api/messages/save", {
+            // Replacing conversation ID with session ID in the function calls.
+      const userSaveResponse = await fetch("/api/messages/save", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -1344,9 +1345,9 @@ export default function ChatWidget() {
     requestConversationsFromParent();
   };
 
-  
 
-  const loadConversationAndStartChat = async (conversationId: string) => {
+
+  const loadSessionAndStartChat = async (conversationId: string) => {
     try {
       console.log(`[Chatbot] Loading conversation: ${conversationId}`);
 

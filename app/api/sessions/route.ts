@@ -51,7 +51,8 @@ export async function GET(request: NextRequest) {
 
     // Return session data formatted for frontend compatibility
     const responseData = [{
-      conversation_id: sessionData.session_id,
+      session_id: sessionData.session_id,
+      id: sessionData.session_id,
       name: sessionData.name,
       started_at: sessionData.started_at,
       ended_at: null
