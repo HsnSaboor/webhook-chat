@@ -1,15 +1,14 @@
 
 /**
- * Shopify Session Manager - Enhanced Version
+ * Shopify Session Manager - Simplified Version
  * Upload this to your Shopify theme assets folder
  */
 (function() {
   'use strict';
 
-  console.log('[Shopify Session Manager] Initializing enhanced session manager...');
+  console.log('[Shopify Session Manager] Initializing simplified session manager...');
 
   let sessionData = null;
-  let conversationId = null;
 
   function getAllCookies() {
     const cookies = {};
@@ -204,15 +203,6 @@
     return context;
   }
 
-  function generateConversationId(sessionId) {
-    if (conversationId) {
-      return conversationId;
-    }
-    const timestamp = Date.now();
-    conversationId = `conv_${sessionId}_${timestamp}`;
-    return conversationId;
-  }
-
   function initializeSession() {
     console.log('[Session Manager] Initializing session...');
 
@@ -244,18 +234,12 @@
     return sessionData && sessionData.session_id && !sessionData.session_id.startsWith('fallback-');
   }
 
-  function getConversationId() {
-    if (!sessionData) return null;
-    return generateConversationId(sessionData.session_id);
-  }
-
   // Expose to global scope
   window.ShopifySessionManager = {
     initialize: initializeSession,
     getSessionData: getSessionData,
-    getConversationId: getConversationId,
     isValid: isSessionValid
   };
 
-  console.log('[Session Manager] Enhanced session manager loaded successfully');
+  console.log('[Session Manager] Simplified session manager loaded successfully');
 })();
